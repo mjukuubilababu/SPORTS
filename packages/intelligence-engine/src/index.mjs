@@ -12,3 +12,6 @@ export * from './outcome-1x2.mjs';
 export * from './live-outcome.mjs';
 export * from './outcome-settlement.mjs';
 export * from './outcome-evaluation.mjs';
+export * from './bookmaker-registry.mjs';
+export * from './bookmaker-comparison.mjs';
+export * from './paper-combination.mjs';
