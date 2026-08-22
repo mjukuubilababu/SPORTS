@@ -110,8 +110,9 @@
   },
   "real_observed_market_ingestion": {
     "version": "v0.1",
-    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
-    "branch": "feature/real-market-ingestion-2026-08-23",
+    "status": "MERGED_CANONICAL_RUNTIME_VERIFIED",
+    "merged_via_pr": 4,
+    "merge_commit": "7e2cbc06194cf9f9389b2af9c5e15db33fd8087a",
     "tests": "5/5 PASS_LOCAL_RUNTIME",
     "capture": "3 REAL EPL EVENTS -> 3 MARKET_READY, 3 WAIT_MODEL_INPUT, 0 QUALIFIED",
     "providers_used": ["BETPAWA", "SPORTPESA", "STAKE"],
