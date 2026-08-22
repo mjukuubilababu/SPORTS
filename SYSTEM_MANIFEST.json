@@ -93,8 +93,9 @@
   },
   "operational_trial_processing": {
     "version": "v0.1",
-    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
-    "branch": "feature/operational-trial-runner-v0.1",
+    "status": "MERGED_CANONICAL_RUNTIME_VERIFIED",
+    "merged_via_pr": 3,
+    "merge_commit": "506f21118fae95288b1ee6541a90ca3fd92eb75d",
     "tests": "5/5 PASS_LOCAL_RUNTIME",
     "smoke_batch": "5 EVENTS -> 3 QUALIFIED, 1 WATCH, 1 WAIT, 3 GATE5 DRAFTS, 2 PAPER COMBINATION SETS",
     "input": "packages/intelligence-engine/data/trial-market-batch-v0.1.json",
