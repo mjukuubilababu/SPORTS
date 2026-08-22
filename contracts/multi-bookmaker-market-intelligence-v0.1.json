@@ -31,6 +31,15 @@
       "NORMAL_MARKET_VARIATION"
     ]
   },
+  "historical_learning": {
+    "average_overround": true,
+    "consensus_deviation": true,
+    "selection_signed_bias": true,
+    "disagreement_rate": true,
+    "outcome_brier_when_settled": true,
+    "policy": "LEARN_PATTERNS_NOT_UNOBSERVED_INTENT",
+    "causal_claims_from_odds_alone": "FORBIDDEN"
+  },
   "paper_combination_engine": {
     "max_default_sets": 2,
     "requires_qualified_state": true,
