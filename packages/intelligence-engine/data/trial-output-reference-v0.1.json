@@ -1,0 +1,86 @@
+{
+  "generatedFrom": "trial-market-batch-v0.1.json",
+  "fixtureNature": "SYNTHETIC_OPERATIONAL_TRIAL_NOT_CURRENT_BOOKMAKER_QUOTES",
+  "runtimeVerification": "PASS",
+  "summary": {
+    "eventsReceived": 5,
+    "states": {"QUALIFIED": 3, "WATCH": 1, "WAIT": 1},
+    "qualifiedSignals": 3,
+    "gate5SignalDrafts": 3,
+    "paperCombinationSets": 2
+  },
+  "rankedCandidates": [
+    {
+      "rank": 1,
+      "eventId": "TRIAL-LALIGA-001",
+      "league": "LA_LIGA",
+      "match": "Sevilla vs Villarreal",
+      "state": "QUALIFIED",
+      "selection": "AWAY_WIN",
+      "modelProbability": 0.5134375106358782,
+      "marketFairProbability": 0.40070303958813697,
+      "edgePp": 11.273447104774121,
+      "bestPrice": {"provider": "PARIMATCH", "odds": 2.38},
+      "ev": 0.22198127531339007,
+      "evidenceMaturity": 88
+    },
+    {
+      "rank": 2,
+      "eventId": "TRIAL-EPL-001",
+      "league": "EPL",
+      "match": "Arsenal vs Chelsea",
+      "state": "QUALIFIED",
+      "selection": "HOME_WIN",
+      "modelProbability": 0.5614865857196338,
+      "marketFairProbability": 0.4766972463820571,
+      "edgePp": 8.47893393375767,
+      "bestPrice": {"provider": "SPORTPESA", "odds": 2.02},
+      "ev": 0.13420290315366046,
+      "evidenceMaturity": 85
+    },
+    {
+      "rank": 3,
+      "eventId": "TRIAL-SERIEA-001",
+      "league": "SERIE_A",
+      "match": "Inter vs Torino",
+      "state": "QUALIFIED",
+      "selection": "HOME_WIN",
+      "modelProbability": 0.6298126586314384,
+      "marketFairProbability": 0.5561048823524586,
+      "edgePp": 7.370777627897985,
+      "bestPrice": {"provider": "MBET", "odds": 1.75},
+      "ev": 0.10217215260501722,
+      "evidenceMaturity": 90
+    },
+    {
+      "rank": 4,
+      "eventId": "TRIAL-MLS-001",
+      "league": "MLS",
+      "match": "San Diego FC vs Colorado Rapids",
+      "state": "WATCH",
+      "selection": "HOME_WIN",
+      "modelProbability": 0.43804270504719084,
+      "marketFairProbability": 0.4193032016375023,
+      "edgePp": 1.8739503409688552,
+      "bestPrice": {"provider": "SPORTPESA", "odds": 2.28},
+      "ev": -0.0012626324924049914,
+      "evidenceMaturity": 82
+    }
+  ],
+  "paperCombinationSets": [
+    {
+      "events": ["TRIAL-EPL-001", "TRIAL-LALIGA-001"],
+      "combinedProbability": 0.28828827482732744,
+      "combinedOdds": 4.8076,
+      "combinedEv": 0.3859747100598594
+    },
+    {
+      "events": ["TRIAL-SERIEA-001", "TRIAL-LALIGA-001"],
+      "combinedProbability": 0.3233694436146899,
+      "combinedOdds": 4.165,
+      "combinedEv": 0.34683373265518336
+    }
+  ],
+  "mode": "TRIAL_PAPER_ONLY",
+  "realMoney": "NO"
+}

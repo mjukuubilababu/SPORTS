@@ -16,3 +16,4 @@ export * from './bookmaker-registry.mjs';
 export * from './bookmaker-comparison.mjs';
 export * from './paper-combination.mjs';
 export * from './bookmaker-learning.mjs';
+export * from './trial-processing.mjs';
