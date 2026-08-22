@@ -83,6 +83,47 @@ A qualified operational trial event emits a Gate5-compatible draft containing `m
 
 The operational runner remains `TRIAL_PAPER_ONLY`, `realMoney: NO`, and does not change the capital gate.
 
+## Real Observed Market Ingestion v0.1
+
+The engine now accepts real, time-stamped public-web bookmaker observations separately from synthetic fixtures. The first governed reference capture is for three EPL matches on 23 August 2026.
+
+Current reference providers used in that capture are betPawa, SportPesa and Stake. MBet, Parimatch and SokaBet remain discoverable providers, but no quote is admitted to a consensus unless a fresh, attributable observation is available. Presence in the registry does not authorize private API access.
+
+Important safeguards:
+
+- raw bookmaker display order is mapped explicitly into canonical `HOME / DRAW / AWAY`; silent positional assumptions are forbidden;
+- each observation records source URL, capture time semantics and freshness;
+- stale or ineligible observations are excluded from cross-bookmaker consensus;
+- each provider is de-vigged independently before fair-probability consensus;
+- market-only processing is valid and can reach `MARKET_READY` without a prediction;
+- bookmaker odds cannot be recycled as independent model truth;
+- a prediction requires independently verified model inputs (`model.verified=true` plus valid home/away lambdas);
+- missing verified model inputs result in `WAIT` with `MODEL_INPUT_NOT_VERIFIED`, not a fabricated pick.
+
+Files:
+
+- `src/provider-odds-adapter.mjs`
+- `src/real-market-processing.mjs`
+- `data/real-market-batch-2026-08-23T001346+0300.json`
+- `data/real-market-output-reference-2026-08-23T001346+0300.json`
+- `tests/real-market-processing.test.mjs`
+- `../../scripts/run_real_market_intelligence.mjs`
+- `../../contracts/real-observed-market-ingestion-v0.1.json`
+
+Run the real captured batch from `packages/intelligence-engine`:
+
+```bash
+npm run real:market
+```
+
+Write the generated report:
+
+```bash
+npm run real:market:write
+```
+
+The initial real capture is deliberately market-ready/model-waiting: it proves ingestion, canonical mapping, de-vig, consensus, dispersion and best-price logic using real bookmaker observations without introducing market-to-model circularity.
+
 Run all intelligence-engine tests:
 
 ```bash

@@ -24,7 +24,8 @@
     "qualified-signal-set contract v0.1",
     "match-outcome-1x2-live capability v0.1",
     "multi-bookmaker-market-intelligence capability v0.1",
-    "operational-trial-processing capability v0.1"
+    "operational-trial-processing capability v0.1",
+    "real-observed-market-ingestion capability v0.1"
   ],
   "verified_runtime_checks": "15/15 PASS",
   "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
@@ -76,7 +77,7 @@
     "merge_commit": "e7ade9ccb24da22a5a99d9157755b27e8569ebfb",
     "tests": "7/7 PASS_LOCAL_MODULE_RUNTIME",
     "full_package_ci": "NOT_CLAIMED_NO_AUTOMATIC_REPO_CI",
-    "initial_providers": ["BETPAWA", "SPORTPESA", "MBET", "PARIMATCH", "SOKABET"],
+    "initial_providers": ["BETPAWA", "SPORTPESA", "MBET", "PARIMATCH", "SOKABET", "STAKE"],
     "capabilities": [
       "PROVIDER_REGISTRY_AND_INGESTION_GOVERNANCE",
       "N_WAY_DEVIG",
@@ -104,6 +105,23 @@
     "flow": "TRIAL_BATCH -> 1X2_MODEL -> BOOKMAKER_DEVIG_CONSENSUS -> EDGE_EV -> QUALIFICATION -> RANKING -> GATE5_SIGNAL_DRAFTS -> PAPER_COMBINATIONS",
     "gate5_compatibility": "QUALIFIED_EVENTS_EMIT_DRAFTS_FOR_EXISTING_FREEZE_PAPER_EXECUTE_CLOSE_SETTLE_FLOW",
     "fixture_policy": "INCLUDED_BATCH_IS_SYNTHETIC_AND_NOT_CURRENT_BOOKMAKER_QUOTES",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "real_observed_market_ingestion": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
+    "branch": "feature/real-market-ingestion-2026-08-23",
+    "tests": "5/5 PASS_LOCAL_RUNTIME",
+    "capture": "3 REAL EPL EVENTS -> 3 MARKET_READY, 3 WAIT_MODEL_INPUT, 0 QUALIFIED",
+    "providers_used": ["BETPAWA", "SPORTPESA", "STAKE"],
+    "providers_not_used_without_fresh_verified_quote": ["MBET", "PARIMATCH", "SOKABET"],
+    "input": "packages/intelligence-engine/data/real-market-batch-2026-08-23T001346+0300.json",
+    "output_reference": "packages/intelligence-engine/data/real-market-output-reference-2026-08-23T001346+0300.json",
+    "runner": "scripts/run_real_market_intelligence.mjs",
+    "commands": ["npm run real:market", "npm run real:market:write"],
+    "flow": "REAL_PUBLIC_QUOTES -> EXPLICIT_PROVIDER_MAPPING -> DEVIG -> MARKET_CONSENSUS -> BEST_PRICE -> MODEL_VERIFICATION_GATE -> PREDICTION_ONLY_IF_INDEPENDENT_MODEL_VERIFIED",
+    "market_to_model_circularity": "FORBIDDEN",
     "capital_effect": "NONE",
     "real_money": "NO"
   }

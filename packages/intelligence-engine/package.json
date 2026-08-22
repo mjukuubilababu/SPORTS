@@ -7,6 +7,8 @@
     "test": "node --test tests/*.test.mjs",
     "verify": "npm test",
     "trial": "node ../../scripts/run_trial_market_intelligence.mjs",
-    "trial:write": "node ../../scripts/run_trial_market_intelligence.mjs data/trial-market-batch-v0.1.json data/trial-output-v0.1.json"
+    "trial:write": "node ../../scripts/run_trial_market_intelligence.mjs data/trial-market-batch-v0.1.json data/trial-output-v0.1.json",
+    "real:market": "node ../../scripts/run_real_market_intelligence.mjs",
+    "real:market:write": "node ../../scripts/run_real_market_intelligence.mjs data/real-market-batch-2026-08-23T001346+0300.json data/real-market-output-2026-08-23T001346+0300.json"
   }
 }
