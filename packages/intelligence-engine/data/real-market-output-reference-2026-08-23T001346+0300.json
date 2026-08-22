@@ -1,0 +1,81 @@
+{
+  "generatedFrom": "real-market-batch-2026-08-23T001346+0300.json",
+  "dataNature": "REAL_OBSERVED_MARKET_DATA",
+  "runtimeVerification": "PASS",
+  "summary": {
+    "eventsReceived": 3,
+    "states": {"WAIT": 3},
+    "marketReadyEvents": 3,
+    "modelVerifiedEvents": 0,
+    "qualifiedSignals": 0
+  },
+  "marketBoard": [
+    {
+      "eventId": "EPL-2026-08-23-MCI-BOU",
+      "match": "Manchester City vs AFC Bournemouth",
+      "providers": ["BETPAWA", "SPORTPESA", "STAKE"],
+      "consensusFair": {
+        "HOME": 0.6382437323421978,
+        "DRAW": 0.1934745700777293,
+        "AWAY": 0.16828169758007275
+      },
+      "bestPrice": {
+        "HOME": {"provider": "SPORTPESA", "odds": 1.55},
+        "DRAW": {"provider": "BETPAWA", "odds": 5.33},
+        "AWAY": {"provider": "BETPAWA", "odds": 5.89}
+      },
+      "meanOverround": 0.033384134390650834,
+      "maxFairProbabilityDispersion": 0.02886468037962653,
+      "marketHypothesis": "MARGIN_DIFFERENCE",
+      "modelState": "MODEL_INPUT_NOT_VERIFIED",
+      "state": "WAIT"
+    },
+    {
+      "eventId": "EPL-2026-08-23-BHA-AVL",
+      "match": "Brighton & Hove Albion vs Aston Villa",
+      "providers": ["SPORTPESA", "STAKE"],
+      "consensusFair": {
+        "HOME": 0.42613765454321645,
+        "DRAW": 0.26880402968296885,
+        "AWAY": 0.3050583157738147
+      },
+      "bestPrice": {
+        "HOME": {"provider": "SPORTPESA", "odds": 2.26},
+        "DRAW": {"provider": "STAKE", "odds": 3.60},
+        "AWAY": {"provider": "SPORTPESA", "odds": 3.15}
+      },
+      "meanOverround": 0.040655437047061094,
+      "maxFairProbabilityDispersion": 0.0032569143277696444,
+      "marketHypothesis": "NORMAL_MARKET_VARIATION",
+      "modelState": "MODEL_INPUT_NOT_VERIFIED",
+      "state": "WAIT"
+    },
+    {
+      "eventId": "EPL-2026-08-23-NEW-LIV",
+      "match": "Newcastle United vs Liverpool FC",
+      "providers": ["SPORTPESA", "STAKE"],
+      "consensusFair": {
+        "HOME": 0.2499375572391974,
+        "DRAW": 0.24361002414453414,
+        "AWAY": 0.5064524186162684
+      },
+      "bestPrice": {
+        "HOME": {"provider": "SPORTPESA", "odds": 3.85},
+        "DRAW": {"provider": "SPORTPESA", "odds": 3.95},
+        "AWAY": {"provider": "SPORTPESA", "odds": 1.90}
+      },
+      "meanOverround": 0.03922060617596923,
+      "maxFairProbabilityDispersion": 0,
+      "marketHypothesis": "NORMAL_MARKET_VARIATION",
+      "modelState": "MODEL_INPUT_NOT_VERIFIED",
+      "state": "WAIT"
+    }
+  ],
+  "governance": {
+    "noMarketDerivedModel": true,
+    "noSyntheticOddsInThisBatch": true,
+    "predictionNotExecution": true,
+    "capitalLocked": true,
+    "realMoney": "NO"
+  }
+}
