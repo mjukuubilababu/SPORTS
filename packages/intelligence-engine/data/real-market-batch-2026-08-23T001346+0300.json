@@ -1,0 +1,159 @@
+{
+  "batchId": "REAL-MARKET-2026-08-23T001346+0300",
+  "fixtureNature": "REAL_OBSERVED_MARKET_DATA",
+  "capturedAt": "2026-08-22T21:13:46Z",
+  "captureTimezone": "Africa/Dar_es_Salaam",
+  "capturePolicy": {
+    "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+    "publicWebOnly": true,
+    "staleCachedSourcesExcluded": true,
+    "privateEndpointReverseEngineering": false,
+    "marketDerivedModelInputsForbidden": true
+  },
+  "events": [
+    {
+      "eventId": "EPL-2026-08-23-MCI-BOU",
+      "league": "EPL",
+      "homeTeam": "Manchester City",
+      "awayTeam": "AFC Bournemouth",
+      "kickoffAt": "2026-08-23T13:00:00Z",
+      "marketKey": "1X2_90M",
+      "model": {
+        "verified": false,
+        "reason": "INDEPENDENT_HISTORICAL_FEATURE_INPUTS_NOT_YET_INGESTED"
+      },
+      "bookmakerSnapshots": [
+        {
+          "provider": "BETPAWA",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+          "sourceType": "PUBLIC_WEB",
+          "sourceUrl": "https://www.betpawa.co.tz/event/36108243?filter=all",
+          "sourceFreshness": "EVENT_PAGE_CRAWLED_TODAY",
+          "rawOdds": [1.50, 5.33, 5.89],
+          "rawOrder": ["HOME", "DRAW", "AWAY"]
+        },
+        {
+          "provider": "SPORTPESA",
+          "providerGameId": "2345",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+          "sourceType": "PUBLIC_WEB",
+          "sourceUrl": "https://sportpesa.co.tz/sw/nyumbani-betting/soka-1/england-24/premier-league-58/",
+          "sourceFreshness": "LEAGUE_PAGE_CRAWLED_TODAY",
+          "rawOdds": [1.55, 5.57, 4.71],
+          "rawOrder": ["HOME", "AWAY", "DRAW"],
+          "captureNote": "SportPesa page DOM exposes 3-Way values in HOME, AWAY, DRAW order for this capture; adapter canonicalizes explicitly."
+        },
+        {
+          "provider": "STAKE",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+          "sourceType": "PUBLIC_WEB",
+          "sourceUrl": "https://stake.games/sports/soccer/england/premier-league",
+          "sourceFreshness": "PAGE_CRAWLED_TODAY",
+          "rawOdds": [1.50, 5.00, 5.80],
+          "rawOrder": ["HOME", "DRAW", "AWAY"]
+        }
+      ],
+      "supplementalMarkets": [
+        {
+          "provider": "BETPAWA",
+          "marketKey": "TOTAL_2_5_90M",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "sourceUrl": "https://www.betpawa.co.tz/event/36108243?filter=all",
+          "odds": {"OVER": 1.42, "UNDER": 2.91}
+        },
+        {
+          "provider": "BETPAWA",
+          "marketKey": "TOTAL_3_5_90M",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "sourceUrl": "https://www.betpawa.co.tz/event/36108243?filter=all",
+          "odds": {"OVER": 2.03, "UNDER": 1.80}
+        }
+      ]
+    },
+    {
+      "eventId": "EPL-2026-08-23-BHA-AVL",
+      "league": "EPL",
+      "homeTeam": "Brighton & Hove Albion",
+      "awayTeam": "Aston Villa",
+      "kickoffAt": "2026-08-23T13:00:00Z",
+      "marketKey": "1X2_90M",
+      "model": {
+        "verified": false,
+        "reason": "INDEPENDENT_HISTORICAL_FEATURE_INPUTS_NOT_YET_INGESTED"
+      },
+      "bookmakerSnapshots": [
+        {
+          "provider": "SPORTPESA",
+          "providerGameId": "5016",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+          "sourceType": "PUBLIC_WEB",
+          "sourceUrl": "https://sportpesa.co.tz/sw/nyumbani-betting/soka-1/england-24/premier-league-58/",
+          "sourceFreshness": "LEAGUE_PAGE_CRAWLED_TODAY",
+          "rawOdds": [2.26, 3.15, 3.55],
+          "rawOrder": ["HOME", "AWAY", "DRAW"]
+        },
+        {
+          "provider": "STAKE",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+          "sourceType": "PUBLIC_WEB",
+          "sourceUrl": "https://stake.games/sports/soccer/england/premier-league",
+          "sourceFreshness": "PAGE_CRAWLED_TODAY",
+          "rawOdds": [2.25, 3.60, 3.15],
+          "rawOrder": ["HOME", "DRAW", "AWAY"]
+        }
+      ],
+      "excludedSourceNotes": [
+        {
+          "provider": "BETPAWA",
+          "reason": "AVAILABLE_PAGE_CACHE_NOT_FRESH_ENOUGH_FOR_THIS_CAPTURE; EXCLUDED_FROM_CONSENSUS"
+        }
+      ]
+    },
+    {
+      "eventId": "EPL-2026-08-23-NEW-LIV",
+      "league": "EPL",
+      "homeTeam": "Newcastle United",
+      "awayTeam": "Liverpool FC",
+      "kickoffAt": "2026-08-23T15:30:00Z",
+      "marketKey": "1X2_90M",
+      "model": {
+        "verified": false,
+        "reason": "INDEPENDENT_HISTORICAL_FEATURE_INPUTS_NOT_YET_INGESTED"
+      },
+      "bookmakerSnapshots": [
+        {
+          "provider": "SPORTPESA",
+          "providerGameId": "2576",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+          "sourceType": "PUBLIC_WEB",
+          "sourceUrl": "https://sportpesa.co.tz/sw/nyumbani-betting/soka-1/england-24/premier-league-58/",
+          "sourceFreshness": "LEAGUE_PAGE_CRAWLED_TODAY",
+          "rawOdds": [3.85, 1.90, 3.95],
+          "rawOrder": ["HOME", "AWAY", "DRAW"]
+        },
+        {
+          "provider": "STAKE",
+          "observedAt": "2026-08-22T21:13:46Z",
+          "observedAtSemantic": "SESSION_CAPTURE_TIME_NOT_PROVIDER_PUBLISH_TIME",
+          "sourceType": "PUBLIC_WEB",
+          "sourceUrl": "https://stake.games/sports/soccer/england/premier-league",
+          "sourceFreshness": "PAGE_CRAWLED_TODAY",
+          "rawOdds": [3.85, 3.95, 1.90],
+          "rawOrder": ["HOME", "DRAW", "AWAY"]
+        }
+      ],
+      "excludedSourceNotes": [
+        {
+          "provider": "BETPAWA",
+          "reason": "LEAGUE_CACHE_NOT_FRESH_ENOUGH_FOR_THIS_CAPTURE; EXCLUDED_FROM_CONSENSUS"
+        }
+      ]
+    }
+  ]
+}
