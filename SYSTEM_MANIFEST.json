@@ -150,16 +150,19 @@
   },
   "kickoff_confirmed_lineup_final_gate": {
     "version": "v0.1",
-    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_UNIT_RUNTIME_VERIFIED",
-    "branch": "feature/kickoff-lineup-final-gate-v0.1",
+    "status": "MERGED_CANONICAL_UNIT_RUNTIME_VERIFIED",
+    "merged_via_pr": 6,
+    "merge_commit": "8fd66039a37c58a4067485a6f22f84bd7b800d8b",
+    "source_branch": "feature/kickoff-lineup-final-gate-v0.1",
     "tests": "11/11 PASS_LOCAL_NODE_UNIT_GATE",
     "integration_runtime": "PENDING_REAL_CONFIRMED_LINEUP_AND_FRESH_PREKICKOFF_ODDS_CAPTURE",
+    "full_repository_ci": "NOT_CLAIMED",
     "contract": "contracts/kickoff-lineup-final-gate-v0.1.json",
     "docs": "docs/kickoff-lineup-final-gate-v0.1.md",
     "runner": "scripts/run_final_prematch_intelligence.mjs",
     "command": "npm run final:prematch -- <market-batch> <model-dataset> <final-capture> [output]",
     "flow": "BASELINE_MARKET_AND_MODEL -> VERIFIED_KICKOFF -> CONFIRMED_XI -> LATEST_ODDS -> OPTIONAL_VERIFIED_LINEUP_IMPACT -> VERIFIED_FINAL_CONTEXT -> FINAL_1X2 -> WATCH_REJECTED_QUALIFIED -> IMMUTABLE_FINAL_PREMATCH_SNAPSHOT",
-    "governance": "NO_FAKE_LINEUPS; EXACTLY_11_UNIQUE_STARTERS_PER_TEAM; LINEUP_BEFORE_KICKOFF; NO_SILENT_LAMBDA_REWRITE; VERIFIED_IMPACT_PROVENANCE_REQUIRED; DIRECTION_CONFLICT_BLOCKS_QUALIFICATION; PRIOR_SNAPSHOTS_IMMUTABLE; NO_HINDSIGHT",
+    "governance": "NO_FAKE_LINEUPS; EXACTLY_11_UNIQUE_STARTERS_PER_TEAM; LINEUP_BEFORE_KICKOFF; NO_SILENT_LAMBDA_REWRITE; VERIFIED_IMPACT_PROVENANCE_REQUIRED; DIRECTION_CONFLICT_BLOCKS_QUALIFICATION; HIGH_TRANSITION_LARGE_DIVERGENCE_BLOCKS_QUALIFICATION; PRIOR_SNAPSHOTS_IMMUTABLE; NO_HINDSIGHT",
     "capital_effect": "NONE",
     "real_money": "NO"
   }
