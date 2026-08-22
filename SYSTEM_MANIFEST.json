@@ -25,7 +25,8 @@
     "match-outcome-1x2-live capability v0.1",
     "multi-bookmaker-market-intelligence capability v0.1",
     "operational-trial-processing capability v0.1",
-    "real-observed-market-ingestion capability v0.1"
+    "real-observed-market-ingestion capability v0.1",
+    "independent-real-model-inputs capability v0.1"
   ],
   "verified_runtime_checks": "15/15 PASS",
   "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
@@ -123,6 +124,24 @@
     "commands": ["npm run real:market", "npm run real:market:write"],
     "flow": "REAL_PUBLIC_QUOTES -> EXPLICIT_PROVIDER_MAPPING -> DEVIG -> MARKET_CONSENSUS -> BEST_PRICE -> MODEL_VERIFICATION_GATE -> PREDICTION_ONLY_IF_INDEPENDENT_MODEL_VERIFIED",
     "market_to_model_circularity": "FORBIDDEN",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "independent_real_model_inputs": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_DEPENDENCY_SET_RUNTIME_VERIFIED",
+    "branch": "feature/independent-real-model-inputs-2026-08-23",
+    "tests": "5/5 PASS_DEPENDENCY_SET_LOCAL_NODE",
+    "full_repository_ci": "NOT_CLAIMED_CONTAINER_CANNOT_RESOLVE_GITHUB_HOST",
+    "model": "PREVIOUS_SEASON_VENUE_POISSON_SHRUNK_V0_1",
+    "source_season": "EPL_2025_26",
+    "target_date": "2026-08-23",
+    "dataset": "packages/intelligence-engine/data/independent-model-inputs-2026-08-23.json",
+    "output_reference": "packages/intelligence-engine/data/real-model-market-output-reference-2026-08-23.json",
+    "runner": "scripts/run_real_model_market_intelligence.mjs",
+    "commands": ["npm run real:model-market", "npm run real:model-market:write"],
+    "runtime": "3 REAL EVENTS -> 3 MARKET_READY, 3 MODEL_VERIFIED, 3 WATCH, 0 QUALIFIED, 1 DIRECTION_CONFLICT, 1 HIGH_TRANSITION_LARGE_DIVERGENCE",
+    "governance": "BOOKMAKER_ODDS_EXCLUDED_FROM_MODEL; VENUE_STATS_CROSSCHECKED; TRANSITION_RISK_CAPS_EVIDENCE; LINEUP_PASS_REQUIRED; LARGE_DIVERGENCE_DIAGNOSTIC_ONLY; NO_AUTO_RETUNE",
     "capital_effect": "NONE",
     "real_money": "NO"
   }

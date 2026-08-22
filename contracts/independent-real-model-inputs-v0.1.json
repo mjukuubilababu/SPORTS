@@ -1,0 +1,61 @@
+{
+  "name": "Independent Real Model Inputs",
+  "version": "v0.1",
+  "scope": "real football historical team data joined to real observed bookmaker markets without circularity",
+  "baseline_model": "PREVIOUS_SEASON_VENUE_POISSON_SHRUNK_V0_1",
+  "target": "1X2_90M",
+  "input_policy": {
+    "bookmaker_odds_as_model_inputs": "FORBIDDEN",
+    "independent_historical_team_data_required": true,
+    "venue_split_required": true,
+    "source_verification_required": true,
+    "season_total_cross_check_required": true,
+    "market_capture_mutation": "FORBIDDEN"
+  },
+  "baseline_features": [
+    "PREVIOUS_SEASON_HOME_GOALS_FOR",
+    "PREVIOUS_SEASON_HOME_GOALS_AGAINST",
+    "PREVIOUS_SEASON_AWAY_GOALS_FOR",
+    "PREVIOUS_SEASON_AWAY_GOALS_AGAINST",
+    "LEAGUE_HOME_GOAL_RATE",
+    "LEAGUE_AWAY_GOAL_RATE"
+  ],
+  "shrinkage": {
+    "enabled": true,
+    "prior": "LEAGUE_VENUE_GOAL_RATE",
+    "prior_equivalent_matches": 5
+  },
+  "transition_risk": {
+    "LOW_evidence_cap": 85,
+    "MEDIUM_evidence_cap": 75,
+    "HIGH_evidence_cap": 65,
+    "opening_weekend_context_applied": true,
+    "changes_lambda_automatically": false
+  },
+  "qualification": {
+    "confirmed_lineup_required": true,
+    "minimum_evidence_maturity": 70,
+    "market_model_large_divergence": "DIAGNOSTIC_ONLY",
+    "direction_conflict": "DIAGNOSTIC_ONLY",
+    "automatic_retune_from_one_match_or_one_market_snapshot": "FORBIDDEN"
+  },
+  "first_real_batch": {
+    "date": "2026-08-23",
+    "events": 3,
+    "model_verified": 3,
+    "watch": 3,
+    "qualified": 0,
+    "direction_conflicts": 1,
+    "high_transition_large_divergences": 1
+  },
+  "governance": [
+    "PREDICTION_NOT_EQUAL_VALIDATION_NOT_EQUAL_EXECUTION",
+    "NO_HINDSIGHT",
+    "NO_MARKET_TO_MODEL_CIRCULARITY",
+    "NO_AUTO_RETUNE",
+    "LINEUP_GATE_BEFORE_QUALIFICATION",
+    "CAPITAL_LOCKED"
+  ],
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}

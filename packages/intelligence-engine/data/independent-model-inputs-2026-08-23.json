@@ -1,0 +1,139 @@
+{
+  "datasetId": "INDEPENDENT-MODEL-INPUTS-2026-08-23-V0.1",
+  "capturedAt": "2026-08-22T21:32:00Z",
+  "dataNature": "REAL_INDEPENDENT_HISTORICAL_TEAM_AND_CONTEXT_DATA",
+  "competition": "EPL",
+  "sourceSeason": "2025/26",
+  "targetSeason": "2026/27",
+  "priorEquivalentMatches": 5,
+  "leagueStats": {
+    "matches": 380,
+    "homeGoals": 580,
+    "awayGoals": 465,
+    "homeGoalsPerMatch": 1.5263157894736843,
+    "awayGoalsPerMatch": 1.2236842105263157,
+    "totalGoalsPerMatch": 2.75
+  },
+  "leagueProvenance": [
+    "https://www.statbunker.com/competitions/HomeLeagueTable?comp_id=776",
+    "https://www.statbunker.com/competitions/AwayLeagueTable?comp_id=776",
+    "https://www.statbunker.com/competitions/GoalsFor?comp_id=776",
+    "https://www.premierleague.com/en/tables/premier-league/2025-26"
+  ],
+  "modelPolicy": {
+    "bookmakerOddsUsedAsModelInputs": false,
+    "venueSplitRequired": true,
+    "previousSeasonOnly": true,
+    "shrinkTowardLeagueAverage": true,
+    "openingWeekendTransitionRiskAppliedAsEvidenceCap": true,
+    "lineupsConfirmed": false,
+    "capitalEffect": "NONE"
+  },
+  "events": [
+    {
+      "eventId": "EPL-2026-08-23-MCI-BOU",
+      "homeStats": {"matches": 19, "goalsFor": 45, "goalsAgainst": 14},
+      "awayStats": {"matches": 19, "goalsFor": 29, "goalsAgainst": 34},
+      "seasonTotalCrossCheck": {
+        "homeTeam": {"goalsFor": 77, "goalsAgainst": 35},
+        "awayTeam": {"goalsFor": 58, "goalsAgainst": 54}
+      },
+      "sourceVerification": {
+        "primaryVenueStats": true,
+        "crossCheckSeasonTotals": true,
+        "independenceFromMarket": true
+      },
+      "lineupGate": "PENDING",
+      "contextRisk": "HIGH",
+      "contextReasons": [
+        "HOME_NEW_MANAGER",
+        "HOME_RODRI_DEPARTED",
+        "HOME_DOKU_OUT",
+        "AWAY_NEW_MANAGER",
+        "AWAY_MULTIPLE_ABSENCES"
+      ],
+      "contextObservedAt": "2026-08-22T21:32:00Z",
+      "contextSources": [
+        "https://www.reuters.com/sports/soccer/maresca-unfazed-by-city-exits-ahead-season-opener-against-bournemouth-2026-08-21/",
+        "https://www.sportsmole.co.uk/football/man-city/injury-news/team-news/man-city-vs-bournemouth-injury-suspension-list-predicted-xis_603414.html"
+      ],
+      "provenance": {
+        "venueStats": "StatBunker Premier League 25/26",
+        "seasonTotalsCrossCheck": "PremierLeague.com 2025/26 table",
+        "marketDataExcludedFromModel": true
+      },
+      "crossEventIndependenceVerified": false,
+      "correlationGroup": "EPL_GW1_TRANSITION"
+    },
+    {
+      "eventId": "EPL-2026-08-23-BHA-AVL",
+      "homeStats": {"matches": 19, "goalsFor": 30, "goalsAgainst": 20},
+      "awayStats": {"matches": 19, "goalsFor": 24, "goalsAgainst": 27},
+      "seasonTotalCrossCheck": {
+        "homeTeam": {"goalsFor": 52, "goalsAgainst": 46},
+        "awayTeam": {"goalsFor": 56, "goalsAgainst": 49}
+      },
+      "sourceVerification": {
+        "primaryVenueStats": true,
+        "crossCheckSeasonTotals": true,
+        "independenceFromMarket": true
+      },
+      "lineupGate": "PENDING",
+      "contextRisk": "HIGH",
+      "contextReasons": [
+        "HOME_MULTIPLE_ATTACKING_ABSENCES",
+        "HOME_RECENT_EUROPEAN_PLAYOFF",
+        "AWAY_MAJOR_SQUAD_TURNOVER",
+        "AWAY_MULTIPLE_INJURIES"
+      ],
+      "contextObservedAt": "2026-08-22T21:32:00Z",
+      "contextSources": [
+        "https://www.theguardian.com/football/2026/aug/23/aston-villa-upheaval-unai-emery-exodus-key-players-youthful-arrivals",
+        "https://www.sportsmole.co.uk/football/brighton-and-hove-albion/team-news/brighton-vs-aston-villa-injury-suspension-list-predicted-xis_603418.html"
+      ],
+      "provenance": {
+        "venueStats": "StatBunker Premier League 25/26",
+        "seasonTotalsCrossCheck": "PremierLeague.com 2025/26 table",
+        "marketDataExcludedFromModel": true
+      },
+      "crossEventIndependenceVerified": false,
+      "correlationGroup": "EPL_GW1_TRANSITION"
+    },
+    {
+      "eventId": "EPL-2026-08-23-NEW-LIV",
+      "homeStats": {"matches": 19, "goalsFor": 36, "goalsAgainst": 30},
+      "awayStats": {"matches": 19, "goalsFor": 29, "goalsAgainst": 33},
+      "seasonTotalCrossCheck": {
+        "homeTeam": {"goalsFor": 53, "goalsAgainst": 55},
+        "awayTeam": {"goalsFor": 63, "goalsAgainst": 53}
+      },
+      "sourceVerification": {
+        "primaryVenueStats": true,
+        "crossCheckSeasonTotals": true,
+        "independenceFromMarket": true
+      },
+      "lineupGate": "PENDING",
+      "contextRisk": "HIGH",
+      "contextReasons": [
+        "BOTH_NEW_MANAGERS",
+        "HOME_MAJOR_MIDFIELD_DEPARTURES",
+        "HOME_JOELINTON_AND_LIVRAMENTO_OUT",
+        "AWAY_SALAH_DEPARTED",
+        "AWAY_DEFENCE_REBUILT",
+        "AWAY_MULTIPLE_INJURIES"
+      ],
+      "contextObservedAt": "2026-08-22T21:32:00Z",
+      "contextSources": [
+        "https://www.reuters.com/sports/soccer/liverpools-new-look-defence-will-take-time-gel-says-van-dijk-2026-08-18/",
+        "https://www.sportsmole.co.uk/football/liverpool/injury-news/team-news/newcastle-vs-liverpool-injury-suspension-list-predicted-xis_603432.html"
+      ],
+      "provenance": {
+        "venueStats": "StatBunker Premier League 25/26",
+        "seasonTotalsCrossCheck": "PremierLeague.com 2025/26 table",
+        "marketDataExcludedFromModel": true
+      },
+      "crossEventIndependenceVerified": false,
+      "correlationGroup": "EPL_GW1_TRANSITION"
+    }
+  ]
+}
