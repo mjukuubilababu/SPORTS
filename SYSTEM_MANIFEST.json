@@ -22,7 +22,8 @@
     "testing-verification-assurance v0.1 + integration defect fix",
     "intelligence-engine v0.1",
     "qualified-signal-set contract v0.1",
-    "match-outcome-1x2-live capability v0.1"
+    "match-outcome-1x2-live capability v0.1",
+    "multi-bookmaker-market-intelligence capability v0.1"
   ],
   "verified_runtime_checks": "15/15 PASS",
   "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
@@ -49,10 +50,11 @@
   },
   "match_outcome_1x2_live": {
     "version": "v0.1",
-    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
-    "branch": "feature/1x2-live-outcome-v0.1",
+    "status": "MERGED_CANONICAL_RUNTIME_VERIFIED",
+    "merged_via_pr": 1,
+    "merge_commit": "bec7f51e6e394fbf5497cb0d2e90ec33aa15b638",
     "tests": "7/7 PASS",
-    "repo_ci": "NO_COMMIT_WORKFLOW_RUN_AVAILABLE_FOR_BRANCH",
+    "repo_ci": "NO_COMMIT_WORKFLOW_RUN_AVAILABLE",
     "capabilities": [
       "PRE_MATCH_HOME_DRAW_AWAY_PROBABILITIES",
       "IMMUTABLE_PRE_MATCH_SNAPSHOT",
@@ -63,6 +65,27 @@
       "CONFUSION_MATRIX_AND_PER_CLASS_EVALUATION"
     ],
     "governance": "NO_HINDSIGHT; LIVE_SEPARATE_FROM_PREMATCH; NO_SILENT_LIVE_HEURISTICS; NO_AUTO_RETUNE",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "multi_bookmaker_market_intelligence": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
+    "branch": "feature/multi-bookmaker-market-intelligence-v0.1",
+    "tests": "7/7 PASS_LOCAL_MODULE_RUNTIME",
+    "full_package_ci": "NOT_CLAIMED_NO_AUTOMATIC_REPO_CI_AND_CONTAINER_GITHUB_NETWORK_UNAVAILABLE",
+    "initial_providers": ["BETPAWA", "SPORTPESA", "MBET", "PARIMATCH", "SOKABET"],
+    "capabilities": [
+      "PROVIDER_REGISTRY_AND_INGESTION_GOVERNANCE",
+      "N_WAY_DEVIG",
+      "CROSS_BOOKMAKER_CONSENSUS",
+      "BEST_PRICE_BY_SELECTION",
+      "OVERROUND_AND_FAIR_PROBABILITY_DISPERSION",
+      "EVIDENCE_BACKED_DIFFERENCE_HYPOTHESES",
+      "HISTORICAL_PROVIDER_MARGIN_BIAS_AND_BRIER_PROFILES",
+      "PAPER_ONLY_ONE_OR_TWO_COMBINATION_SETS"
+    ],
+    "governance": "OFFICIAL_OR_APPROVED_PUBLIC_OR_LICENSED_DATA_ONLY; NO_PRIVATE_ENDPOINT_REVERSE_ENGINEERING; HYPOTHESES_NOT_INTERNAL_FACTS; VERIFIED_INDEPENDENCE_REQUIRED_FOR_COMBINATIONS; NO_AUTO_EXECUTION",
     "capital_effect": "NONE",
     "real_money": "NO"
   }
