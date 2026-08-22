@@ -26,7 +26,8 @@
     "multi-bookmaker-market-intelligence capability v0.1",
     "operational-trial-processing capability v0.1",
     "real-observed-market-ingestion capability v0.1",
-    "independent-real-model-inputs capability v0.1"
+    "independent-real-model-inputs capability v0.1",
+    "kickoff-confirmed-lineup-final-gate capability v0.1"
   ],
   "verified_runtime_checks": "15/15 PASS",
   "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
@@ -144,6 +145,21 @@
     "commands": ["npm run real:model-market", "npm run real:model-market:write"],
     "runtime": "3 REAL EVENTS -> 3 MARKET_READY, 3 MODEL_VERIFIED, 3 WATCH, 0 QUALIFIED, 1 DIRECTION_CONFLICT, 1 HIGH_TRANSITION_LARGE_DIVERGENCE",
     "governance": "BOOKMAKER_ODDS_EXCLUDED_FROM_MODEL; VENUE_STATS_CROSSCHECKED; TRANSITION_RISK_CAPS_EVIDENCE; LINEUP_PASS_REQUIRED; LARGE_DIVERGENCE_DIAGNOSTIC_ONLY; NO_AUTO_RETUNE",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "kickoff_confirmed_lineup_final_gate": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_UNIT_RUNTIME_VERIFIED",
+    "branch": "feature/kickoff-lineup-final-gate-v0.1",
+    "tests": "11/11 PASS_LOCAL_NODE_UNIT_GATE",
+    "integration_runtime": "PENDING_REAL_CONFIRMED_LINEUP_AND_FRESH_PREKICKOFF_ODDS_CAPTURE",
+    "contract": "contracts/kickoff-lineup-final-gate-v0.1.json",
+    "docs": "docs/kickoff-lineup-final-gate-v0.1.md",
+    "runner": "scripts/run_final_prematch_intelligence.mjs",
+    "command": "npm run final:prematch -- <market-batch> <model-dataset> <final-capture> [output]",
+    "flow": "BASELINE_MARKET_AND_MODEL -> VERIFIED_KICKOFF -> CONFIRMED_XI -> LATEST_ODDS -> OPTIONAL_VERIFIED_LINEUP_IMPACT -> VERIFIED_FINAL_CONTEXT -> FINAL_1X2 -> WATCH_REJECTED_QUALIFIED -> IMMUTABLE_FINAL_PREMATCH_SNAPSHOT",
+    "governance": "NO_FAKE_LINEUPS; EXACTLY_11_UNIQUE_STARTERS_PER_TEAM; LINEUP_BEFORE_KICKOFF; NO_SILENT_LAMBDA_REWRITE; VERIFIED_IMPACT_PROVENANCE_REQUIRED; DIRECTION_CONFLICT_BLOCKS_QUALIFICATION; PRIOR_SNAPSHOTS_IMMUTABLE; NO_HINDSIGHT",
     "capital_effect": "NONE",
     "real_money": "NO"
   }

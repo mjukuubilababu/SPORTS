@@ -1,0 +1,65 @@
+{
+  "contract": "kickoff-lineup-final-gate",
+  "version": "v0.1",
+  "scope": "final pre-match football decision refresh using verified kickoff status, confirmed starting XI, latest bookmaker snapshots, and independently verified model inputs",
+  "inputs": {
+    "baseline_market_batch": "immutable real observed market capture",
+    "independent_model_dataset": "bookmaker-independent verified model inputs",
+    "final_capture_batch": {
+      "captureId": "required",
+      "capturedAt": "required pre-kickoff timestamp",
+      "events": {
+        "eventId": "required",
+        "kickoffObservation": {
+          "status": ["SCHEDULED", "DELAYED", "POSTPONED", "CANCELLED"],
+          "scheduledKickoffAt": "required",
+          "revisedKickoffAt": "required only for DELAYED",
+          "observedAt": "required",
+          "sourceVerified": true,
+          "source_or_sourceUrl": "required"
+        },
+        "lineupSnapshot": {
+          "status": "CONFIRMED",
+          "confirmedAt": "must be before effective kickoff",
+          "sourceVerified": true,
+          "source_or_sourceUrl": "required",
+          "home.startingXI": "exactly 11 unique identified players",
+          "away.startingXI": "exactly 11 unique identified players"
+        },
+        "bookmakerSnapshots": "at least two fresh attributable providers",
+        "lineupImpact": "optional; ignored unless verified with bounded explicit lambda multipliers and provenance",
+        "finalContextAssessment": "optional; cannot change evidence maturity unless verified with provenance"
+      }
+    }
+  },
+  "rules": [
+    "POSTPONED_OR_CANCELLED_REJECTS_FINAL_PREMATCH_PROCESSING",
+    "FINAL_CAPTURE_AT_OR_AFTER_KICKOFF_REJECTED",
+    "CONFIRMED_LINEUP_REQUIRED_FOR_LINEUP_GATE_PASS",
+    "EXACTLY_11_UNIQUE_STARTERS_PER_TEAM",
+    "LINEUP_CONFIRMATION_MUST_PRECEDE_EFFECTIVE_KICKOFF",
+    "LATEST_MULTI_BOOKMAKER_MARKET_REQUIRED",
+    "CONFIRMED_XI_ALONE_MUST_NOT_SILENTLY_REWRITE_LAMBDA",
+    "LAMBDA_ADJUSTMENT_REQUIRES_VERIFIED_LINEUP_IMPACT_MODEL_AND_PROVENANCE",
+    "EVIDENCE_MATURITY_CHANGE_REQUIRES_VERIFIED_FINAL_CONTEXT_AND_PROVENANCE",
+    "MODEL_MARKET_DIRECTION_CONFLICT_BLOCKS_QUALIFICATION",
+    "HIGH_TRANSITION_LARGE_DIVERGENCE_BLOCKS_QUALIFICATION",
+    "PRIOR_MARKET_MODEL_AND_SIGNAL_SNAPSHOTS_REMAIN_IMMUTABLE",
+    "FINAL_PREMATCH_SNAPSHOT_IS_SEPARATE_AND_IMMUTABLE",
+    "NO_HINDSIGHT",
+    "NO_AUTO_RETUNE",
+    "PREDICTION_NOT_EXECUTION",
+    "REAL_MONEY_NO"
+  ],
+  "outputs": [
+    "effective kickoff state",
+    "verified confirmed lineup snapshot",
+    "optional evidence-gated lambda adjustment",
+    "latest de-vigged bookmaker consensus",
+    "final 1X2 probabilities",
+    "WATCH / REJECTED / QUALIFIED decision",
+    "immutable FINAL_PREMATCH_DECISION snapshot",
+    "Gate5 draft only when all final gates pass"
+  ],
+  "capital_effect": "NONE"
+}
