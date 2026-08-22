@@ -17,3 +17,5 @@ export * from './bookmaker-comparison.mjs';
 export * from './paper-combination.mjs';
 export * from './bookmaker-learning.mjs';
 export * from './trial-processing.mjs';
+export * from './provider-odds-adapter.mjs';
+export * from './real-market-processing.mjs';
