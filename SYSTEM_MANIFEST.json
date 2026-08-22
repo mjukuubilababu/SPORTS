@@ -129,8 +129,10 @@
   },
   "independent_real_model_inputs": {
     "version": "v0.1",
-    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_DEPENDENCY_SET_RUNTIME_VERIFIED",
-    "branch": "feature/independent-real-model-inputs-2026-08-23",
+    "status": "MERGED_CANONICAL_DEPENDENCY_SET_RUNTIME_VERIFIED",
+    "merged_via_pr": 5,
+    "merge_commit": "7602746f7b14777493d981487bf6e808f8aafc15",
+    "source_branch": "feature/independent-real-model-inputs-2026-08-23",
     "tests": "5/5 PASS_DEPENDENCY_SET_LOCAL_NODE",
     "full_repository_ci": "NOT_CLAIMED_CONTAINER_CANNOT_RESOLVE_GITHUB_HOST",
     "model": "PREVIOUS_SEASON_VENUE_POISSON_SHRUNK_V0_1",
