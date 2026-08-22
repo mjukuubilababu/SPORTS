@@ -1,0 +1,55 @@
+{
+  "name": "Multi-Bookmaker Market Intelligence",
+  "version": "v0.1",
+  "scope": "global football; provider-agnostic with Tanzania-facing initial registry",
+  "initial_providers": ["BETPAWA", "SPORTPESA", "MBET", "PARIMATCH", "SOKABET"],
+  "acquisition_modes": ["OFFICIAL_API", "LICENSED_DATA_VENDOR", "PUBLIC_WEB", "MANUAL_CAPTURE", "DISCOVERY_REQUIRED"],
+  "ingestion_policy": {
+    "private_endpoint_reverse_engineering": "FORBIDDEN",
+    "credential_bypass": "FORBIDDEN",
+    "terms_approval_required": true,
+    "endpoint_verification_required": true,
+    "unconfirmed_feed_behavior": "DO_NOT_INGEST"
+  },
+  "snapshot_identity": ["eventId", "provider", "marketKey", "observedAt", "sourceType", "odds"],
+  "comparison": {
+    "same_event_required": true,
+    "same_market_required": true,
+    "max_default_timestamp_skew_seconds": 120,
+    "devig_each_provider_before_consensus": true,
+    "consensus_source_weighted": true,
+    "best_price_tracking": true,
+    "provider_overround_tracking": true,
+    "fair_probability_dispersion_tracking": true
+  },
+  "difference_explanations": {
+    "policy": "HYPOTHESES_NOT_INTERNAL_BOOKMAKER_FACTS",
+    "candidate_drivers": [
+      "MARGIN_DIFFERENCE",
+      "TIMING_OR_INFORMATION_LATENCY",
+      "MODEL_OR_RISK_SHADING_DIFFERENCE",
+      "NORMAL_MARKET_VARIATION"
+    ]
+  },
+  "paper_combination_engine": {
+    "max_default_sets": 2,
+    "requires_qualified_state": true,
+    "requires_positive_edge": true,
+    "requires_positive_ev": true,
+    "requires_evidence_maturity": true,
+    "requires_verified_independence": true,
+    "same_event_duplicate_blocked": true,
+    "correlation_group_collision_blocked": true,
+    "mode": "PAPER_ONLY",
+    "real_money": "NO"
+  },
+  "governance": [
+    "PREDICTION_NOT_EQUAL_VALIDATION_NOT_EQUAL_EXECUTION",
+    "NO_HINDSIGHT",
+    "NO_CROSS_PROVIDER_SNAPSHOT_MIX_WITHOUT_EXPLICIT_COMPARISON",
+    "NO_UNVERIFIED_PROVIDER_FEED",
+    "NO_AUTO_EXECUTION",
+    "NO_ONE_MATCH_RETUNE"
+  ],
+  "capital_effect": "NONE"
+}
