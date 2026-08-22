@@ -49,6 +49,13 @@ export const BOOKMAKER_REGISTRY = Object.freeze({
     homeMarket: 'TZ',
     acquisitionMode: 'DISCOVERY_REQUIRED',
     state: 'DISCOVERED'
+  }),
+  STAKE: Object.freeze({
+    id: 'STAKE',
+    displayName: 'Stake',
+    homeMarket: 'GLOBAL',
+    acquisitionMode: 'PUBLIC_WEB',
+    state: 'DISCOVERED'
   })
 });
 
