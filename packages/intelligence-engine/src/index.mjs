@@ -19,3 +19,5 @@ export * from './bookmaker-learning.mjs';
 export * from './trial-processing.mjs';
 export * from './provider-odds-adapter.mjs';
 export * from './real-market-processing.mjs';
+export * from './venue-strength-model.mjs';
+export * from './independent-model-processing.mjs';
