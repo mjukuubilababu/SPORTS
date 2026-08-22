@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BOOKMAKER_REGISTRY, providerMayIngest, devigNWay,
-  compareBookmakerSnapshots, buildPaperCombinations
+  compareBookmakerSnapshots, buildPaperCombinations, buildBookmakerLearningProfile
 } from '../src/index.mjs';
 
 test('registry includes requested Tanzania-facing providers without assuming private feed access', () => {
@@ -60,4 +60,19 @@ test('paper combinations require qualified, mature, positive-edge, independent l
   assert.equal(r.qualifiedCount,2);
   assert.equal(r.selected.length,1);
   assert.equal(r.rejected.some(x=>x.reason==='INDEPENDENCE_NOT_VERIFIED'),true);
+});
+
+test('historical bookmaker learning is descriptive and tracks margin, bias and calibration', () => {
+  const rows = [
+    {provider:'A',overround:.08,fair:{HOME:.55,DRAW:.25,AWAY:.20},consensusFair:{HOME:.52,DRAW:.27,AWAY:.21},actualOutcome:'HOME'},
+    {provider:'A',overround:.09,fair:{HOME:.58,DRAW:.24,AWAY:.18},consensusFair:{HOME:.54,DRAW:.26,AWAY:.20},actualOutcome:'DRAW'},
+    {provider:'B',overround:.04,fair:{HOME:.50,DRAW:.28,AWAY:.22},consensusFair:{HOME:.52,DRAW:.27,AWAY:.21},actualOutcome:'HOME'},
+    {provider:'B',overround:.04,fair:{HOME:.52,DRAW:.27,AWAY:.21},consensusFair:{HOME:.54,DRAW:.26,AWAY:.20},actualOutcome:'DRAW'}
+  ];
+  const x=buildBookmakerLearningProfile(rows);
+  assert.equal(x.status,'PASS');
+  assert.equal(x.policy,'LEARN_PATTERNS_NOT_UNOBSERVED_INTENT');
+  assert.equal(x.profiles.A.interpretation,'DESCRIPTIVE_NOT_CAUSAL');
+  assert.ok(x.profiles.A.averageOverround>x.profiles.B.averageOverround);
+  assert.ok(Number.isFinite(x.profiles.A.outcomeBrier));
 });
