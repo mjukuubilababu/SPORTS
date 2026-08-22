@@ -1,0 +1,39 @@
+{
+  "contract": "Match Outcome 1X2 + Live State v0.1",
+  "scope": "global football; league-agnostic",
+  "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
+  "outcomes": ["HOME_WIN", "DRAW", "AWAY_WIN"],
+  "inputs": {
+    "pre_match": ["home_lambda", "away_lambda", "model_version", "feature_version", "created_at", "frozen_at"],
+    "live": ["frozen_pre_match_snapshot", "minute", "home_score", "away_score", "observed_at"],
+    "optional_live_evidence": ["verified_rate_multipliers", "evidence_records"]
+  },
+  "outputs": {
+    "pre_match": ["home_win_probability", "draw_probability", "away_win_probability", "predicted_outcome", "confidence", "most_likely_score"],
+    "live": ["home_win_probability", "draw_probability", "away_win_probability", "predicted_outcome", "most_likely_final_score"],
+    "settlement": ["actual_outcome", "prediction_correct", "brier_score", "log_loss"],
+    "evaluation": ["accuracy", "mean_brier_score", "mean_log_loss", "confusion_matrix", "per_class_precision", "per_class_recall"]
+  },
+  "invariants": [
+    "PRE_MATCH_SNAPSHOT_IMMUTABLE",
+    "LIVE_SNAPSHOT_SEPARATE_FROM_PRE_MATCH",
+    "NO_HINDSIGHT_MUTATION",
+    "PROBABILITIES_NORMALIZED_TO_ONE",
+    "LIVE_MODIFIERS_EXPLICIT_NOT_INFERRED_SILENTLY",
+    "SETTLEMENT_SEPARATE_FROM_PREDICTION",
+    "ONE_MATCH_CANNOT_RETUNE_MODEL",
+    "CAPITAL_STATE_UNCHANGED"
+  ],
+  "implementation": {
+    "package": "packages/intelligence-engine",
+    "modules": [
+      "src/outcome-1x2.mjs",
+      "src/live-outcome.mjs",
+      "src/outcome-settlement.mjs",
+      "src/outcome-evaluation.mjs"
+    ],
+    "tests": ["tests/outcome-1x2.test.mjs"]
+  },
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
