@@ -1,0 +1,8 @@
+{
+  "contract": "Global Football Capacity, Scalability & Cost Governance Contract",
+  "version": "0.1",
+  "status": "IMPLEMENTATION_READY",
+  "constitutional_principle": "The larger the system's intelligence becomes, the stronger its discipline against self-deception.",
+  "capacity_invariant": "Scale preserves freshness and truth; cost controls may defer optional work but may not weaken integrity or security.",
+  "next_recommended_layer": "Testing, Verification & System Assurance Contract v0.1"
+}

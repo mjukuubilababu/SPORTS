@@ -1,0 +1,28 @@
+{
+  "artifact": "Qualified Signal Set Contract",
+  "version": "v0.1",
+  "generated_at": "2026-08-22T14:49:09.142818+00:00",
+  "assurance": "PROMOTE",
+  "runtime_test_command": [
+    "node",
+    "--test",
+    "tests/qualified-set.test.mjs"
+  ],
+  "runtime_tests": {
+    "total": 7,
+    "passed": 7
+  },
+  "verified_behaviors": [
+    "zero qualifiers returns valid empty set",
+    "one qualifier returns exactly one",
+    "many qualifiers are all returned with no top-1 truncation",
+    "ranking is deterministic and cannot suppress qualifiers",
+    "duplicates are deduplicated deterministically",
+    "portfolio risk restriction preserves qualification history",
+    "equal-time conflicting duplicates are rejected"
+  ],
+  "p002_frozen_rules_sha256": "82832c4c255f91a3307f8e74506eca01fa899abc3b0961dbc6332d75542a4d0d",
+  "p002_changed": false,
+  "capital_effect": "NONE",
+  "capital_state": "LOCKED"
+}

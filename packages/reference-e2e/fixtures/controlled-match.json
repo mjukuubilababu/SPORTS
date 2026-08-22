@@ -1,0 +1,18 @@
+{
+  "rawEvent": {
+    "providerEventId": "CONTROL-MLS-001",
+    "provider": "1xBet",
+    "competitionId": "MLS",
+    "seasonId": "2025",
+    "kickoffAt": "2025-05-10T23:30:00.000Z",
+    "homeTeam": "Chicago Fire",
+    "awayTeam": "Atlanta United",
+    "observedAt": "2025-05-10T20:00:00.000Z",
+    "market": {"o25":1.45,"o35":2.25,"u35":1.64,"quoteType":"CONTROLLED_CLOSING_FIXTURE"},
+    "source": {"uri":"fixture://controlled/chicago-atlanta","captureMethod":"CONTROLLED_FIXTURE","verified":true}
+  },
+  "rawFeatures": {"lambdaBase":2.775,"homePriorN":10,"awayPriorN":10,"lineupState":"STABLE","lineupAdjustment":0},
+  "lineupGate": "PASS",
+  "result": {"homeGoals":2,"awayGoals":1,"officialSource":"fixture://official-result"},
+  "closingPrice": 1.60
+}

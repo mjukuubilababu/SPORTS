@@ -1,0 +1,30 @@
+{
+  "gate": "Gate 2 \u2014 Full Feature & Model Backfill",
+  "build_status": "COMPLETE",
+  "system_build_completion_after_gate": 68,
+  "frozen_formula": {
+    "venue_weight": 0.5,
+    "last10_weight": 0.3,
+    "last5_weight": 0.2,
+    "home_lambda_each_window": "mean(home GF, away GA)",
+    "away_lambda_each_window": "mean(away GF, home GA)",
+    "warmup_min_prior_matches_each_team": 3
+  },
+  "model": {
+    "distribution": "Poisson total goals",
+    "target_probability": "P(total goals <= 3)",
+    "market_anchor": "same-match O3.5/U3.5 de-vig",
+    "raw_edge_gate_pp": 5.0,
+    "lambda_gate": [
+      2.7,
+      3.1
+    ]
+  },
+  "lineup_policy": {
+    "major_attacking_upgrade": "FAIL",
+    "unknown": "PENDING",
+    "confirmed_no_upgrade": "PASS",
+    "provisional_lambda_adjustment": 0.1
+  },
+  "no_hindsight": "Current match appended to history only after its features are computed."
+}

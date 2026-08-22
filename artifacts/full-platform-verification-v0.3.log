@@ -1,0 +1,22 @@
+{
+  "core_integrated_assurance": "PROMOTE",
+  "infrastructure_runtime_assurance": "PROMOTE",
+  "full_platform_assurance": "REVIEW_EXTERNAL_POSTGRES_TEST_REQUIRED",
+  "capital_assurance": "LOCKED",
+  "runtime_checks_total": 13,
+  "runtime_checks_passed": 13,
+  "migration_status": {
+    "authored_count": 6,
+    "files": [
+      "packages/infrastructure/global-football-system-integration-orchestration-observability-contract-v0.1/global-football-system-integration-orchestration-observability-contract-v0.1/migrations/0009_system_integration_observability_v0_1.sql",
+      "packages/infrastructure/global-football-security-identity-access-data-governance-contract-v0.1/global-football-security-identity-access-data-governance-contract-v0.1/migrations/0010_security_identity_access_governance_v0_1.sql",
+      "packages/infrastructure/global-football-deployment-configuration-environment-management-contract-v0.1/global-football-deployment-configuration-environment-management-contract-v0.1/migrations/0011_deployment_config_environment_v0_1.sql",
+      "packages/infrastructure/global-football-capacity-scalability-cost-governance-contract-v0.1/global-football-capacity-scalability-cost-governance-contract-v0.1/migrations/0012_capacity_scalability_cost_v0_1.sql",
+      "packages/infrastructure/global-football-testing-verification-system-assurance-contract-v0.1/global-football-testing-verification-system-assurance-contract-v0.1/migrations/0013_testing_verification_assurance_v0_1.sql",
+      "packages/infrastructure/global-football-testing-verification-system-assurance-contract-v0.1/global-football-testing-verification-system-assurance-contract-v0.1/migrations/0014_test_results_critical_v0_1_1.sql"
+    ],
+    "postgres_runtime_available": false,
+    "applied_to_test_db": false,
+    "verified_on_postgres": false
+  }
+}

@@ -1,0 +1,6 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import fs from 'node:fs';
+import { ArtifactStore } from '../src/store.mjs'; import { AuditLog } from '../src/audit.mjs'; import { runVerticalSlice } from '../src/orchestrator.mjs';
+const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/controlled-match.json',import.meta.url),'utf8'));
+const clock=()=>new Date('2025-05-11T03:00:00Z');
+test('controlled match passes full reference vertical slice',()=>{const store=new ArtifactStore(),audit=new AuditLog();const r=runVerticalSlice({...fixture,store,audit,clock});assert.equal(r.state,'ASSURED');assert.equal(r.decision.decision,'QUALIFIED');assert.equal(r.risk.allowed,true);assert.equal(r.execution.mode,'PAPER');assert.equal(r.settlement.won,true);assert.equal(r.assurance.gate,'PROMOTE');assert.equal(audit.verifyChain(),true);});
+test('re-running same pipeline against same store cannot create second execution effect',()=>{const store=new ArtifactStore(),audit1=new AuditLog();const r1=runVerticalSlice({...fixture,store,audit:audit1,clock});const executionCount1=store.all('execution').length;const audit2=new AuditLog();const r2=runVerticalSlice({...fixture,store,audit:audit2,clock});assert.equal(store.all('execution').length,executionCount1);assert.equal(r2.duplicateExecution,true);assert.equal(r1.execution.id,r2.execution.id);});

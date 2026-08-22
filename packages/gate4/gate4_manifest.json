@@ -1,0 +1,38 @@
+{
+  "gate": "Gate 4 \u2014 Robustness + Champion/Challenger",
+  "build_status": "COMPLETE",
+  "system_build_completion_after_gate": 86,
+  "models": [
+    "market",
+    "poisson",
+    "negative_binomial",
+    "ensemble"
+  ],
+  "selection_priority": [
+    "out-of-sample LogLoss",
+    "out-of-sample Brier",
+    "calibration",
+    "walk-forward consistency",
+    "regime consistency"
+  ],
+  "incumbent_policy": "Market is default champion until a challenger wins robustly.",
+  "walk_forward": {
+    "supported": true,
+    "chronological": true
+  },
+  "regime_analysis": {
+    "supported": true
+  },
+  "threshold_stability": {
+    "supported": true
+  },
+  "ablation": {
+    "supported": true
+  },
+  "promotion_defaults": {
+    "min_n": 100,
+    "walkforward_win_rate": 0.6,
+    "regime_win_rate": 0.6
+  },
+  "numeric_stability": "Negative Binomial PMF computed in log-space using lgamma."
+}

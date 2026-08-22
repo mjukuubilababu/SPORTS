@@ -1,0 +1,14 @@
+{
+  "name": "decision-intelligence-system-bootstrap-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "migrate:test": "node scripts/migrate-test-db.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "e2e": "node scripts/run-e2e.mjs",
+    "verify": "npm run check && npm run migrate:test && npm test && npm run e2e"
+  },
+  "engines": {"node": ">=22"}
+}

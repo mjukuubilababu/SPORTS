@@ -1,0 +1,2 @@
+match_id,model_prob,market_prob,outcome,entry_odds,closing_odds,stake,qualified,pattern_id
+example-1,0.64,0.59,1,1.70,1.62,1,true,P002

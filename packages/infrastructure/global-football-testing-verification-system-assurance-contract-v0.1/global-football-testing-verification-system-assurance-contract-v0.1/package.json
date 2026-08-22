@@ -1,0 +1,16 @@
+{
+  "name": "@football-intelligence/testing-verification-system-assurance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Global Football Testing, Verification & System Assurance Contract v0.1",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "check": "npm run typecheck && npm test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,370 @@
+{
+  "correlationId": "corr_b0c56aee27a69622",
+  "state": "ASSURED",
+  "event": {
+    "id": "evt_c5c2ae80c5ecd8f0",
+    "contractVersion": "global-football-data-v0.2-ref",
+    "providerEventId": "CONTROL-MLS-001",
+    "provider": "1xBet",
+    "competitionId": "MLS",
+    "seasonId": "2025",
+    "kickoffAt": "2025-05-10T23:30:00.000Z",
+    "homeTeam": "Chicago Fire",
+    "awayTeam": "Atlanta United",
+    "observedAt": "2025-05-10T20:00:00.000Z",
+    "market": {
+      "o25": 1.45,
+      "o35": 2.25,
+      "u35": 1.64,
+      "quoteType": "CONTROLLED_CLOSING_FIXTURE"
+    },
+    "source": {
+      "uri": "fixture://controlled/chicago-atlanta",
+      "captureMethod": "CONTROLLED_FIXTURE",
+      "verified": true
+    },
+    "normalizedAt": "2025-05-11T03:00:00.000Z"
+  },
+  "features": {
+    "id": "feat_c6d2f0839c225ea5",
+    "eventId": "evt_c5c2ae80c5ecd8f0",
+    "featureVersion": "reference-features-v0.1",
+    "asOf": "2025-05-10T20:00:00.000Z",
+    "lambdaBase": 2.775,
+    "homePriorN": 10,
+    "awayPriorN": 10,
+    "lineupState": "STABLE",
+    "lineupAdjustment": 0,
+    "createdAt": "2025-05-11T03:00:00.000Z"
+  },
+  "prediction": {
+    "id": "pred_10798d77fcf1876e",
+    "eventId": "evt_c5c2ae80c5ecd8f0",
+    "modelVersion": "reference-poisson-v0.1",
+    "featureSnapshotId": "feat_c6d2f0839c225ea5",
+    "lambda": 2.775,
+    "probabilityUnder35": 0.6974943407269305,
+    "createdAt": "2025-05-11T03:00:00.000Z"
+  },
+  "pattern": {
+    "id": "pat_e9a698546245290c",
+    "eventId": "evt_c5c2ae80c5ecd8f0",
+    "rulesVersion": "P002-v1-frozen",
+    "priceGate": true,
+    "lambdaGate": true,
+    "edgeGate": true,
+    "lineupGate": "PASS",
+    "marketFairUnder35": 0.5784061696658098,
+    "rawEdgePp": 11.908817106112068,
+    "passed": true,
+    "evaluatedAt": "2025-05-11T03:00:00.000Z"
+  },
+  "decision": {
+    "id": "dec_bd11ad34b95dc36a",
+    "eventId": "evt_c5c2ae80c5ecd8f0",
+    "patternId": "pat_e9a698546245290c",
+    "decision": "QUALIFIED",
+    "failedGates": [],
+    "createdAt": "2025-05-11T03:00:00.000Z"
+  },
+  "risk": {
+    "id": "risk_2e0244ac92e99002",
+    "decisionId": "dec_bd11ad34b95dc36a",
+    "riskPolicyVersion": "paper-risk-v0.1",
+    "mode": "PAPER_ONLY",
+    "allowed": true,
+    "stake": 2500,
+    "reason": "PAPER_APPROVED",
+    "createdAt": "2025-05-11T03:00:00.000Z"
+  },
+  "execution": {
+    "id": "exec_e80f62439fb6eb08",
+    "eventId": "evt_c5c2ae80c5ecd8f0",
+    "decisionId": "dec_bd11ad34b95dc36a",
+    "riskId": "risk_2e0244ac92e99002",
+    "mode": "PAPER",
+    "market": "UNDER_3_5",
+    "entryPrice": 1.64,
+    "stake": 2500,
+    "executedAt": "2025-05-11T03:00:00.000Z",
+    "effectKey": "paper:evt_c5c2ae80c5ecd8f0:dec_bd11ad34b95dc36a"
+  },
+  "settlement": {
+    "id": "set_1b019e16b61bc690",
+    "executionId": "exec_e80f62439fb6eb08",
+    "eventId": "evt_c5c2ae80c5ecd8f0",
+    "homeGoals": 2,
+    "awayGoals": 1,
+    "totalGoals": 3,
+    "won": true,
+    "pnl": 1599.9999999999998,
+    "officialSource": "fixture://official-result",
+    "settledAt": "2025-05-11T03:00:00.000Z"
+  },
+  "evaluation": {
+    "id": "eval_e977854948520825",
+    "eventId": "evt_c5c2ae80c5ecd8f0",
+    "predictionId": "pred_10798d77fcf1876e",
+    "patternId": "pat_e9a698546245290c",
+    "settlementId": "set_1b019e16b61bc690",
+    "brier": 0.09150967389223441,
+    "logLoss": 0.36026087897267844,
+    "clv": 0.02499999999999991,
+    "pnl": 1599.9999999999998,
+    "createdAt": "2025-05-11T03:00:00.000Z"
+  },
+  "assurance": {
+    "id": "assure_71881c779560aa5f",
+    "gate": "PROMOTE",
+    "checks": {
+      "auditChain": true,
+      "traceComplete": true,
+      "immutableArtifacts": true,
+      "replayDeterministic": true,
+      "noDuplicateExecution": true
+    },
+    "createdAt": "2025-05-11T03:00:00.000Z"
+  },
+  "trace": [
+    {
+      "stage": "INGEST",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": null,
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "evt_c5c2ae80c5ecd8f0"
+    },
+    {
+      "stage": "FEATURE",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_89f70a80f2aab618",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "feat_c6d2f0839c225ea5"
+    },
+    {
+      "stage": "MODEL",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_dcd5bef21031ee82",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "pred_10798d77fcf1876e"
+    },
+    {
+      "stage": "PATTERN",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_bc630537c2550fb3",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "pat_e9a698546245290c"
+    },
+    {
+      "stage": "DECISION",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_20b32fc73ede290d",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "dec_bd11ad34b95dc36a"
+    },
+    {
+      "stage": "RISK",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_1a278f2f97d44caf",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "risk_2e0244ac92e99002"
+    },
+    {
+      "stage": "EXECUTION",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_3e6e0a724c882503",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "exec_e80f62439fb6eb08"
+    },
+    {
+      "stage": "START",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_06d32274c310c4d4",
+      "startedAt": "2025-05-10T23:30:00.000Z",
+      "artifactId": "evt_c5c2ae80c5ecd8f0"
+    },
+    {
+      "stage": "SETTLEMENT",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_06d32274c310c4d4",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "set_1b019e16b61bc690"
+    },
+    {
+      "stage": "EVALUATION",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_af1fb9dc89d175d5",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "eval_e977854948520825"
+    },
+    {
+      "stage": "ASSURANCE",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_8ede525e5830b466",
+      "startedAt": "2025-05-11T03:00:00.000Z",
+      "artifactId": "assure_71881c779560aa5f"
+    }
+  ],
+  "audit": [
+    {
+      "auditId": "audit_89f70a80f2aab618",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": null,
+      "actor": "svc.ingestion",
+      "action": "event:ingest",
+      "artifactType": "event",
+      "artifactId": "evt_c5c2ae80c5ecd8f0",
+      "payload": {
+        "hash": "a7396a49212c7a44f45af6a708185b26effeb517266027499597ba480bb7cfa5"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 0,
+      "previousHash": "GENESIS",
+      "eventHash": "3e0c575fe17da101e2b04c193140deb2077bda4c0ab66c3bd28eecba55ba1925"
+    },
+    {
+      "auditId": "audit_dcd5bef21031ee82",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_89f70a80f2aab618",
+      "actor": "svc.pipeline",
+      "action": "feature:write",
+      "artifactType": "feature",
+      "artifactId": "feat_c6d2f0839c225ea5",
+      "payload": {
+        "hash": "103f01ab4504446747785a38811d9e7461464acdb0118b27a4b7626b083f99d2"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 1,
+      "previousHash": "3e0c575fe17da101e2b04c193140deb2077bda4c0ab66c3bd28eecba55ba1925",
+      "eventHash": "85f2ca45127de9f250b0957e7a2d5a2acf8b9b7223a3c5acd396542243fe841e"
+    },
+    {
+      "auditId": "audit_bc630537c2550fb3",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_dcd5bef21031ee82",
+      "actor": "svc.pipeline",
+      "action": "model:infer",
+      "artifactType": "prediction",
+      "artifactId": "pred_10798d77fcf1876e",
+      "payload": {
+        "hash": "d1b7229d00c1a35de256af3070e640e2d45bdb207d6462a1204b0e3259669bc4"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 2,
+      "previousHash": "85f2ca45127de9f250b0957e7a2d5a2acf8b9b7223a3c5acd396542243fe841e",
+      "eventHash": "17384b4714901f659896ebbe95b87df727195b56f287d7c10ba33655c3a3724e"
+    },
+    {
+      "auditId": "audit_20b32fc73ede290d",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_bc630537c2550fb3",
+      "actor": "svc.pipeline",
+      "action": "pattern:evaluate",
+      "artifactType": "pattern",
+      "artifactId": "pat_e9a698546245290c",
+      "payload": {
+        "hash": "086782c4a1f4d83f7ee9435f15ec76004141e27150183cb0c6cb9bc35fe092b8"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 3,
+      "previousHash": "17384b4714901f659896ebbe95b87df727195b56f287d7c10ba33655c3a3724e",
+      "eventHash": "96b0e5e001fafe789ea50886dbd6a9ffa45fa3e3ee82dde16b5d66212fd77faf"
+    },
+    {
+      "auditId": "audit_1a278f2f97d44caf",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_20b32fc73ede290d",
+      "actor": "svc.pipeline",
+      "action": "decision:evaluate",
+      "artifactType": "decision",
+      "artifactId": "dec_bd11ad34b95dc36a",
+      "payload": {
+        "hash": "4fbb0999f67b9402c597dd889478e84d06770ec8848c2c10b2fb875ec2f77a6e"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 4,
+      "previousHash": "96b0e5e001fafe789ea50886dbd6a9ffa45fa3e3ee82dde16b5d66212fd77faf",
+      "eventHash": "d782a8954d457106f9c92c178dea5a61c412e348346f8209691740e98d72aeb8"
+    },
+    {
+      "auditId": "audit_3e6e0a724c882503",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_1a278f2f97d44caf",
+      "actor": "svc.pipeline",
+      "action": "risk:evaluate",
+      "artifactType": "risk",
+      "artifactId": "risk_2e0244ac92e99002",
+      "payload": {
+        "hash": "42318d9b23d6923ddd756c8af344afd3a936ec1135d2a9c031af6ac0a52a29de"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 5,
+      "previousHash": "d782a8954d457106f9c92c178dea5a61c412e348346f8209691740e98d72aeb8",
+      "eventHash": "c64d9a5b453ccb6f860c7a48730038d7e5f35bd5a6fe39aeb6c1ca68d10d406b"
+    },
+    {
+      "auditId": "audit_06d32274c310c4d4",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_3e6e0a724c882503",
+      "actor": "svc.pipeline",
+      "action": "paper:execute",
+      "artifactType": "execution",
+      "artifactId": "exec_e80f62439fb6eb08",
+      "payload": {
+        "hash": "ade2ae24cd11504544bbc97c625ccccaccb44620cfad43de5089a7dae2b7470b"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 6,
+      "previousHash": "c64d9a5b453ccb6f860c7a48730038d7e5f35bd5a6fe39aeb6c1ca68d10d406b",
+      "eventHash": "95cf3086ef7ebee37198d6d0c93eeb7d3d7c595e93819910f520f417d1850a89"
+    },
+    {
+      "auditId": "audit_af1fb9dc89d175d5",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_06d32274c310c4d4",
+      "actor": "svc.pipeline",
+      "action": "settlement:write",
+      "artifactType": "settlement",
+      "artifactId": "set_1b019e16b61bc690",
+      "payload": {
+        "hash": "39b259c13a092a2fda6fded127c5f28d2c722e138b23cc11558edaec21cb4a85"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 7,
+      "previousHash": "95cf3086ef7ebee37198d6d0c93eeb7d3d7c595e93819910f520f417d1850a89",
+      "eventHash": "40efb1e7a494d18e4ce17cc2b96b8ce4d94f7253e945798c3c3c9be1bd0ba0f5"
+    },
+    {
+      "auditId": "audit_8ede525e5830b466",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_af1fb9dc89d175d5",
+      "actor": "svc.pipeline",
+      "action": "evaluation:write",
+      "artifactType": "evaluation",
+      "artifactId": "eval_e977854948520825",
+      "payload": {
+        "hash": "743b62a6a57faaa5a290f68d95c7e003034e7ded82054ffd5ba782fed79ddee4"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 8,
+      "previousHash": "40efb1e7a494d18e4ce17cc2b96b8ce4d94f7253e945798c3c3c9be1bd0ba0f5",
+      "eventHash": "070e1d8c145e2afa98ff0fb7654f412b3aeb613b1bbc23774c20c66d4aafb77c"
+    },
+    {
+      "auditId": "audit_b6e799c0ef785805",
+      "correlationId": "corr_b0c56aee27a69622",
+      "causationId": "audit_8ede525e5830b466",
+      "actor": "svc.pipeline",
+      "action": "assurance:run",
+      "artifactType": "assurance",
+      "artifactId": "assure_71881c779560aa5f",
+      "payload": {
+        "hash": "e903281663e2b3d692ed7becb976743bce7b686cffe6ad341ed608852a2ccec7"
+      },
+      "occurredAt": "2025-05-11T03:00:00.000Z",
+      "sequence": 9,
+      "previousHash": "070e1d8c145e2afa98ff0fb7654f412b3aeb613b1bbc23774c20c66d4aafb77c",
+      "eventHash": "a47ba7b9b4b202b3369dc58d0f0eddf08f7bc7532269ae287730ce22edf4cbb2"
+    }
+  ],
+  "duplicateExecution": false
+}

@@ -1,0 +1,8 @@
+{
+  "contract": "Global Football Deployment, Configuration & Environment Management Contract",
+  "version": "0.1",
+  "status": "IMPLEMENTATION_READY",
+  "constitutional_principle": "The larger the system's intelligence becomes, the stronger its discipline against self-deception.",
+  "release_invariant": "No production release without reproducible build, signature, governed config, safe migration path, observability and rollback.",
+  "next_recommended_layer": "Capacity, Scalability & Cost Governance Contract v0.1"
+}

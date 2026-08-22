@@ -1,0 +1,37 @@
+{
+  "package_name": "decision-intelligence-selective-salvage-transfer-v0.1.zip",
+  "purpose": "Discovery + preservation only. No merge, code rewrite, rule change, migration application, or capital-state change.",
+  "canonical_comparison_basis": "User-provided canonical capability/state summary only; no direct canonical repository file diff was available in this conversation.",
+  "inventory_summary": {
+    "conversation_file_records": 27,
+    "unique_filenames": 21,
+    "standalone_non_xlsx_files_found": 0,
+    "selected_original_artifacts": 1,
+    "duplicate_name_revision_records": 6
+  },
+  "selected_artifacts": [
+    {
+      "name": "Betting Intelligence cumulative research lineage",
+      "version": "v0.4.3",
+      "original_filename": "Betting_Intelligence_v0.4.3_Later_Season_Recency.xlsx",
+      "classification": "UNIQUE_HERE",
+      "sha256": "e21e9bd770dcc7b98535fb3638e37933db07175afee596f149bd15e84fdd6354",
+      "why_selected": "Latest cumulative original contains unique/reusable intelligence specifications and data not explicitly present in the declared canonical state: direct target-line market-surface anchoring, source quorum/conflict handling, confidence budget, champion/challenger governance, adaptive reliability weights, evidence graph, self-evaluation, Bayesian team memory, walk-forward challenger evaluation, exact two-team chronology, recency decay and change-point diagnostics. It also preserves earlier frozen/reference sheets for review without authorizing overwrite.",
+      "canonical_counterpart": "Generic Feature/Model/Pattern/Decision/Evaluation/Assurance/market logic in canonical Unified Repository; exact sheet-level counterparts were not available for direct diff.",
+      "tests_authored": true,
+      "tests_executed": true,
+      "tests_passed": false,
+      "migration_authored": false,
+      "migration_applied": false,
+      "migration_risk": "HIGH"
+    }
+  ],
+  "governance": {
+    "p002_frozen_thresholds_changed": false,
+    "capital_state_changed": false,
+    "history_rewritten": false,
+    "source_timestamps_modified": false,
+    "canonical_code_modified": false,
+    "selected_original_regenerated": false
+  }
+}

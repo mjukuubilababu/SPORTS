@@ -1,0 +1,90 @@
+{
+  "verified_closing_controls_2026_footiqo": [
+    {
+      "date": "2026-02-21",
+      "home": "St. Louis City",
+      "away": "Charlotte",
+      "o25": 1.75,
+      "o35": 2.82,
+      "u35": 1.45
+    },
+    {
+      "date": "2026-02-21",
+      "home": "FC Cincinnati",
+      "away": "Atlanta Utd",
+      "o25": 1.75,
+      "o35": 2.57,
+      "u35": 1.4
+    },
+    {
+      "date": "2026-02-22",
+      "home": "DC United",
+      "away": "Philadelphia Union",
+      "o25": 2.32,
+      "o35": 4.05,
+      "u35": 1.25
+    },
+    {
+      "date": "2026-02-22",
+      "home": "Orlando City",
+      "away": "New York Red Bulls",
+      "o25": 1.66,
+      "o35": 2.53,
+      "u35": 1.54
+    },
+    {
+      "date": "2026-02-22",
+      "home": "Vancouver Whitecaps",
+      "away": "Real Salt Lake",
+      "o25": 1.46,
+      "o35": 2.21,
+      "u35": 1.73
+    },
+    {
+      "date": "2026-02-22",
+      "home": "Austin FC",
+      "away": "Minnesota United",
+      "o25": 2.06,
+      "o35": 3.37,
+      "u35": 1.34
+    }
+  ],
+  "verified_2025_prefilter_evidence_betmgm": [
+    {
+      "date": "2025-06-25",
+      "home": "Columbus Crew",
+      "away": "Atlanta United",
+      "line": 3.5,
+      "over": 2.15,
+      "under": 1.6
+    },
+    {
+      "date": "2025-06-26",
+      "home": "Dallas",
+      "away": "SJ Earthquakes",
+      "line": 3.5,
+      "over": 2.25,
+      "under": 1.55
+    },
+    {
+      "date": "2025-06-26",
+      "home": "Sporting KC",
+      "away": "Charlotte",
+      "line": 2.5,
+      "over": 1.6,
+      "under": 2.2
+    },
+    {
+      "date": "2025-06-26",
+      "home": "St. Louis City",
+      "away": "Orlando City",
+      "line": 2.5,
+      "over": 1.6,
+      "under": 2.15
+    }
+  ],
+  "source_notes": {
+    "2026_closing_controls": "Footiqo explicitly labels historical odds as closing and 1xBet-sourced.",
+    "2025_prefilter": "BetMGM archived market evidence is retained as prefilter only; not validation-N eligible without closing verification."
+  }
+}

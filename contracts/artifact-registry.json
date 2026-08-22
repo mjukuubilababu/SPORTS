@@ -1,0 +1,94 @@
+{
+  "registry_version": "0.1",
+  "canonical_scope": "global-football-decision-intelligence",
+  "packages_present": [
+    {
+      "name": "Gate1 Historical Truth Engine",
+      "version": "v0.1-lineage",
+      "path": "packages/gate1",
+      "runtime_test": "REQUIRED"
+    },
+    {
+      "name": "Gate2 Feature Model Backfill Engine",
+      "version": "v0.1-lineage",
+      "path": "packages/gate2",
+      "runtime_test": "REQUIRED"
+    },
+    {
+      "name": "Gate3 Statistical Validation Engine",
+      "version": "v0.1-lineage",
+      "path": "packages/gate3",
+      "runtime_test": "REQUIRED"
+    },
+    {
+      "name": "Gate4 Robustness Champion Challenger Engine",
+      "version": "v0.1-lineage",
+      "path": "packages/gate4",
+      "runtime_test": "REQUIRED"
+    },
+    {
+      "name": "Gate5 Forward Paper Execution Engine",
+      "version": "v0.1-lineage",
+      "path": "packages/gate5",
+      "runtime_test": "REQUIRED"
+    },
+    {
+      "name": "Gate6 Capital Risk Engine",
+      "version": "v0.1-lineage",
+      "path": "packages/gate6",
+      "runtime_test": "REQUIRED"
+    },
+    {
+      "name": "System Bootstrap Reference E2E",
+      "version": "v0.1",
+      "path": "packages/reference-e2e",
+      "runtime_test": "REQUIRED"
+    },
+    {
+      "name": "Integration Orchestration Observability",
+      "version": "v0.1",
+      "path": "packages/infrastructure/global-football-system-integration-orchestration-observability-contract-v0.1/global-football-system-integration-orchestration-observability-contract-v0.1",
+      "runtime_test": "REQUIRED",
+      "source": "ORIGINAL_TRANSFER_WORKING_COPY"
+    },
+    {
+      "name": "Security Identity Access Data Governance",
+      "version": "v0.1",
+      "path": "packages/infrastructure/global-football-security-identity-access-data-governance-contract-v0.1/global-football-security-identity-access-data-governance-contract-v0.1",
+      "runtime_test": "REQUIRED",
+      "source": "ORIGINAL_TRANSFER_WORKING_COPY"
+    },
+    {
+      "name": "Deployment Configuration Environment Management",
+      "version": "v0.1",
+      "path": "packages/infrastructure/global-football-deployment-configuration-environment-management-contract-v0.1/global-football-deployment-configuration-environment-management-contract-v0.1",
+      "runtime_test": "REQUIRED",
+      "source": "ORIGINAL_TRANSFER_WORKING_COPY"
+    },
+    {
+      "name": "Capacity Scalability Cost Governance",
+      "version": "v0.1",
+      "path": "packages/infrastructure/global-football-capacity-scalability-cost-governance-contract-v0.1/global-football-capacity-scalability-cost-governance-contract-v0.1",
+      "runtime_test": "REQUIRED",
+      "source": "ORIGINAL_TRANSFER_WORKING_COPY"
+    },
+    {
+      "name": "Testing Verification System Assurance",
+      "version": "v0.1",
+      "path": "packages/infrastructure/global-football-testing-verification-system-assurance-contract-v0.1/global-football-testing-verification-system-assurance-contract-v0.1",
+      "runtime_test": "REQUIRED",
+      "source": "ORIGINAL_TRANSFER_WORKING_COPY"
+    },
+    {
+      "name": "Intelligence Engine Consolidation & Governed Learning Loop",
+      "version": "v0.1",
+      "path": "packages/intelligence-engine",
+      "runtime_test": "REQUIRED",
+      "source": "SELECTIVE_SALVAGE_GOVERNED_DELTA",
+      "source_sha256": "e21e9bd770dcc7b98535fb3638e37933db07175afee596f149bd15e84fdd6354"
+    }
+  ],
+  "contracts_expected_but_not_physically_imported": [],
+  "rule": "Do not recreate missing branch artifacts. Import originals and compare manifest/hash before canonical promotion.",
+  "import_note": "Original ZIPs preserved under packages/infrastructure-original; extracted working copies under packages/infrastructure. Testing/Assurance working copy contains documented additive integration defect fix DEFECT-ASSURANCE-001."
+}

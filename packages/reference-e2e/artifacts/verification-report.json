@@ -1,0 +1,28 @@
+{
+  "system": "Decision Intelligence & Evidence-Gated Prediction System",
+  "artifact": "System Bootstrap, Reference Implementation & End-to-End Vertical Slice",
+  "version": "v0.1",
+  "verified": true,
+  "structural_check": "PASS",
+  "test_database_migration": "PASS",
+  "automated_tests": {"total": 9, "passed": 9, "failed": 0},
+  "e2e": {
+    "status": "PASS",
+    "final_state": "ASSURED",
+    "assurance_gate": "PROMOTE",
+    "execution_mode": "PAPER"
+  },
+  "verified_invariants": [
+    "no post-kickoff evidence in pre-match data contract",
+    "default-deny authorization",
+    "immutable artifact conflict rejection",
+    "exactly-once paper execution business effect",
+    "illegal backward state transition rejection",
+    "hash-chained audit verification",
+    "controlled event traverses full reference pipeline",
+    "replay does not duplicate paper execution",
+    "settlement and evaluation remain separate lineage artifacts"
+  ],
+  "capital_state": "LOCKED",
+  "capital_note": "Reference E2E promotion proves engineering integration only; it does not prove predictive edge, primary N, OOS validation, forward CLV, or real-capital readiness."
+}

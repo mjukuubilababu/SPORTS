@@ -1,0 +1,111 @@
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 verify
+> npm run check && npm run migrate:test && npm test && npm run e2e
+
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 check
+> node scripts/check.mjs
+
+CHECK_PASS files=14
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 migrate:test
+> node scripts/migrate-test-db.mjs
+
+MIGRATION_PASS db=/mnt/data/system-bootstrap-reference-e2e-v0.1/artifacts/reference-test.sqlite tables=artifacts,assurance_runs,audit_events,paper_executions,schema_migrations,settlements
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: data contract rejects evidence observed at/after kickoff
+ok 1 - data contract rejects evidence observed at/after kickoff
+  ---
+  duration_ms: 1.925531
+  type: 'test'
+  ...
+# Subtest: security is default deny
+ok 2 - security is default deny
+  ---
+  duration_ms: 0.676306
+  type: 'test'
+  ...
+# Subtest: known identity still cannot perform ungranted action
+ok 3 - known identity still cannot perform ungranted action
+  ---
+  duration_ms: 0.471392
+  type: 'test'
+  ...
+# Subtest: controlled match passes full reference vertical slice
+ok 4 - controlled match passes full reference vertical slice
+  ---
+  duration_ms: 13.559399
+  type: 'test'
+  ...
+# Subtest: re-running same pipeline against same store cannot create second execution effect
+ok 5 - re-running same pipeline against same store cannot create second execution effect
+  ---
+  duration_ms: 2.100461
+  type: 'test'
+  ...
+# Subtest: immutable artifacts cannot be overwritten
+ok 6 - immutable artifacts cannot be overwritten
+  ---
+  duration_ms: 1.767451
+  type: 'test'
+  ...
+# Subtest: exactly-once effect suppresses duplicate business effect
+ok 7 - exactly-once effect suppresses duplicate business effect
+  ---
+  duration_ms: 0.216517
+  type: 'test'
+  ...
+# Subtest: settled cannot transition backwards to qualified path
+ok 8 - settled cannot transition backwards to qualified path
+  ---
+  duration_ms: 0.20347
+  type: 'test'
+  ...
+# Subtest: audit chain detects valid append-only history
+ok 9 - audit chain detects valid append-only history
+  ---
+  duration_ms: 0.660685
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 138.466321
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 e2e
+> node scripts/run-e2e.mjs
+
+{
+  "E2E": "PASS",
+  "state": "ASSURED",
+  "assurance": "PROMOTE",
+  "decision": "QUALIFIED",
+  "paperExecution": "exec_e80f62439fb6eb08",
+  "settlementWon": true,
+  "brier": 0.09150967389223441,
+  "logLoss": 0.36026087897267844,
+  "clv": 0.02499999999999991,
+  "auditEvents": 10,
+  "traceStages": [
+    "INGEST",
+    "FEATURE",
+    "MODEL",
+    "PATTERN",
+    "DECISION",
+    "RISK",
+    "EXECUTION",
+    "START",
+    "SETTLEMENT",
+    "EVALUATION",
+    "ASSURANCE"
+  ]
+}

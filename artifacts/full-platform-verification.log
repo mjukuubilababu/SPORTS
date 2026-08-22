@@ -1,0 +1,880 @@
+=== gate1_acceptance passed=True rc=0 ===
+{
+  "closing_primary_can_enter_validation_n": true,
+  "snapshot_cannot_enter_validation_n": true,
+  "snapshot_can_still_pass_price_gate": true,
+  "unknown_source_quarantined": true,
+  "canonical_team_aliases_match": true,
+  "duplicate_detection": true
+}
+GATE1_ACCEPTANCE=PASS
+
+
+=== gate2_acceptance passed=True rc=0 ===
+{'warmup_pass_after_3_prior_each': True, 'no_hindsight_home_prior': True, 'no_hindsight_away_prior': True, 'venue_stats_correct': True, 'away_venue_stats_correct': True, 'pair_expected_formula_correct': True, 'frozen_50_30_20_lambda_correct': True, 'poisson_u35_correct': True, 'devig_correct': True, 'early_rows_blocked': True}
+GATE2_ACCEPTANCE=PASS
+
+
+=== gate3_acceptance passed=True rc=0 ===
+{'brier_exact': True, 'logloss_positive': True, 'profit_exact': True, 'roi_exact': True, 'drawdown_exact': True, 'losing_streak_exact': True, 'clv_count': True, 'mean_clv_positive': True, 'bootstrap_reproducible': True, 'bootstrap_bounds_ordered': True, 'calibration_n_conserved': True, 'delta_fields_exist': True, 'unqualified_excluded': True}
+GATE3_ACCEPTANCE=PASS
+
+
+=== gate4_acceptance passed=True rc=0 ===
+{'negbin_converges_poisson': True, 'ensemble_best_logloss': True, 'ensemble_best_brier': True, 'champion_selection': True, 'walkforward_created': True, 'walkforward_has_scores': True, 'three_regimes': True, 'challenger_promotes_when_dominant': True, 'min_n_blocks': True, 'threshold_result_constructed': True, 'ablation_full_and_drops': True, 'scores_finite': True}
+GATE4_ACCEPTANCE=PASS
+
+
+=== gate5_acceptance passed=True rc=0 ===
+{'immutable_hash': True, 'pre_kickoff_only': True, 'fresh_quote': True, 'slippage': True, 'clv_positive': True, 'settlement': True, 'stale_detected': True, 'batch_report': True, 'drift_alert': True, 'promotion_pass': True, 'min_n_blocks': True}
+GATE5_ACCEPTANCE=PASS
+
+
+=== gate6_acceptance passed=True rc=0 ===
+{'locked_without_evidence': True, 'micro_allows_bet': True, 'micro_cap_enforced': True, 'positive_adjusted_edge': True, 'kelly_nonnegative': True, 'cluster_cap_blocks': True, 'daily_dd_defensive': True, 'total_dd_locked': True, 'losing_streak_lock': True, 'loss_settlement': True, 'win_settlement': True, 'promotion_micro_to_limited': True, 'promotion_blocked_missing_gate': True, 'perfect_corr_effective_exposure': True, 'uncorrelated_lower_than_sum': True, 'uncertainty_shrinkage': True}
+GATE6_ACCEPTANCE=PASS
+
+
+=== reference_e2e_verify passed=True rc=0 ===
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 verify
+> npm run check && npm run migrate:test && npm test && npm run e2e
+
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 check
+> node scripts/check.mjs
+
+CHECK_PASS files=15
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 migrate:test
+> node scripts/migrate-test-db.mjs
+
+MIGRATION_PASS db=/mnt/data/decision-intelligence-unified-repo-v0.5-qualified-set/packages/reference-e2e/artifacts/reference-test.sqlite tables=artifacts,assurance_runs,audit_events,paper_executions,schema_migrations,settlements
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: data contract rejects evidence observed at/after kickoff
+ok 1 - data contract rejects evidence observed at/after kickoff
+  ---
+  duration_ms: 0.820657
+  type: 'test'
+  ...
+# Subtest: security is default deny
+ok 2 - security is default deny
+  ---
+  duration_ms: 0.191484
+  type: 'test'
+  ...
+# Subtest: known identity still cannot perform ungranted action
+ok 3 - known identity still cannot perform ungranted action
+  ---
+  duration_ms: 0.102432
+  type: 'test'
+  ...
+# Subtest: controlled match passes full reference vertical slice
+ok 4 - controlled match passes full reference vertical slice
+  ---
+  duration_ms: 10.10118
+  type: 'test'
+  ...
+# Subtest: re-running same pipeline against same store cannot create second execution effect
+ok 5 - re-running same pipeline against same store cannot create second execution effect
+  ---
+  duration_ms: 1.663478
+  type: 'test'
+  ...
+# Subtest: immutable artifacts cannot be overwritten
+ok 6 - immutable artifacts cannot be overwritten
+  ---
+  duration_ms: 1.248873
+  type: 'test'
+  ...
+# Subtest: exactly-once effect suppresses duplicate business effect
+ok 7 - exactly-once effect suppresses duplicate business effect
+  ---
+  duration_ms: 0.203512
+  type: 'test'
+  ...
+# Subtest: settled cannot transition backwards to qualified path
+ok 8 - settled cannot transition backwards to qualified path
+  ---
+  duration_ms: 0.211444
+  type: 'test'
+  ...
+# Subtest: audit chain detects valid append-only history
+ok 9 - audit chain detects valid append-only history
+  ---
+  duration_ms: 0.709893
+  type: 'test'
+  ...
+# Subtest: zero qualifiers returns a valid empty QualifiedSet
+ok 10 - zero qualifiers returns a valid empty QualifiedSet
+  ---
+  duration_ms: 2.292522
+  type: 'test'
+  ...
+# Subtest: one qualifier returns exactly that qualifier
+ok 11 - one qualifier returns exactly that qualifier
+  ---
+  duration_ms: 0.307336
+  type: 'test'
+  ...
+# Subtest: many qualifying teams are all returned with no top-1 truncation
+ok 12 - many qualifying teams are all returned with no top-1 truncation
+  ---
+  duration_ms: 0.683474
+  type: 'test'
+  ...
+# Subtest: ranking is deterministic and never suppresses a valid qualifier
+ok 13 - ranking is deterministic and never suppresses a valid qualifier
+  ---
+  duration_ms: 0.765135
+  type: 'test'
+  ...
+# Subtest: duplicate candidate is deterministically deduplicated, not double-counted
+ok 14 - duplicate candidate is deterministically deduplicated, not double-counted
+  ---
+  duration_ms: 0.348227
+  type: 'test'
+  ...
+# Subtest: portfolio risk can restrict execution without deleting qualification history
+ok 15 - portfolio risk can restrict execution without deleting qualification history
+  ---
+  duration_ms: 0.500994
+  type: 'test'
+  ...
+# Subtest: equal-time conflicting duplicates are rejected instead of silently choosing one
+ok 16 - equal-time conflicting duplicates are rejected instead of silently choosing one
+  ---
+  duration_ms: 0.515175
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 104.000523
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 e2e
+> node scripts/run-e2e.mjs
+
+{
+  "E2E": "PASS",
+  "state": "ASSURED",
+  "assurance": "PROMOTE",
+  "decision": "QUALIFIED",
+  "paperExecution": "exec_e80f62439fb6eb08",
+  "settlementWon": true,
+  "brier": 0.09150967389223441,
+  "logLoss": 0.36026087897267844,
+  "clv": 0.02499999999999991,
+  "auditEvents": 10,
+  "traceStages": [
+    "INGEST",
+    "FEATURE",
+    "MODEL",
+    "PATTERN",
+    "DECISION",
+    "RISK",
+    "EXECUTION",
+    "START",
+    "SETTLEMENT",
+    "EVALUATION",
+    "ASSURANCE"
+  ]
+}
+
+(node:3090) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+=== migration_static_audit passed=True rc=0 ===
+{
+  "report_version": "0.1",
+  "generated_at": "2026-08-22T14:49:22.574275+00:00",
+  "migration_count": 6,
+  "expected_versions": [
+    "0009",
+    "0010",
+    "0011",
+    "0012",
+    "0013",
+    "0014"
+  ],
+  "actual_versions": [
+    "0009",
+    "0010",
+    "0011",
+    "0012",
+    "0013",
+    "0014"
+  ],
+  "checks": {
+    "versions_exact_order": true,
+    "all_unique_versions": true,
+    "no_destructive_table_or_column_ops": true,
+    "immutable_trigger_0009": true,
+    "immutable_trigger_0010": true,
+    "immutable_trigger_0011": true,
+    "immutable_trigger_0013": true,
+    "repair_0014_adds_critical": true
+  },
+  "migrations": [
+    {
+      "version": "0009",
+      "file": "packages/infrastructure/global-football-system-integration-orchestration-observability-contract-v0.1/global-football-system-integration-orchestration-observability-contract-v0.1/migrations/0009_system_integration_observability_v0_1.sql",
+      "sha256": "249b5061a9fb24a67ab4ed42746df61e4e1d370c012d2f9de67e1eb8b2971e1c",
+      "tables": [
+        "system_events_v01",
+        "stage_runs_v01",
+        "dead_letter_events_v01",
+        "trace_spans_v01",
+        "alerts_v01",
+        "circuit_breakers_v01",
+        "replay_requests_v01"
+      ],
+      "triggers": [
+        "stage_runs_no_mutation"
+      ],
+      "functions": [
+        "reject_stage_run_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0010",
+      "file": "packages/infrastructure/global-football-security-identity-access-data-governance-contract-v0.1/global-football-security-identity-access-data-governance-contract-v0.1/migrations/0010_security_identity_access_governance_v0_1.sql",
+      "sha256": "9b7be59a34afdbd10b40211e9bd6b156c5c1e2d0997b7690ec9417727596c20f",
+      "tables": [
+        "identities_v01",
+        "permissions_v01",
+        "approval_records_v01",
+        "signed_artifacts_v01",
+        "provider_trust_v01",
+        "data_governance_v01",
+        "security_audit_events_v01",
+        "poisoning_signals_v01"
+      ],
+      "triggers": [
+        "security_audit_no_mutation"
+      ],
+      "functions": [
+        "reject_security_truth_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0011",
+      "file": "packages/infrastructure/global-football-deployment-configuration-environment-management-contract-v0.1/global-football-deployment-configuration-environment-management-contract-v0.1/migrations/0011_deployment_config_environment_v0_1.sql",
+      "sha256": "0e763b3e613ad3d912b4646447c72c2d6d7cc7b79f54e0ffd3fe43e764d99a03",
+      "tables": [
+        "build_artifacts_v01",
+        "release_artifacts_v01",
+        "config_snapshots_v01",
+        "feature_flags_v01",
+        "deployment_results_v01",
+        "migration_bundles_v01",
+        "backup_records_v01",
+        "disaster_recovery_plans_v01"
+      ],
+      "triggers": [
+        "build_artifacts_no_mutation",
+        "deployment_results_no_mutation"
+      ],
+      "functions": [
+        "reject_release_truth_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0012",
+      "file": "packages/infrastructure/global-football-capacity-scalability-cost-governance-contract-v0.1/global-football-capacity-scalability-cost-governance-contract-v0.1/migrations/0012_capacity_scalability_cost_v0_1.sql",
+      "sha256": "7e1e8811f32d3806bc3cda48c9c4e3283b1f13c0ed3b9eed0780f993ced49ea5",
+      "tables": [
+        "capacity_envelopes_v01",
+        "capacity_observations_v01",
+        "scaling_decisions_v01",
+        "cost_budgets_v01",
+        "cost_observations_v01",
+        "storage_tier_policies_v01",
+        "provider_rate_limits_v01",
+        "capacity_forecasts_v01"
+      ],
+      "triggers": [],
+      "functions": [],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0013",
+      "file": "packages/infrastructure/global-football-testing-verification-system-assurance-contract-v0.1/global-football-testing-verification-system-assurance-contract-v0.1/migrations/0013_testing_verification_assurance_v0_1.sql",
+      "sha256": "8e6ce680affeec2d1c44e21c485fdc81e074ee153009dfea88eb2dc0d733bc81",
+      "tables": [
+        "test_cases_v01",
+        "test_results_v01",
+        "coverage_snapshots_v01",
+        "assurance_gate_results_v01",
+        "chaos_experiments_v01",
+        "defects_v01"
+      ],
+      "triggers": [
+        "assurance_results_no_mutation"
+      ],
+      "functions": [
+        "reject_assurance_truth_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0014",
+      "file": "packages/infrastructure/global-football-testing-verification-system-assurance-contract-v0.1/global-football-testing-verification-system-assurance-contract-v0.1/migrations/0014_test_results_critical_v0_1_1.sql",
+      "sha256": "2d9dffc5f9fc0a56a9540dda3892ae3831922513d5d039c5d51a1af5f1560c52",
+      "tables": [],
+      "triggers": [],
+      "functions": [],
+      "destructive_operation_detected": false
+    }
+  ],
+  "decision": "PASS"
+}
+
+
+=== intelligence_engine_verify passed=True rc=0 ===
+
+> decision-intelligence-governed-intelligence-engine@0.1.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: target market uses direct same-provider U3.5 de-vig, not indirect O2.5 inference
+ok 1 - target market uses direct same-provider U3.5 de-vig, not indirect O2.5 inference
+  ---
+  duration_ms: 1.050018
+  type: 'test'
+  ...
+# Subtest: cross-provider or timestamp target-line construction is blocked
+ok 2 - cross-provider or timestamp target-line construction is blocked
+  ---
+  duration_ms: 0.114389
+  type: 'test'
+  ...
+# Subtest: surface disagreement creates uncertainty rather than silently forcing one lambda
+ok 3 - surface disagreement creates uncertainty rather than silently forcing one lambda
+  ---
+  duration_ms: 0.183943
+  type: 'test'
+  ...
+# Subtest: source conflict preserves null when quorum is absent
+ok 4 - source conflict preserves null when quorum is absent
+  ---
+  duration_ms: 0.177864
+  type: 'test'
+  ...
+# Subtest: confidence budget is evidence maturity, and critical blocks prevent promotion
+ok 5 - confidence budget is evidence maturity, and critical blocks prevent promotion
+  ---
+  duration_ms: 0.160478
+  type: 'test'
+  ...
+# Subtest: unvalidated models collapse to zero reliability weight
+ok 6 - unvalidated models collapse to zero reliability weight
+  ---
+  duration_ms: 0.205936
+  type: 'test'
+  ...
+# Subtest: evidence graph rejects duplicate IDs and unverified critical evidence is visible
+ok 7 - evidence graph rejects duplicate IDs and unverified critical evidence is visible
+  ---
+  duration_ms: 0.331321
+  type: 'test'
+  ...
+# Subtest: one match never authorizes retuning
+ok 8 - one match never authorizes retuning
+  ---
+  duration_ms: 0.110224
+  type: 'test'
+  ...
+# Subtest: market remains champion when challenger does not beat OOS metrics
+ok 9 - market remains champion when challenger does not beat OOS metrics
+  ---
+  duration_ms: 0.794529
+  type: 'test'
+  ...
+# Subtest: M011 and M012 remain zero-weight challengers
+ok 10 - M011 and M012 remain zero-weight challengers
+  ---
+  duration_ms: 0.278213
+  type: 'test'
+  ...
+# Subtest: probabilistic brain separates probability, EV, and evidence maturity and cannot unlock capital
+ok 11 - probabilistic brain separates probability, EV, and evidence maturity and cannot unlock capital
+  ---
+  duration_ms: 0.281758
+  type: 'test'
+  ...
+# Subtest: self evaluation prohibits superiority claim without calibration and OOS market win
+ok 12 - self evaluation prohibits superiority claim without calibration and OOS market win
+  ---
+  duration_ms: 0.144114
+  type: 'test'
+  ...
+# Subtest: learning loop creates governed proposal and never auto-applies
+ok 13 - learning loop creates governed proposal and never auto-applies
+  ---
+  duration_ms: 0.109202
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 69.218435
+
+
+=== qualified_set_contract_verify passed=True rc=0 ===
+TAP version 13
+# Subtest: zero qualifiers returns a valid empty QualifiedSet
+ok 1 - zero qualifiers returns a valid empty QualifiedSet
+  ---
+  duration_ms: 2.293974
+  type: 'test'
+  ...
+# Subtest: one qualifier returns exactly that qualifier
+ok 2 - one qualifier returns exactly that qualifier
+  ---
+  duration_ms: 0.307086
+  type: 'test'
+  ...
+# Subtest: many qualifying teams are all returned with no top-1 truncation
+ok 3 - many qualifying teams are all returned with no top-1 truncation
+  ---
+  duration_ms: 0.639999
+  type: 'test'
+  ...
+# Subtest: ranking is deterministic and never suppresses a valid qualifier
+ok 4 - ranking is deterministic and never suppresses a valid qualifier
+  ---
+  duration_ms: 0.766808
+  type: 'test'
+  ...
+# Subtest: duplicate candidate is deterministically deduplicated, not double-counted
+ok 5 - duplicate candidate is deterministically deduplicated, not double-counted
+  ---
+  duration_ms: 0.344832
+  type: 'test'
+  ...
+# Subtest: portfolio risk can restrict execution without deleting qualification history
+ok 6 - portfolio risk can restrict execution without deleting qualification history
+  ---
+  duration_ms: 0.837843
+  type: 'test'
+  ...
+# Subtest: equal-time conflicting duplicates are rejected instead of silently choosing one
+ok 7 - equal-time conflicting duplicates are rejected instead of silently choosing one
+  ---
+  duration_ms: 0.519771
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 54.918334
+
+
+=== infra_global-football-capacity-scalability-cost-governance-contract-v0.1 passed=True rc=0 ===
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: capacity envelope valid
+ok 1 - capacity envelope valid
+  ---
+  duration_ms: 0.995848
+  type: 'test'
+  ...
+# Subtest: queue pressure scales out
+ok 2 - queue pressure scales out
+  ---
+  duration_ms: 0.277542
+  type: 'test'
+  ...
+# Subtest: critical workload protected from shedding
+ok 3 - critical workload protected from shedding
+  ---
+  duration_ms: 0.103583
+  type: 'test'
+  ...
+# Subtest: low batch work can shed
+ok 4 - low batch work can shed
+  ---
+  duration_ms: 0.086128
+  type: 'test'
+  ...
+# Subtest: budget valid
+ok 5 - budget valid
+  ---
+  duration_ms: 0.111165
+  type: 'test'
+  ...
+# Subtest: critical reserve throttles noncritical
+ok 6 - critical reserve throttles noncritical
+  ---
+  duration_ms: 0.140659
+  type: 'test'
+  ...
+# Subtest: unit economics
+ok 7 - unit economics
+  ---
+  duration_ms: 0.290521
+  type: 'test'
+  ...
+# Subtest: storage lifecycle
+ok 8 - storage lifecycle
+  ---
+  duration_ms: 0.513022
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 52.501929
+
+
+=== infra_global-football-deployment-configuration-environment-management-contract-v0.1 passed=True rc=0 ===
+
+> @football-intelligence/deployment-config-environment@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/deployment-config-environment@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/deployment-config-environment@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/deployment-config-environment@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: reproducible build valid
+ok 1 - reproducible build valid
+  ---
+  duration_ms: 0.959083
+  type: 'test'
+  ...
+# Subtest: signed staged release valid
+ok 2 - signed staged release valid
+  ---
+  duration_ms: 0.160679
+  type: 'test'
+  ...
+# Subtest: direct dev to prod rejected
+ok 3 - direct dev to prod rejected
+  ---
+  duration_ms: 0.167488
+  type: 'test'
+  ...
+# Subtest: config drift detected
+ok 4 - config drift detected
+  ---
+  duration_ms: 0.169943
+  type: 'test'
+  ...
+# Subtest: secret-like key requires reference
+ok 5 - secret-like key requires reference
+  ---
+  duration_ms: 0.203141
+  type: 'test'
+  ...
+# Subtest: critical signal rolls back
+ok 6 - critical signal rolls back
+  ---
+  duration_ms: 0.223962
+  type: 'test'
+  ...
+# Subtest: destructive migration requires backup
+ok 7 - destructive migration requires backup
+  ---
+  duration_ms: 0.201108
+  type: 'test'
+  ...
+# Subtest: DR requires failover target when multi-region
+ok 8 - DR requires failover target when multi-region
+  ---
+  duration_ms: 0.128461
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 52.234101
+
+
+=== infra_global-football-security-identity-access-data-governance-contract-v0.1 passed=True rc=0 ===
+
+> @football-intelligence/security-identity-access-governance@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/security-identity-access-governance@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/security-identity-access-governance@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/security-identity-access-governance@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: deny by default without permission
+ok 1 - deny by default without permission
+  ---
+  duration_ms: 0.686839
+  type: 'test'
+  ...
+# Subtest: promotion allowed but needs secondary approval
+ok 2 - promotion allowed but needs secondary approval
+  ---
+  duration_ms: 0.157093
+  type: 'test'
+  ...
+# Subtest: stable hash verifies content
+ok 3 - stable hash verifies content
+  ---
+  duration_ms: 0.194429
+  type: 'test'
+  ...
+# Subtest: bad provider is blocked
+ok 4 - bad provider is blocked
+  ---
+  duration_ms: 0.11454
+  type: 'test'
+  ...
+# Subtest: critical tamper invalidates artifact
+ok 5 - critical tamper invalidates artifact
+  ---
+  duration_ms: 0.182291
+  type: 'test'
+  ...
+# Subtest: artifact requires signature
+ok 6 - artifact requires signature
+  ---
+  duration_ms: 0.131715
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 52.446917
+
+
+=== infra_global-football-system-integration-orchestration-observability-contract-v0.1 passed=True rc=0 ===
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: event valid
+ok 1 - event valid
+  ---
+  duration_ms: 0.966324
+  type: 'test'
+  ...
+# Subtest: missing dependency waits
+ok 2 - missing dependency waits
+  ---
+  duration_ms: 0.335938
+  type: 'test'
+  ...
+# Subtest: idempotent success skips duplicate
+ok 3 - idempotent success skips duplicate
+  ---
+  duration_ms: 0.121631
+  type: 'test'
+  ...
+# Subtest: open circuit blocks
+ok 4 - open circuit blocks
+  ---
+  duration_ms: 0.101741
+  type: 'test'
+  ...
+# Subtest: circuit opens after failures
+ok 5 - circuit opens after failures
+  ---
+  duration_ms: 0.15546
+  type: 'test'
+  ...
+# Subtest: backpressure pauses stale huge queue
+ok 6 - backpressure pauses stale huge queue
+  ---
+  duration_ms: 0.126918
+  type: 'test'
+  ...
+# Subtest: SLO burn detects budget burn
+ok 7 - SLO burn detects budget burn
+  ---
+  duration_ms: 0.141891
+  type: 'test'
+  ...
+# Subtest: successful stage run requires output hash
+ok 8 - successful stage run requires output hash
+  ---
+  duration_ms: 0.123003
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 52.037199
+
+
+=== infra_global-football-testing-verification-system-assurance-contract-v0.1 passed=True rc=0 ===
+
+> @football-intelligence/testing-verification-system-assurance@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/testing-verification-system-assurance@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/testing-verification-system-assurance@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/testing-verification-system-assurance@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: probability invariant
+ok 1 - probability invariant
+  ---
+  duration_ms: 0.841819
+  type: 'test'
+  ...
+# Subtest: probability invariant rejects invalid
+ok 2 - probability invariant rejects invalid
+  ---
+  duration_ms: 0.123704
+  type: 'test'
+  ...
+# Subtest: duplicate effect detected
+ok 3 - duplicate effect detected
+  ---
+  duration_ms: 0.178005
+  type: 'test'
+  ...
+# Subtest: replay divergence fails
+ok 4 - replay divergence fails
+  ---
+  duration_ms: 0.135942
+  type: 'test'
+  ...
+# Subtest: critical slice regression fails
+ok 5 - critical slice regression fails
+  ---
+  duration_ms: 0.130614
+  type: 'test'
+  ...
+# Subtest: load test requires autoscaling
+ok 6 - load test requires autoscaling
+  ---
+  duration_ms: 0.124575
+  type: 'test'
+  ...
+# Subtest: untraceable test rejected
+ok 7 - untraceable test rejected
+  ---
+  duration_ms: 0.163813
+  type: 'test'
+  ...
+# Subtest: clean assurance gate promotes
+ok 8 - clean assurance gate promotes
+  ---
+  duration_ms: 0.157664
+  type: 'test'
+  ...
+# Subtest: security failure blocks
+ok 9 - security failure blocks
+  ---
+  duration_ms: 0.245885
+  type: 'test'
+  ...
+# Subtest: critical failed test blocks assurance
+ok 10 - critical failed test blocks assurance
+  ---
+  duration_ms: 1.074704
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 58.727277
+
+

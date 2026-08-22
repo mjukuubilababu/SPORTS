@@ -1,0 +1,38 @@
+{
+  "gate": "Gate 6 \u2014 Capital & Risk Engine",
+  "build_status": "COMPLETE",
+  "system_build_completion_after_gate": 100,
+  "capital_modes": [
+    "LOCKED",
+    "RESEARCH",
+    "PAPER",
+    "MICRO",
+    "LIMITED",
+    "NORMAL",
+    "DEFENSIVE"
+  ],
+  "risk_controls": [
+    "uncertainty shrinkage toward market",
+    "quarter-Kelly default",
+    "mode-specific hard stake caps",
+    "daily exposure cap",
+    "same-match exposure cap",
+    "same-league exposure cap",
+    "correlated-cluster exposure cap",
+    "daily/weekly/total drawdown circuit breakers",
+    "losing-streak defensive/lock rules",
+    "correlation-adjusted effective exposure",
+    "evidence-gated capital promotion"
+  ],
+  "default_policy": {
+    "kelly_fraction": 0.25,
+    "micro_max_stake_pct": 0.0025,
+    "limited_max_stake_pct": 0.0075,
+    "normal_max_stake_pct": 0.0125,
+    "daily_exposure_cap_pct": 0.04,
+    "daily_drawdown_stop_pct": 0.03,
+    "weekly_drawdown_defensive_pct": 0.07,
+    "total_drawdown_lock_pct": 0.15
+  },
+  "capital_activation_note": "Core system build can be 100% while real-money capital remains LOCKED until evidence gates pass."
+}

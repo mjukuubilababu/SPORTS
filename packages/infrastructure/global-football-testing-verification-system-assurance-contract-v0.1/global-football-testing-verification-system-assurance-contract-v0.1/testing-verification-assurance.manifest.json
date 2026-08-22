@@ -1,0 +1,8 @@
+{
+  "contract": "Global Football Testing, Verification & System Assurance Contract",
+  "version": "0.1",
+  "status": "IMPLEMENTATION_READY",
+  "constitutional_principle": "The larger the system's intelligence becomes, the stronger its discipline against self-deception.",
+  "assurance_invariant": "No production promotion because tests are merely green; critical invariants, contracts, replay, security, load, chaos and regression evidence must agree.",
+  "next_recommended_layer": "System Bootstrap, Reference Implementation & End-to-End Vertical Slice v0.1"
+}

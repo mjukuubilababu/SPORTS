@@ -1,0 +1,147 @@
+{
+  "report_version": "0.1",
+  "generated_at": "2026-08-21T17:39:02.101146+00:00",
+  "migration_count": 6,
+  "expected_versions": [
+    "0009",
+    "0010",
+    "0011",
+    "0012",
+    "0013",
+    "0014"
+  ],
+  "actual_versions": [
+    "0009",
+    "0010",
+    "0011",
+    "0012",
+    "0013",
+    "0014"
+  ],
+  "checks": {
+    "versions_exact_order": true,
+    "all_unique_versions": true,
+    "no_destructive_table_or_column_ops": true,
+    "immutable_trigger_0009": true,
+    "immutable_trigger_0010": true,
+    "immutable_trigger_0011": true,
+    "immutable_trigger_0013": true,
+    "repair_0014_adds_critical": true
+  },
+  "migrations": [
+    {
+      "version": "0009",
+      "file": "packages/infrastructure/global-football-system-integration-orchestration-observability-contract-v0.1/global-football-system-integration-orchestration-observability-contract-v0.1/migrations/0009_system_integration_observability_v0_1.sql",
+      "sha256": "249b5061a9fb24a67ab4ed42746df61e4e1d370c012d2f9de67e1eb8b2971e1c",
+      "tables": [
+        "system_events_v01",
+        "stage_runs_v01",
+        "dead_letter_events_v01",
+        "trace_spans_v01",
+        "alerts_v01",
+        "circuit_breakers_v01",
+        "replay_requests_v01"
+      ],
+      "triggers": [
+        "stage_runs_no_mutation"
+      ],
+      "functions": [
+        "reject_stage_run_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0010",
+      "file": "packages/infrastructure/global-football-security-identity-access-data-governance-contract-v0.1/global-football-security-identity-access-data-governance-contract-v0.1/migrations/0010_security_identity_access_governance_v0_1.sql",
+      "sha256": "9b7be59a34afdbd10b40211e9bd6b156c5c1e2d0997b7690ec9417727596c20f",
+      "tables": [
+        "identities_v01",
+        "permissions_v01",
+        "approval_records_v01",
+        "signed_artifacts_v01",
+        "provider_trust_v01",
+        "data_governance_v01",
+        "security_audit_events_v01",
+        "poisoning_signals_v01"
+      ],
+      "triggers": [
+        "security_audit_no_mutation"
+      ],
+      "functions": [
+        "reject_security_truth_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0011",
+      "file": "packages/infrastructure/global-football-deployment-configuration-environment-management-contract-v0.1/global-football-deployment-configuration-environment-management-contract-v0.1/migrations/0011_deployment_config_environment_v0_1.sql",
+      "sha256": "0e763b3e613ad3d912b4646447c72c2d6d7cc7b79f54e0ffd3fe43e764d99a03",
+      "tables": [
+        "build_artifacts_v01",
+        "release_artifacts_v01",
+        "config_snapshots_v01",
+        "feature_flags_v01",
+        "deployment_results_v01",
+        "migration_bundles_v01",
+        "backup_records_v01",
+        "disaster_recovery_plans_v01"
+      ],
+      "triggers": [
+        "build_artifacts_no_mutation",
+        "deployment_results_no_mutation"
+      ],
+      "functions": [
+        "reject_release_truth_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0012",
+      "file": "packages/infrastructure/global-football-capacity-scalability-cost-governance-contract-v0.1/global-football-capacity-scalability-cost-governance-contract-v0.1/migrations/0012_capacity_scalability_cost_v0_1.sql",
+      "sha256": "7e1e8811f32d3806bc3cda48c9c4e3283b1f13c0ed3b9eed0780f993ced49ea5",
+      "tables": [
+        "capacity_envelopes_v01",
+        "capacity_observations_v01",
+        "scaling_decisions_v01",
+        "cost_budgets_v01",
+        "cost_observations_v01",
+        "storage_tier_policies_v01",
+        "provider_rate_limits_v01",
+        "capacity_forecasts_v01"
+      ],
+      "triggers": [],
+      "functions": [],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0013",
+      "file": "packages/infrastructure/global-football-testing-verification-system-assurance-contract-v0.1/global-football-testing-verification-system-assurance-contract-v0.1/migrations/0013_testing_verification_assurance_v0_1.sql",
+      "sha256": "8e6ce680affeec2d1c44e21c485fdc81e074ee153009dfea88eb2dc0d733bc81",
+      "tables": [
+        "test_cases_v01",
+        "test_results_v01",
+        "coverage_snapshots_v01",
+        "assurance_gate_results_v01",
+        "chaos_experiments_v01",
+        "defects_v01"
+      ],
+      "triggers": [
+        "assurance_results_no_mutation"
+      ],
+      "functions": [
+        "reject_assurance_truth_mutation"
+      ],
+      "destructive_operation_detected": false
+    },
+    {
+      "version": "0014",
+      "file": "packages/infrastructure/global-football-testing-verification-system-assurance-contract-v0.1/global-football-testing-verification-system-assurance-contract-v0.1/migrations/0014_test_results_critical_v0_1_1.sql",
+      "sha256": "2d9dffc5f9fc0a56a9540dda3892ae3831922513d5d039c5d51a1af5f1560c52",
+      "tables": [],
+      "triggers": [],
+      "functions": [],
+      "destructive_operation_detected": false
+    }
+  ],
+  "decision": "PASS"
+}

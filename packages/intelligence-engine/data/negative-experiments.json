@@ -1,0 +1,28 @@
+{
+  "registry_version": "0.1",
+  "experiments": [
+    {
+      "id": "M011_WALK_FORWARD_2026_SEED",
+      "model": "Bayesian Team Memory M011",
+      "source_lineage": "Betting_Intelligence_v0.4.2_Walk_Forward_Bayesian",
+      "result": "FAIL_VS_MARKET",
+      "bayes_brier_approx": 0.199,
+      "market_brier_approx": 0.198,
+      "bayes_logloss_approx": 0.588,
+      "market_logloss_approx": 0.586,
+      "validation_n_ge_3": 0,
+      "governance": "MARKET_REMAINS_CHAMPION",
+      "decision_weight": 0
+    },
+    {
+      "id": "M012_RECENCY_HALF_LIFE_UNSELECTED",
+      "model": "Recency Memory M012",
+      "source_lineage": "Betting_Intelligence_v0.4.3_Later_Season_Recency",
+      "result": "DIAGNOSTIC_ONLY",
+      "half_lives_evaluated": [3,5,8,12,20],
+      "oos_selected": false,
+      "decision_weight": 0,
+      "governance": "DO_NOT_PICK_HALF_LIFE_FROM_CURRENT_MATCH"
+    }
+  ]
+}

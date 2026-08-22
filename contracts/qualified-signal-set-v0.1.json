@@ -1,0 +1,20 @@
+{
+  "contract": "Qualified Signal Set Contract",
+  "version": "v0.1",
+  "purpose": "Return every canonical signal that independently passes all frozen qualification gates; ranking must never silently truncate valid qualifiers.",
+  "market_reference": "UNDER_3_5 in the current P002 reference implementation",
+  "invariants": [
+    "EVERY_CANDIDATE_IS_EVALUATED_INDEPENDENTLY",
+    "EVERY_CANONICAL_SIGNAL_PASSING_ALL_FROZEN_GATES_APPEARS_IN_QUALIFIED_SET",
+    "ZERO_QUALIFIERS_IS_VALID",
+    "NO_TOP_1_TRUNCATION_IN_DECISION_ENGINE",
+    "RANKING_CANNOT_REMOVE_QUALIFICATION",
+    "PORTFOLIO_RISK_MAY_RESTRICT_EXECUTION_BUT_CANNOT_REWRITE_QUALIFICATION_HISTORY",
+    "QUALIFIED_SET_IS_IMMUTABLE_AFTER_CREATION",
+    "DUPLICATE_EVENT_MARKET_SELECTION_SIGNALS_ARE_DEDUPLICATED_DETERMINISTICALLY",
+    "EQUAL_TIME_CONFLICTING_DUPLICATES_ARE_REJECTED_NOT_SILENTLY_RESOLVED"
+  ],
+  "ranking_policy": "EDGE_DESC_THEN_MODEL_PROB_DESC_THEN_KICKOFF_ASC_THEN_EVENT_ID",
+  "truncation": "NONE",
+  "capital_effect": "NONE"
+}

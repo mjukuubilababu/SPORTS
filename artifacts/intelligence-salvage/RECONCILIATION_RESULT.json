@@ -1,0 +1,43 @@
+{
+  "reconciliation_version": "0.1",
+  "source_transfer": "decision-intelligence-selective-salvage-transfer-v0.1.zip",
+  "source_artifact": "Betting_Intelligence_v0.4.3_Later_Season_Recency.xlsx",
+  "source_sha256": "e21e9bd770dcc7b98535fb3638e37933db07175afee596f149bd15e84fdd6354",
+  "canonical_repository": "v0.4-intelligence-consolidation",
+  "approved_active_deltas": [
+    "Market Surface exact target-line anchoring",
+    "Source Quorum / preserve-null conflict handling",
+    "Confidence Budget",
+    "Champion/Challenger market baseline governance",
+    "Adaptive Reliability framework",
+    "Error Taxonomy",
+    "Probabilistic Brain separation of probability/evidence maturity/EV",
+    "Evidence Graph",
+    "Self Evaluation / Model Humility",
+    "Governed Learning Loop"
+  ],
+  "challenger_only": [
+    {
+      "model": "M011 Bayesian Team Memory",
+      "decision_weight": 0,
+      "reason": "Current walk-forward seed worse than market Brier/LogLoss"
+    },
+    {
+      "model": "M012 Recency Memory",
+      "decision_weight": 0,
+      "reason": "Half-life not selected out-of-sample"
+    }
+  ],
+  "not_overwritten": [
+    "P002 frozen rules",
+    "capital state",
+    "canonical historical truth",
+    "old duplicate v0.1-v0.3 logic"
+  ],
+  "runtime_evidence": {
+    "intelligence_tests": "13/13 PASS",
+    "full_platform_checks": "14/14 PASS",
+    "full_platform_assurance": "REVIEW_EXTERNAL_POSTGRES_TEST_REQUIRED"
+  },
+  "capital_state": "LOCKED"
+}

@@ -1,0 +1,11 @@
+{
+  "defect_id": "DEFECT-ASSURANCE-001",
+  "severity": "HIGH",
+  "component": "Testing / Verification / System Assurance v0.1",
+  "detected_during": "unified infrastructure runtime verification",
+  "symptom": "TypeScript compile error TS2339: Property 'critical' does not exist on type 'TestResult'",
+  "root_cause": "Assurance gate consumes TestResult.critical, while the TestResult contract and persistence schema omitted that field.",
+  "repair": "Add critical:boolean to imported working-copy TestResult and additive migration 0014_test_results_critical_v0_1_1.sql. Preserve original transferred ZIP unchanged.",
+  "football_rules_changed": false,
+  "capital_rules_changed": false
+}

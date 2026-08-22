@@ -1,0 +1,158 @@
+=== gate1_acceptance passed=True rc=0 ===
+{
+  "closing_primary_can_enter_validation_n": true,
+  "snapshot_cannot_enter_validation_n": true,
+  "snapshot_can_still_pass_price_gate": true,
+  "unknown_source_quarantined": true,
+  "canonical_team_aliases_match": true,
+  "duplicate_detection": true
+}
+GATE1_ACCEPTANCE=PASS
+
+
+=== gate2_acceptance passed=True rc=0 ===
+{'warmup_pass_after_3_prior_each': True, 'no_hindsight_home_prior': True, 'no_hindsight_away_prior': True, 'venue_stats_correct': True, 'away_venue_stats_correct': True, 'pair_expected_formula_correct': True, 'frozen_50_30_20_lambda_correct': True, 'poisson_u35_correct': True, 'devig_correct': True, 'early_rows_blocked': True}
+GATE2_ACCEPTANCE=PASS
+
+
+=== gate3_acceptance passed=True rc=0 ===
+{'brier_exact': True, 'logloss_positive': True, 'profit_exact': True, 'roi_exact': True, 'drawdown_exact': True, 'losing_streak_exact': True, 'clv_count': True, 'mean_clv_positive': True, 'bootstrap_reproducible': True, 'bootstrap_bounds_ordered': True, 'calibration_n_conserved': True, 'delta_fields_exist': True, 'unqualified_excluded': True}
+GATE3_ACCEPTANCE=PASS
+
+
+=== gate4_acceptance passed=True rc=0 ===
+{'negbin_converges_poisson': True, 'ensemble_best_logloss': True, 'ensemble_best_brier': True, 'champion_selection': True, 'walkforward_created': True, 'walkforward_has_scores': True, 'three_regimes': True, 'challenger_promotes_when_dominant': True, 'min_n_blocks': True, 'threshold_result_constructed': True, 'ablation_full_and_drops': True, 'scores_finite': True}
+GATE4_ACCEPTANCE=PASS
+
+
+=== gate5_acceptance passed=True rc=0 ===
+{'immutable_hash': True, 'pre_kickoff_only': True, 'fresh_quote': True, 'slippage': True, 'clv_positive': True, 'settlement': True, 'stale_detected': True, 'batch_report': True, 'drift_alert': True, 'promotion_pass': True, 'min_n_blocks': True}
+GATE5_ACCEPTANCE=PASS
+
+
+=== gate6_acceptance passed=True rc=0 ===
+{'locked_without_evidence': True, 'micro_allows_bet': True, 'micro_cap_enforced': True, 'positive_adjusted_edge': True, 'kelly_nonnegative': True, 'cluster_cap_blocks': True, 'daily_dd_defensive': True, 'total_dd_locked': True, 'losing_streak_lock': True, 'loss_settlement': True, 'win_settlement': True, 'promotion_micro_to_limited': True, 'promotion_blocked_missing_gate': True, 'perfect_corr_effective_exposure': True, 'uncorrelated_lower_than_sum': True, 'uncertainty_shrinkage': True}
+GATE6_ACCEPTANCE=PASS
+
+
+=== reference_e2e_verify passed=True rc=0 ===
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 verify
+> npm run check && npm run migrate:test && npm test && npm run e2e
+
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 check
+> node scripts/check.mjs
+
+CHECK_PASS files=14
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 migrate:test
+> node scripts/migrate-test-db.mjs
+
+MIGRATION_PASS db=/mnt/data/decision-intelligence-unified-repo-v0.1/packages/reference-e2e/artifacts/reference-test.sqlite tables=artifacts,assurance_runs,audit_events,paper_executions,schema_migrations,settlements
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: data contract rejects evidence observed at/after kickoff
+ok 1 - data contract rejects evidence observed at/after kickoff
+  ---
+  duration_ms: 1.431191
+  type: 'test'
+  ...
+# Subtest: security is default deny
+ok 2 - security is default deny
+  ---
+  duration_ms: 0.309669
+  type: 'test'
+  ...
+# Subtest: known identity still cannot perform ungranted action
+ok 3 - known identity still cannot perform ungranted action
+  ---
+  duration_ms: 0.494661
+  type: 'test'
+  ...
+# Subtest: controlled match passes full reference vertical slice
+ok 4 - controlled match passes full reference vertical slice
+  ---
+  duration_ms: 11.75376
+  type: 'test'
+  ...
+# Subtest: re-running same pipeline against same store cannot create second execution effect
+ok 5 - re-running same pipeline against same store cannot create second execution effect
+  ---
+  duration_ms: 1.967189
+  type: 'test'
+  ...
+# Subtest: immutable artifacts cannot be overwritten
+ok 6 - immutable artifacts cannot be overwritten
+  ---
+  duration_ms: 1.561917
+  type: 'test'
+  ...
+# Subtest: exactly-once effect suppresses duplicate business effect
+ok 7 - exactly-once effect suppresses duplicate business effect
+  ---
+  duration_ms: 0.160628
+  type: 'test'
+  ...
+# Subtest: settled cannot transition backwards to qualified path
+ok 8 - settled cannot transition backwards to qualified path
+  ---
+  duration_ms: 0.134552
+  type: 'test'
+  ...
+# Subtest: audit chain detects valid append-only history
+ok 9 - audit chain detects valid append-only history
+  ---
+  duration_ms: 0.768726
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 86.411519
+
+> decision-intelligence-system-bootstrap-e2e@0.1.0 e2e
+> node scripts/run-e2e.mjs
+
+{
+  "E2E": "PASS",
+  "state": "ASSURED",
+  "assurance": "PROMOTE",
+  "decision": "QUALIFIED",
+  "paperExecution": "exec_e80f62439fb6eb08",
+  "settlementWon": true,
+  "brier": 0.09150967389223441,
+  "logLoss": 0.36026087897267844,
+  "clv": 0.02499999999999991,
+  "auditEvents": 10,
+  "traceStages": [
+    "INGEST",
+    "FEATURE",
+    "MODEL",
+    "PATTERN",
+    "DECISION",
+    "RISK",
+    "EXECUTION",
+    "START",
+    "SETTLEMENT",
+    "EVALUATION",
+    "ASSURANCE"
+  ]
+}
+
+STDERR:
+(node:1671) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+=== unified_structure passed=True rc=0 ===
+required_files=4
+

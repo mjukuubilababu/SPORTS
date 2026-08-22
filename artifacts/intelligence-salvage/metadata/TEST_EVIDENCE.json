@@ -1,0 +1,61 @@
+{
+  "artifact": "Betting_Intelligence_v0.4.3_Later_Season_Recency.xlsx",
+  "artifact_sha256": "e21e9bd770dcc7b98535fb3638e37933db07175afee596f149bd15e84fdd6354",
+  "overall": {
+    "TEST_AUTHORED": true,
+    "TEST_EXECUTED": true,
+    "TEST_PASS": false,
+    "TEST_FAIL": true,
+    "explanation": "Structural/formula integrity checks passed, but empirical model/governance tests intentionally contain FAIL outcomes (e.g., M011 does not beat market; validation sample gate fails). Therefore the artifact must not be labeled globally PASS."
+  },
+  "checks": [
+    {
+      "name": "final_formula_error_scan",
+      "status": "TEST_PASS",
+      "executed": true,
+      "runtime_evidence": "artifact_tool final scan on v0.4.3 matched 0 #REF/#DIV0/#VALUE/#NAME/#N/A entries after the final recency-memory patch.",
+      "scope": "Workbook formula integrity only"
+    },
+    {
+      "name": "immutability_audit",
+      "status": "TEST_PASS",
+      "executed": true,
+      "runtime_evidence": "Post_Match_Learning_v0.3.2 contains PASS checks that pre-match probability=0.5987407031, reference U3.5=1.625 and decision='NO VALUE / PAPER ONLY' equal the frozen values.",
+      "scope": "Anti-hindsight invariant"
+    },
+    {
+      "name": "walk_forward_bayesian_vs_market",
+      "status": "TEST_FAIL",
+      "executed": true,
+      "runtime_evidence": "Bayes_Governance_v0.4.2 records Bayes Brier/LogLoss worse than market in the 25-row seed and warm N>=1 subset; M011 stays weight 0.",
+      "scope": "Empirical challenger benchmark"
+    },
+    {
+      "name": "validation_sample_gate",
+      "status": "TEST_FAIL",
+      "executed": true,
+      "runtime_evidence": "Walk-forward/feature-backfill governance records 0 full validation rows with both teams N>=3; minimum promotion evidence remains unmet.",
+      "scope": "Evidence sufficiency"
+    },
+    {
+      "name": "source_quorum_live_state",
+      "status": "TEST_FAIL",
+      "executed": true,
+      "runtime_evidence": "Source_Quorum_v0.3.3 correctly keeps live state unverified under conflicting/incomplete sources; failure is a gating outcome, not a runtime failure.",
+      "scope": "Live-data integrity gate"
+    },
+    {
+      "name": "recency_half_life_robustness",
+      "status": "TEST_PASS",
+      "executed": true,
+      "runtime_evidence": "Recency_Governance_v0.4.3: exact 38 team-history rows reconcile; half-life 3–20 probability spread ~2.5pp; no half-life is promoted and all decision weights remain 0.",
+      "scope": "Research sensitivity / anti-cherry-picking"
+    }
+  ],
+  "migration_evidence": {
+    "MIGRATION_AUTHORED": false,
+    "MIGRATION_APPLIED": false,
+    "MIGRATION_VERIFIED": false,
+    "reason": "No standalone SQL migrations or database migration artifacts were created in this conversation. The transfer package is preservation-only."
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "report_version": "0.1",
+  "generated_at": "2026-08-21T16:54:28.759596+00:00",
+  "core_integrated_assurance": "PROMOTE",
+  "full_platform_assurance": "REVIEW_MISSING_IMPORTED_ARTIFACTS",
+  "capital_assurance": "LOCKED",
+  "capital_reason": "Engineering assurance is not empirical capital evidence.",
+  "tests_total": 8,
+  "tests_passed": 8,
+  "results": [
+    {
+      "name": "gate1_acceptance",
+      "command": [
+        "/opt/pyvenv/bin/python",
+        "test_gate1.py"
+      ],
+      "cwd": "packages/gate1",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "{\n  \"closing_primary_can_enter_validation_n\": true,\n  \"snapshot_cannot_enter_validation_n\": true,\n  \"snapshot_can_still_pass_price_gate\": true,\n  \"unknown_source_quarantined\": true,\n  \"canonical_team_aliases_match\": true,\n  \"duplicate_detection\": true\n}\nGATE1_ACCEPTANCE=PASS\n",
+      "stderr": ""
+    },
+    {
+      "name": "gate2_acceptance",
+      "command": [
+        "/opt/pyvenv/bin/python",
+        "test_gate2.py"
+      ],
+      "cwd": "packages/gate2",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "{'warmup_pass_after_3_prior_each': True, 'no_hindsight_home_prior': True, 'no_hindsight_away_prior': True, 'venue_stats_correct': True, 'away_venue_stats_correct': True, 'pair_expected_formula_correct': True, 'frozen_50_30_20_lambda_correct': True, 'poisson_u35_correct': True, 'devig_correct': True, 'early_rows_blocked': True}\nGATE2_ACCEPTANCE=PASS\n",
+      "stderr": ""
+    },
+    {
+      "name": "gate3_acceptance",
+      "command": [
+        "/opt/pyvenv/bin/python",
+        "test_gate3.py"
+      ],
+      "cwd": "packages/gate3",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "{'brier_exact': True, 'logloss_positive': True, 'profit_exact': True, 'roi_exact': True, 'drawdown_exact': True, 'losing_streak_exact': True, 'clv_count': True, 'mean_clv_positive': True, 'bootstrap_reproducible': True, 'bootstrap_bounds_ordered': True, 'calibration_n_conserved': True, 'delta_fields_exist': True, 'unqualified_excluded': True}\nGATE3_ACCEPTANCE=PASS\n",
+      "stderr": ""
+    },
+    {
+      "name": "gate4_acceptance",
+      "command": [
+        "/opt/pyvenv/bin/python",
+        "test_gate4.py"
+      ],
+      "cwd": "packages/gate4",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "{'negbin_converges_poisson': True, 'ensemble_best_logloss': True, 'ensemble_best_brier': True, 'champion_selection': True, 'walkforward_created': True, 'walkforward_has_scores': True, 'three_regimes': True, 'challenger_promotes_when_dominant': True, 'min_n_blocks': True, 'threshold_result_constructed': True, 'ablation_full_and_drops': True, 'scores_finite': True}\nGATE4_ACCEPTANCE=PASS\n",
+      "stderr": ""
+    },
+    {
+      "name": "gate5_acceptance",
+      "command": [
+        "/opt/pyvenv/bin/python",
+        "test_gate5.py"
+      ],
+      "cwd": "packages/gate5",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "{'immutable_hash': True, 'pre_kickoff_only': True, 'fresh_quote': True, 'slippage': True, 'clv_positive': True, 'settlement': True, 'stale_detected': True, 'batch_report': True, 'drift_alert': True, 'promotion_pass': True, 'min_n_blocks': True}\nGATE5_ACCEPTANCE=PASS\n",
+      "stderr": ""
+    },
+    {
+      "name": "gate6_acceptance",
+      "command": [
+        "/opt/pyvenv/bin/python",
+        "test_gate6.py"
+      ],
+      "cwd": "packages/gate6",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "{'locked_without_evidence': True, 'micro_allows_bet': True, 'micro_cap_enforced': True, 'positive_adjusted_edge': True, 'kelly_nonnegative': True, 'cluster_cap_blocks': True, 'daily_dd_defensive': True, 'total_dd_locked': True, 'losing_streak_lock': True, 'loss_settlement': True, 'win_settlement': True, 'promotion_micro_to_limited': True, 'promotion_blocked_missing_gate': True, 'perfect_corr_effective_exposure': True, 'uncorrelated_lower_than_sum': True, 'uncertainty_shrinkage': True}\nGATE6_ACCEPTANCE=PASS\n",
+      "stderr": ""
+    },
+    {
+      "name": "reference_e2e_verify",
+      "command": [
+        "npm",
+        "run",
+        "verify"
+      ],
+      "cwd": "packages/reference-e2e",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "\n> decision-intelligence-system-bootstrap-e2e@0.1.0 verify\n> npm run check && npm run migrate:test && npm test && npm run e2e\n\n\n> decision-intelligence-system-bootstrap-e2e@0.1.0 check\n> node scripts/check.mjs\n\nCHECK_PASS files=14\n\n> decision-intelligence-system-bootstrap-e2e@0.1.0 migrate:test\n> node scripts/migrate-test-db.mjs\n\nMIGRATION_PASS db=/mnt/data/decision-intelligence-unified-repo-v0.1/packages/reference-e2e/artifacts/reference-test.sqlite tables=artifacts,assurance_runs,audit_events,paper_executions,schema_migrations,settlements\n\n> decision-intelligence-system-bootstrap-e2e@0.1.0 test\n> node --test tests/*.test.mjs\n\nTAP version 13\n# Subtest: data contract rejects evidence observed at/after kickoff\nok 1 - data contract rejects evidence observed at/after kickoff\n  ---\n  duration_ms: 1.431191\n  type: 'test'\n  ...\n# Subtest: security is default deny\nok 2 - security is default deny\n  ---\n  duration_ms: 0.309669\n  type: 'test'\n  ...\n# Subtest: known identity still cannot perform ungranted action\nok 3 - known identity still cannot perform ungranted action\n  ---\n  duration_ms: 0.494661\n  type: 'test'\n  ...\n# Subtest: controlled match passes full reference vertical slice\nok 4 - controlled match passes full reference vertical slice\n  ---\n  duration_ms: 11.75376\n  type: 'test'\n  ...\n# Subtest: re-running same pipeline against same store cannot create second execution effect\nok 5 - re-running same pipeline against same store cannot create second execution effect\n  ---\n  duration_ms: 1.967189\n  type: 'test'\n  ...\n# Subtest: immutable artifacts cannot be overwritten\nok 6 - immutable artifacts cannot be overwritten\n  ---\n  duration_ms: 1.561917\n  type: 'test'\n  ...\n# Subtest: exactly-once effect suppresses duplicate business effect\nok 7 - exactly-once effect suppresses duplicate business effect\n  ---\n  duration_ms: 0.160628\n  type: 'test'\n  ...\n# Subtest: settled cannot transition backwards to qualified path\nok 8 - settled cannot transition backwards to qualified path\n  ---\n  duration_ms: 0.134552\n  type: 'test'\n  ...\n# Subtest: audit chain detects valid append-only history\nok 9 - audit chain detects valid append-only history\n  ---\n  duration_ms: 0.768726\n  type: 'test'\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 9\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 86.411519\n\n> decision-intelligence-system-bootstrap-e2e@0.1.0 e2e\n> node scripts/run-e2e.mjs\n\n{\n  \"E2E\": \"PASS\",\n  \"state\": \"ASSURED\",\n  \"assurance\": \"PROMOTE\",\n  \"decision\": \"QUALIFIED\",\n  \"paperExecution\": \"exec_e80f62439fb6eb08\",\n  \"settlementWon\": true,\n  \"brier\": 0.09150967389223441,\n  \"logLoss\": 0.36026087897267844,\n  \"clv\": 0.02499999999999991,\n  \"auditEvents\": 10,\n  \"traceStages\": [\n    \"INGEST\",\n    \"FEATURE\",\n    \"MODEL\",\n    \"PATTERN\",\n    \"DECISION\",\n    \"RISK\",\n    \"EXECUTION\",\n    \"START\",\n    \"SETTLEMENT\",\n    \"EVALUATION\",\n    \"ASSURANCE\"\n  ]\n}\n",
+      "stderr": "(node:1671) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    },
+    {
+      "name": "unified_structure",
+      "command": [],
+      "cwd": ".",
+      "returncode": 0,
+      "passed": true,
+      "stdout": "required_files=4",
+      "stderr": ""
+    }
+  ],
+  "missing_original_branch_artifacts": [
+    {
+      "name": "Integration Orchestration Observability",
+      "version": "v0.1",
+      "status": "MISSING_ARTIFACT_IN_THIS_WORKSPACE"
+    },
+    {
+      "name": "Security Identity Access Data Governance",
+      "version": "v0.1",
+      "status": "MISSING_ARTIFACT_IN_THIS_WORKSPACE"
+    },
+    {
+      "name": "Deployment Configuration Environment Management",
+      "version": "v0.1",
+      "status": "MISSING_ARTIFACT_IN_THIS_WORKSPACE"
+    },
+    {
+      "name": "Capacity Scalability Cost Governance",
+      "version": "v0.1",
+      "status": "MISSING_ARTIFACT_IN_THIS_WORKSPACE"
+    },
+    {
+      "name": "Testing Verification System Assurance",
+      "version": "v0.1",
+      "status": "MISSING_ARTIFACT_IN_THIS_WORKSPACE"
+    }
+  ],
+  "hash_inventory_count": 66
+}

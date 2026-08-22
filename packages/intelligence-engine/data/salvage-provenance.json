@@ -1,0 +1,9 @@
+{
+  "source_artifact":"Betting_Intelligence_v0.4.3_Later_Season_Recency.xlsx",
+  "source_sha256":"e21e9bd770dcc7b98535fb3638e37933db07175afee596f149bd15e84fdd6354",
+  "transfer":"decision-intelligence-selective-salvage-transfer-v0.1.zip",
+  "merge_policy":"SELECTIVE_GOVERNED_DELTA_ONLY",
+  "capital_state_changed":false,
+  "p002_changed":false,
+  "promoted_unvalidated_models":false
+}

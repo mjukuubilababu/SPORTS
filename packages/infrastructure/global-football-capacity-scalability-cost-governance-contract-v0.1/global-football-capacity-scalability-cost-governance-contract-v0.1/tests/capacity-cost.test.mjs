@@ -1,0 +1,12 @@
+import test from"node:test";import assert from"node:assert/strict";
+import{autoscale,capacityState,shouldShed,governCost,unitCost,storageTier,validateCapacity,validateBudget}from"../dist/index.js";
+const e={service_id:"market",workload:"LIVE_MARKET",region:"eu",min_replicas:2,max_replicas:20,reserved_capacity:2,target_cpu_pct:65,target_memory_pct:70,max_queue_age_seconds:10,max_rps_per_replica:100,headroom_pct:30};
+test("capacity envelope valid",()=>assert.deepEqual(validateCapacity(e),[]));
+test("queue pressure scales out",()=>{const o={service_id:"market",observed_at:"x",replicas:2,cpu_pct:70,memory_pct:60,rps:180,queue_depth:500,oldest_queue_age_seconds:20,p95_latency_ms:100,error_rate:.01,ingress_rps:200,egress_rps:180};assert.equal(autoscale(e,o,"x").action,"SCALE_OUT");assert.equal(capacityState(e,o),"PRESSURED")});
+test("critical workload protected from shedding",()=>assert.equal(shouldShed("LOW","LIVE_MARKET",true,["LIVE_MARKET"]),false));
+test("low batch work can shed",()=>assert.equal(shouldShed("LOW","TRAINING",true,["LIVE_MARKET"]),true));
+const b={budget_id:"b",scope:"global",period:"MONTHLY",currency:"USD",soft_limit:800,hard_limit:1000,critical_reserve:150,owner:"platform"};
+test("budget valid",()=>assert.deepEqual(validateBudget(b),[]));
+test("critical reserve throttles noncritical",()=>assert.equal(governCost(b,{budget_id:"b",observed_at:"x",spend_to_date:860,forecast_period_end:900,cost_per_match:null,cost_per_decision:null,cost_per_inference:null}).state,"THROTTLE_NONCRITICAL"));
+test("unit economics",()=>assert.equal(unitCost(100,20),5));
+test("storage lifecycle",()=>assert.equal(storageTier(100,{dataset_class:"events",hot_days:7,warm_days:30,cold_after_days:90,archive_after_days:365,compression_required:true}),"COLD"));

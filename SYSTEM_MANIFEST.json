@@ -1,0 +1,49 @@
+{
+  "system": "Decision Intelligence & Evidence-Gated Prediction System",
+  "repository_version": "v0.5-qualified-signal-set",
+  "scope": "global football with MLS reference implementation",
+  "engineering_state": "CORE_INFRASTRUCTURE_INTELLIGENCE_AND_QUALIFIED_SET_VERIFIED_PENDING_POSTGRES",
+  "core_integrated_assurance": "PROMOTE",
+  "infrastructure_runtime_assurance": "PROMOTE",
+  "full_platform_assurance": "REVIEW_EXTERNAL_POSTGRES_TEST_REQUIRED",
+  "capital_state": "LOCKED",
+  "packages": [
+    "gate1",
+    "gate2",
+    "gate3",
+    "gate4",
+    "gate5",
+    "gate6",
+    "reference-e2e",
+    "integration-orchestration-observability v0.1",
+    "security-identity-access-data-governance v0.1",
+    "deployment-configuration-environment v0.1",
+    "capacity-scalability-cost v0.1",
+    "testing-verification-assurance v0.1 + integration defect fix",
+    "intelligence-engine v0.1",
+    "qualified-signal-set contract v0.1"
+  ],
+  "verified_runtime_checks": "15/15 PASS",
+  "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
+  "capital_note": "Engineering/intelligence promotion does not constitute predictive edge or capital readiness.",
+  "migration_static_assurance": "PROMOTE",
+  "intelligence_engine": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_AND_RUNTIME_VERIFIED",
+    "tests": "13/13 PASS",
+    "source_salvage_sha256": "e21e9bd770dcc7b98535fb3638e37933db07175afee596f149bd15e84fdd6354",
+    "governance": "M011_M012_WEIGHT_ZERO; MARKET_CHAMPION; NO_AUTO_SELF_MODIFICATION"
+  },
+  "intelligence_runtime_assurance": "PROMOTE",
+  "qualified_signal_set": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_AND_RUNTIME_VERIFIED",
+    "tests": "7/7 PASS",
+    "reference_e2e_total_tests": "16/16 PASS",
+    "behavior": "RETURN_ALL_QUALIFYING_SIGNALS_NO_TOP1_TRUNCATION",
+    "ranking": "DETERMINISTIC_DISPLAY_PRIORITY_ONLY",
+    "risk_separation": "RISK_MAY_RESTRICT_EXECUTION_BUT_CANNOT_REWRITE_QUALIFICATION_HISTORY",
+    "p002_frozen_rules_sha256": "82832c4c255f91a3307f8e74506eca01fa899abc3b0961dbc6332d75542a4d0d",
+    "capital_effect": "NONE"
+  }
+}

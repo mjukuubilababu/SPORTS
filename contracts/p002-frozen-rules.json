@@ -1,0 +1,16 @@
+{
+  "lineage":"P002",
+  "status":"FROZEN_RESEARCH_RULE",
+  "o25_max":1.60,
+  "u35_min":1.55,
+  "u35_max":1.75,
+  "lambda_min":2.70,
+  "lambda_max":3.10,
+  "raw_model_edge_pp_min":5.0,
+  "discovery_min_n":30,
+  "independent_validation_min_n":30,
+  "model_mls_prior_weights":[0.5,0.5],
+  "prior_equivalent_sample_size":5,
+  "lineup_lambda_adjustment":0.10,
+  "capital_effect":"NONE_UNTIL_GOVERNED_EVIDENCE"
+}

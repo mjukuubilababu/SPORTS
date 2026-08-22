@@ -1,0 +1,41 @@
+{
+  "gate": "Gate 3 \u2014 Statistical Validation",
+  "build_status": "COMPLETE",
+  "system_build_completion_after_gate": 78,
+  "metrics": [
+    "N",
+    "wins",
+    "hit rate",
+    "profit",
+    "ROI",
+    "average entry odds",
+    "Brier model",
+    "Brier market",
+    "delta Brier vs market",
+    "LogLoss model",
+    "LogLoss market",
+    "delta LogLoss vs market",
+    "mean CLV",
+    "positive CLV rate",
+    "max drawdown",
+    "longest losing streak",
+    "bootstrap ROI CI95",
+    "bootstrap hit-rate CI95",
+    "calibration buckets",
+    "expected calibration error"
+  ],
+  "benchmark_rule": "Market remains champion unless model beats it out-of-sample on proper scoring metrics.",
+  "bootstrap": {
+    "default_reps": 5000,
+    "seeded": true
+  },
+  "promotion_guard": {
+    "min_n": 30,
+    "positive_roi": true,
+    "positive_clv": true,
+    "model_better_than_market_brier": true,
+    "model_better_than_market_logloss": true,
+    "bootstrap_roi_lower_bound_positive": true
+  },
+  "important": "Gate 3 software completion does not mean P002 is statistically validated; runtime evidence must still satisfy the gates."
+}

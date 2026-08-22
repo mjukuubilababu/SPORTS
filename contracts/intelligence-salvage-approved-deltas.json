@@ -1,0 +1,35 @@
+{
+  "version": "0.1",
+  "source": "Betting_Intelligence_v0.4.3_Later_Season_Recency.xlsx",
+  "source_sha256": "e21e9bd770dcc7b98535fb3638e37933db07175afee596f149bd15e84fdd6354",
+  "active_migrations": [
+    "MARKET_SURFACE_EXACT_TARGET_LINE",
+    "SOURCE_QUORUM",
+    "CONFIDENCE_BUDGET",
+    "CHAMPION_CHALLENGER",
+    "ADAPTIVE_RELIABILITY_FRAMEWORK",
+    "ERROR_TAXONOMY",
+    "EVIDENCE_GRAPH",
+    "SELF_EVALUATION_HUMILITY",
+    "GOVERNED_LEARNING_PROPOSALS"
+  ],
+  "challenger_only": [
+    {
+      "id": "M011",
+      "weight": 0,
+      "reason": "FAILED_MARKET_BRIER_LOGLOSS_CURRENT_SEED"
+    },
+    {
+      "id": "M012",
+      "weight": 0,
+      "reason": "NO_OOS_HALF_LIFE_SELECTION"
+    }
+  ],
+  "not_migrated": [
+    "P002_OVERWRITE",
+    "OLD_V0_1_TO_V0_3_DUPLICATED_LOGIC",
+    "AUTOMATIC_MODEL_PROMOTION"
+  ],
+  "capital_state": "LOCKED",
+  "p002_modified": false
+}

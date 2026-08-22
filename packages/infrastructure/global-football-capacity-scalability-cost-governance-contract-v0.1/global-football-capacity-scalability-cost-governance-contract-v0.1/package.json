@@ -1,0 +1,16 @@
+{
+  "name": "@football-intelligence/capacity-scalability-cost-governance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Global Football Capacity, Scalability & Cost Governance Contract v0.1",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "check": "npm run typecheck && npm test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

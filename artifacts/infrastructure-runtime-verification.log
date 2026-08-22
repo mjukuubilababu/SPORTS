@@ -1,0 +1,301 @@
+v22.16.0
+10.9.2
+Version 5.8.3
+===== global-football-capacity-scalability-cost-governance-contract-v0.1 =====
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/capacity-scalability-cost-governance@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: capacity envelope valid
+ok 1 - capacity envelope valid
+  ---
+  duration_ms: 1.282846
+  type: 'test'
+  ...
+# Subtest: queue pressure scales out
+ok 2 - queue pressure scales out
+  ---
+  duration_ms: 1.42369
+  type: 'test'
+  ...
+# Subtest: critical workload protected from shedding
+ok 3 - critical workload protected from shedding
+  ---
+  duration_ms: 0.108621
+  type: 'test'
+  ...
+# Subtest: low batch work can shed
+ok 4 - low batch work can shed
+  ---
+  duration_ms: 0.087237
+  type: 'test'
+  ...
+# Subtest: budget valid
+ok 5 - budget valid
+  ---
+  duration_ms: 0.106291
+  type: 'test'
+  ...
+# Subtest: critical reserve throttles noncritical
+ok 6 - critical reserve throttles noncritical
+  ---
+  duration_ms: 0.117106
+  type: 'test'
+  ...
+# Subtest: unit economics
+ok 7 - unit economics
+  ---
+  duration_ms: 0.073997
+  type: 'test'
+  ...
+# Subtest: storage lifecycle
+ok 8 - storage lifecycle
+  ---
+  duration_ms: 0.080901
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 107.13252
+===== global-football-deployment-configuration-environment-management-contract-v0.1 =====
+
+> @football-intelligence/deployment-config-environment@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/deployment-config-environment@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/deployment-config-environment@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/deployment-config-environment@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: reproducible build valid
+ok 1 - reproducible build valid
+  ---
+  duration_ms: 1.051002
+  type: 'test'
+  ...
+# Subtest: signed staged release valid
+ok 2 - signed staged release valid
+  ---
+  duration_ms: 0.165353
+  type: 'test'
+  ...
+# Subtest: direct dev to prod rejected
+ok 3 - direct dev to prod rejected
+  ---
+  duration_ms: 0.173171
+  type: 'test'
+  ...
+# Subtest: config drift detected
+ok 4 - config drift detected
+  ---
+  duration_ms: 0.159307
+  type: 'test'
+  ...
+# Subtest: secret-like key requires reference
+ok 5 - secret-like key requires reference
+  ---
+  duration_ms: 0.188112
+  type: 'test'
+  ...
+# Subtest: critical signal rolls back
+ok 6 - critical signal rolls back
+  ---
+  duration_ms: 0.10029
+  type: 'test'
+  ...
+# Subtest: destructive migration requires backup
+ok 7 - destructive migration requires backup
+  ---
+  duration_ms: 0.226794
+  type: 'test'
+  ...
+# Subtest: DR requires failover target when multi-region
+ok 8 - DR requires failover target when multi-region
+  ---
+  duration_ms: 0.11246
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 83.656716
+===== global-football-security-identity-access-data-governance-contract-v0.1 =====
+
+> @football-intelligence/security-identity-access-governance@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/security-identity-access-governance@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/security-identity-access-governance@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/security-identity-access-governance@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: deny by default without permission
+ok 1 - deny by default without permission
+  ---
+  duration_ms: 0.998205
+  type: 'test'
+  ...
+# Subtest: promotion allowed but needs secondary approval
+ok 2 - promotion allowed but needs secondary approval
+  ---
+  duration_ms: 0.273291
+  type: 'test'
+  ...
+# Subtest: stable hash verifies content
+ok 3 - stable hash verifies content
+  ---
+  duration_ms: 0.224932
+  type: 'test'
+  ...
+# Subtest: bad provider is blocked
+ok 4 - bad provider is blocked
+  ---
+  duration_ms: 0.145541
+  type: 'test'
+  ...
+# Subtest: critical tamper invalidates artifact
+ok 5 - critical tamper invalidates artifact
+  ---
+  duration_ms: 0.196933
+  type: 'test'
+  ...
+# Subtest: artifact requires signature
+ok 6 - artifact requires signature
+  ---
+  duration_ms: 0.124269
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79.338201
+===== global-football-system-integration-orchestration-observability-contract-v0.1 =====
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 test
+> npm run build && node --test tests/*.test.mjs
+
+
+> @football-intelligence/system-integration-orchestration-observability@0.1.0 build
+> tsc
+
+TAP version 13
+# Subtest: event valid
+ok 1 - event valid
+  ---
+  duration_ms: 1.118071
+  type: 'test'
+  ...
+# Subtest: missing dependency waits
+ok 2 - missing dependency waits
+  ---
+  duration_ms: 0.296731
+  type: 'test'
+  ...
+# Subtest: idempotent success skips duplicate
+ok 3 - idempotent success skips duplicate
+  ---
+  duration_ms: 0.122474
+  type: 'test'
+  ...
+# Subtest: open circuit blocks
+ok 4 - open circuit blocks
+  ---
+  duration_ms: 0.09275
+  type: 'test'
+  ...
+# Subtest: circuit opens after failures
+ok 5 - circuit opens after failures
+  ---
+  duration_ms: 0.177403
+  type: 'test'
+  ...
+# Subtest: backpressure pauses stale huge queue
+ok 6 - backpressure pauses stale huge queue
+  ---
+  duration_ms: 0.122648
+  type: 'test'
+  ...
+# Subtest: SLO burn detects budget burn
+ok 7 - SLO burn detects budget burn
+  ---
+  duration_ms: 0.134272
+  type: 'test'
+  ...
+# Subtest: successful stage run requires output hash
+ok 8 - successful stage run requires output hash
+  ---
+  duration_ms: 0.118735
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.05721
+===== global-football-testing-verification-system-assurance-contract-v0.1 =====
+
+> @football-intelligence/testing-verification-system-assurance@0.1.0 check
+> npm run typecheck && npm test
+
+
+> @football-intelligence/testing-verification-system-assurance@0.1.0 typecheck
+> tsc --noEmit
+
+src/assurance/gate.ts(4,25): error TS2339: Property 'critical' does not exist on type 'TestResult'.

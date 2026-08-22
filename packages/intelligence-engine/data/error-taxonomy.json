@@ -1,0 +1,8 @@
+{
+  "version":"0.1",
+  "classes":[
+    "PROBABILITY_CALIBRATION","DISTRIBUTION_SHAPE","TEAM_STRENGTH","FINISHING_VARIANCE",
+    "EVENT_SHOCK","PRICE_ERROR","DATA_ERROR","REGIME_DRIFT"
+  ],
+  "one_match_retune_allowed": false
+}

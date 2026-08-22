@@ -1,0 +1,46 @@
+{
+  "gate": "Gate 1 \u2014 Historical Truth Layer",
+  "build_status": "COMPLETE",
+  "system_build_completion_after_gate": 57,
+  "evidence_maturity": {
+    "p002_closing_confirmed_full_qualifiers": 0,
+    "target": 30,
+    "note": "Evidence maturity is runtime learning, not software-build completion."
+  },
+  "primary_closing_source": {
+    "source": "Footiqo",
+    "provider": "1xBet",
+    "url": "https://footiqo.com/database/leagues/usa-mls/",
+    "markets": [
+      "O2.5",
+      "U2.5",
+      "O3.5",
+      "U3.5"
+    ],
+    "semantics": "closing odds"
+  },
+  "secondary_closing_source": {
+    "source": "OddsPortal",
+    "url": "https://www.oddsportal.com/results/",
+    "semantics": "historical archived closing odds"
+  },
+  "p002_price_rule": {
+    "o25_max": 1.6,
+    "u35_min": 1.55,
+    "u35_max": 1.75,
+    "locked": true,
+    "locked_at": "2026-08-20T02:52:00+03:00"
+  },
+  "truth_requirements": [
+    "canonical date+home+away identity",
+    "source registry",
+    "quote type classification",
+    "closing-only validation eligibility",
+    "same-match exact market line",
+    "duplicate detection",
+    "invalid/missing odds quarantine",
+    "audit reasons",
+    "frozen P002 price gate",
+    "separate build completion from evidence maturity"
+  ]
+}

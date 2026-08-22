@@ -1,0 +1,2 @@
+match_id,date,season,regime,outcome_u35,market_prob,poisson_prob,negbin_prob,ensemble_prob,entry_odds
+example-1,2025-01-01,2025,early,1,0.59,0.64,0.62,0.61,1.70
