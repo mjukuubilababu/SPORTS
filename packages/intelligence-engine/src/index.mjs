@@ -21,3 +21,5 @@ export * from './provider-odds-adapter.mjs';
 export * from './real-market-processing.mjs';
 export * from './venue-strength-model.mjs';
 export * from './independent-model-processing.mjs';
+export * from './lineup-final-gate.mjs';
+export * from './final-prematch-processing.mjs';
