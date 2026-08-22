@@ -21,7 +21,8 @@
     "capacity-scalability-cost v0.1",
     "testing-verification-assurance v0.1 + integration defect fix",
     "intelligence-engine v0.1",
-    "qualified-signal-set contract v0.1"
+    "qualified-signal-set contract v0.1",
+    "match-outcome-1x2-live capability v0.1"
   ],
   "verified_runtime_checks": "15/15 PASS",
   "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
@@ -45,5 +46,24 @@
     "risk_separation": "RISK_MAY_RESTRICT_EXECUTION_BUT_CANNOT_REWRITE_QUALIFICATION_HISTORY",
     "p002_frozen_rules_sha256": "82832c4c255f91a3307f8e74506eca01fa899abc3b0961dbc6332d75542a4d0d",
     "capital_effect": "NONE"
+  },
+  "match_outcome_1x2_live": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
+    "branch": "feature/1x2-live-outcome-v0.1",
+    "tests": "7/7 PASS",
+    "repo_ci": "NO_COMMIT_WORKFLOW_RUN_AVAILABLE_FOR_BRANCH",
+    "capabilities": [
+      "PRE_MATCH_HOME_DRAW_AWAY_PROBABILITIES",
+      "IMMUTABLE_PRE_MATCH_SNAPSHOT",
+      "LIVE_SCORE_AND_TIME_REFORECAST",
+      "EXPLICIT_EVIDENCE_DRIVEN_RATE_MULTIPLIERS",
+      "FINAL_RESULT_SETTLEMENT",
+      "BRIER_AND_LOG_LOSS_SCORING",
+      "CONFUSION_MATRIX_AND_PER_CLASS_EVALUATION"
+    ],
+    "governance": "NO_HINDSIGHT; LIVE_SEPARATE_FROM_PREMATCH; NO_SILENT_LIVE_HEURISTICS; NO_AUTO_RETUNE",
+    "capital_effect": "NONE",
+    "real_money": "NO"
   }
 }
