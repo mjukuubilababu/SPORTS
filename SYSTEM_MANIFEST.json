@@ -23,7 +23,8 @@
     "intelligence-engine v0.1",
     "qualified-signal-set contract v0.1",
     "match-outcome-1x2-live capability v0.1",
-    "multi-bookmaker-market-intelligence capability v0.1"
+    "multi-bookmaker-market-intelligence capability v0.1",
+    "operational-trial-processing capability v0.1"
   ],
   "verified_runtime_checks": "15/15 PASS",
   "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
@@ -70,10 +71,11 @@
   },
   "multi_bookmaker_market_intelligence": {
     "version": "v0.1",
-    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
-    "branch": "feature/multi-bookmaker-market-intelligence-v0.1",
+    "status": "MERGED_CANONICAL_RUNTIME_VERIFIED",
+    "merged_via_pr": 2,
+    "merge_commit": "e7ade9ccb24da22a5a99d9157755b27e8569ebfb",
     "tests": "7/7 PASS_LOCAL_MODULE_RUNTIME",
-    "full_package_ci": "NOT_CLAIMED_NO_AUTOMATIC_REPO_CI_AND_CONTAINER_GITHUB_NETWORK_UNAVAILABLE",
+    "full_package_ci": "NOT_CLAIMED_NO_AUTOMATIC_REPO_CI",
     "initial_providers": ["BETPAWA", "SPORTPESA", "MBET", "PARIMATCH", "SOKABET"],
     "capabilities": [
       "PROVIDER_REGISTRY_AND_INGESTION_GOVERNANCE",
@@ -86,6 +88,21 @@
       "PAPER_ONLY_ONE_OR_TWO_COMBINATION_SETS"
     ],
     "governance": "OFFICIAL_OR_APPROVED_PUBLIC_OR_LICENSED_DATA_ONLY; NO_PRIVATE_ENDPOINT_REVERSE_ENGINEERING; HYPOTHESES_NOT_INTERNAL_FACTS; VERIFIED_INDEPENDENCE_REQUIRED_FOR_COMBINATIONS; NO_AUTO_EXECUTION",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "operational_trial_processing": {
+    "version": "v0.1",
+    "status": "IMPLEMENTED_ON_FEATURE_BRANCH_RUNTIME_VERIFIED",
+    "branch": "feature/operational-trial-runner-v0.1",
+    "tests": "5/5 PASS_LOCAL_RUNTIME",
+    "smoke_batch": "5 EVENTS -> 3 QUALIFIED, 1 WATCH, 1 WAIT, 3 GATE5 DRAFTS, 2 PAPER COMBINATION SETS",
+    "input": "packages/intelligence-engine/data/trial-market-batch-v0.1.json",
+    "runner": "scripts/run_trial_market_intelligence.mjs",
+    "commands": ["npm run trial", "npm run trial:write"],
+    "flow": "TRIAL_BATCH -> 1X2_MODEL -> BOOKMAKER_DEVIG_CONSENSUS -> EDGE_EV -> QUALIFICATION -> RANKING -> GATE5_SIGNAL_DRAFTS -> PAPER_COMBINATIONS",
+    "gate5_compatibility": "QUALIFIED_EVENTS_EMIT_DRAFTS_FOR_EXISTING_FREEZE_PAPER_EXECUTE_CLOSE_SETTLE_FLOW",
+    "fixture_policy": "INCLUDED_BATCH_IS_SYNTHETIC_AND_NOT_CURRENT_BOOKMAKER_QUOTES",
     "capital_effect": "NONE",
     "real_money": "NO"
   }
