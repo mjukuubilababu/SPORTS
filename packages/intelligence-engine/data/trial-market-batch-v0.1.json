@@ -1,0 +1,95 @@
+{
+  "batchId": "TRIAL-GLOBAL-2026-08-23-001",
+  "fixtureNature": "SYNTHETIC_OPERATIONAL_TRIAL_NOT_CURRENT_BOOKMAKER_QUOTES",
+  "capturedAt": "2026-08-23T00:10:00+03:00",
+  "events": [
+    {
+      "eventId": "TRIAL-EPL-001",
+      "league": "EPL",
+      "homeTeam": "Arsenal",
+      "awayTeam": "Chelsea",
+      "kickoffAt": "2026-08-24T19:00:00Z",
+      "marketKey": "1X2_90M",
+      "model": {"homeLambda": 1.8, "awayLambda": 1.0, "modelVersion": "M-TRIAL-1X2-V0.1", "featureVersion": "F-TRIAL-V0.1"},
+      "evidenceMaturity": 85,
+      "lineupGate": "PASS",
+      "independenceVerified": true,
+      "correlationGroup": "EPL-ROUND-A",
+      "bookmakerSnapshots": [
+        {"provider": "BETPAWA", "observedAt": "2026-08-22T21:09:10Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 2.00, "DRAW": 3.50, "AWAY": 3.80}},
+        {"provider": "SPORTPESA", "observedAt": "2026-08-22T21:09:30Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 2.02, "DRAW": 3.45, "AWAY": 3.75}},
+        {"provider": "PARIMATCH", "observedAt": "2026-08-22T21:09:45Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 1.98, "DRAW": 3.55, "AWAY": 3.85}}
+      ]
+    },
+    {
+      "eventId": "TRIAL-SERIEA-001",
+      "league": "SERIE_A",
+      "homeTeam": "Inter",
+      "awayTeam": "Torino",
+      "kickoffAt": "2026-08-25T18:45:00Z",
+      "marketKey": "1X2_90M",
+      "model": {"homeLambda": 2.0, "awayLambda": 0.9, "modelVersion": "M-TRIAL-1X2-V0.1", "featureVersion": "F-TRIAL-V0.1"},
+      "evidenceMaturity": 90,
+      "lineupGate": "PASS",
+      "independenceVerified": true,
+      "correlationGroup": "SERIEA-ROUND-A",
+      "bookmakerSnapshots": [
+        {"provider": "BETPAWA", "observedAt": "2026-08-22T21:09:05Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 1.72, "DRAW": 3.80, "AWAY": 5.00}},
+        {"provider": "MBET", "observedAt": "2026-08-22T21:09:22Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 1.75, "DRAW": 3.75, "AWAY": 4.90}},
+        {"provider": "SOKABET", "observedAt": "2026-08-22T21:09:39Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 1.70, "DRAW": 3.85, "AWAY": 5.10}}
+      ]
+    },
+    {
+      "eventId": "TRIAL-LALIGA-001",
+      "league": "LA_LIGA",
+      "homeTeam": "Sevilla",
+      "awayTeam": "Villarreal",
+      "kickoffAt": "2026-08-25T20:00:00Z",
+      "marketKey": "1X2_90M",
+      "model": {"homeLambda": 1.0, "awayLambda": 1.6, "modelVersion": "M-TRIAL-1X2-V0.1", "featureVersion": "F-TRIAL-V0.1"},
+      "evidenceMaturity": 88,
+      "lineupGate": "PASS",
+      "independenceVerified": true,
+      "correlationGroup": "LALIGA-ROUND-A",
+      "bookmakerSnapshots": [
+        {"provider": "SPORTPESA", "observedAt": "2026-08-22T21:09:12Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 3.00, "DRAW": 3.30, "AWAY": 2.35}},
+        {"provider": "PARIMATCH", "observedAt": "2026-08-22T21:09:28Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 3.05, "DRAW": 3.25, "AWAY": 2.38}},
+        {"provider": "BETPAWA", "observedAt": "2026-08-22T21:09:44Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 2.95, "DRAW": 3.35, "AWAY": 2.32}}
+      ]
+    },
+    {
+      "eventId": "TRIAL-MLS-001",
+      "league": "MLS",
+      "homeTeam": "San Diego FC",
+      "awayTeam": "Colorado Rapids",
+      "kickoffAt": "2026-08-26T02:30:00Z",
+      "marketKey": "1X2_90M",
+      "model": {"homeLambda": 1.4, "awayLambda": 1.1, "modelVersion": "M-TRIAL-1X2-V0.1", "featureVersion": "F-TRIAL-V0.1"},
+      "evidenceMaturity": 82,
+      "lineupGate": "PASS",
+      "independenceVerified": true,
+      "correlationGroup": "MLS-ROUND-A",
+      "bookmakerSnapshots": [
+        {"provider": "BETPAWA", "observedAt": "2026-08-22T21:09:14Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 2.25, "DRAW": 3.30, "AWAY": 3.20}},
+        {"provider": "SPORTPESA", "observedAt": "2026-08-22T21:09:31Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 2.28, "DRAW": 3.25, "AWAY": 3.15}},
+        {"provider": "SOKABET", "observedAt": "2026-08-22T21:09:47Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 2.22, "DRAW": 3.35, "AWAY": 3.25}}
+      ]
+    },
+    {
+      "eventId": "TRIAL-LIGUE1-001",
+      "league": "LIGUE_1",
+      "homeTeam": "Lyon",
+      "awayTeam": "Nice",
+      "kickoffAt": "2026-08-26T19:00:00Z",
+      "marketKey": "1X2_90M",
+      "model": {"homeLambda": 1.5, "awayLambda": 1.2, "modelVersion": "M-TRIAL-1X2-V0.1", "featureVersion": "F-TRIAL-V0.1"},
+      "evidenceMaturity": 80,
+      "lineupGate": "PASS",
+      "independenceVerified": true,
+      "correlationGroup": "LIGUE1-ROUND-A",
+      "bookmakerSnapshots": [
+        {"provider": "BETPAWA", "observedAt": "2026-08-22T21:09:20Z", "sourceType": "MANUAL_CAPTURE", "odds": {"HOME": 2.10, "DRAW": 3.35, "AWAY": 3.45}}
+      ]
+    }
+  ]
+}
