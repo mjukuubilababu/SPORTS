@@ -74,8 +74,16 @@ export function processFinalPrematchEvent({
     captureTimezone: finalCaptureBatch.captureTimezone ?? null
   }, options);
 
+  const diagnosticContextRisk = prepared.finalContext?.transitionRisk
+    ?? baseEvent.modelContext?.contextRisk
+    ?? null;
   const withContext = {
     ...result,
+    modelContext: {
+      ...(baseEvent.modelContext ?? {}),
+      contextRisk: diagnosticContextRisk,
+      finalContextVerified: prepared.finalContext?.verified === true
+    },
     confirmedLineup: prepared.lineup,
     kickoffObservation: prepared.kickoff,
     finalContext: prepared.finalContext,
@@ -170,6 +178,7 @@ export function processFinalPrematchBatch(marketBatch, modelDataset, finalCaptur
       verifiedLineupImpactRequiredForLambdaAdjustment: true,
       finalContextProvenanceRequiredToChangeEvidenceMaturity: true,
       modelMarketDirectionConflictBlocksQualification: true,
+      highTransitionLargeDivergenceBlocksQualification: true,
       previousSnapshotsRemainImmutable: true,
       noHindsight: true,
       predictionNotExecution: true,
