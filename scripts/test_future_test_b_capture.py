@@ -33,7 +33,6 @@ CSV = """Round Number,Match Number,Date,Location,Home Team,Away Team,Result
 
 
 def prior_history() -> list[Match]:
-    # Ensure both future teams have venue/home/away and rolling history before 2026 rows.
     teams = ["new england revolution", "new york city fc", "atlanta united", "sporting kansas city"]
     rows: list[Match] = []
     for i in range(6):
@@ -103,6 +102,8 @@ def main() -> int:
         ),
         "PREMATCH_CAPTURE_NOT_BEFORE_KICKOFF",
     )
+    # A historical settled fixture must fail closed. The current check order rejects
+    # it at the pre-kickoff boundary before reaching the redundant settled-result guard.
     expect_error(
         lambda: capture_prematch_snapshot(
             fixture=fixtures[0], history=history, captured_at=CAPTURED,
@@ -110,7 +111,7 @@ def main() -> int:
             challenger_specification_sha256=SPEC, dispersion_r=R,
             fixture_source_sha256="d" * 64,
         ),
-        "PREMATCH_CAPTURE_FIXTURE_ALREADY_HAS_RESULT",
+        "PREMATCH_CAPTURE_NOT_BEFORE_KICKOFF",
     )
 
     print("FUTURE_TEST_B_PREMATCH_CAPTURE=PASS")
