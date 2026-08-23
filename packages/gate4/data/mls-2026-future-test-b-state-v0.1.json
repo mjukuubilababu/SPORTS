@@ -1,0 +1,51 @@
+{
+  "state_version": "MLS_2026_FUTURE_TEST_B_STATE_V0_1",
+  "state": "BLIND_ACCUMULATING",
+  "accumulator_version": "BLIND_FUTURE_TEST_SET_B_ACCUMULATOR_V0_1",
+  "challenger": {
+    "model_version": "P002_NEGBIN_CHALLENGER_V0_1",
+    "specification_sha256": "650d6cdd6eccc31ec0756cd1bfe80b51032e079ba90c00ad950b86db85508c00",
+    "registered_at": "2026-08-23T13:40:00Z",
+    "preregistration_artifact": "packages/gate4/data/negbin-challenger-preregistration-v0.1.json"
+  },
+  "test_set": {
+    "evaluation_set_id": "MLS-2026-FUTURE-TEST-B-V0.1",
+    "target_n": 100,
+    "promotion_eligible_n": 0,
+    "remaining_to_target": 100,
+    "received_n": 0,
+    "rejected_n": 0,
+    "interim_metrics_exposed": false,
+    "evaluation_performed": false,
+    "performance_claim": "NONE_BLIND_ACCUMULATION"
+  },
+  "holdout_a": {
+    "freeze_id": "MLS-2026-REAL-RESEARCH-HOLDOUT-A-V0.1",
+    "reuse_forbidden": true,
+    "match_level_overlap_forbidden": true
+  },
+  "data_requirements": {
+    "future_to_preregistration": true,
+    "immutable_pre_match_prediction_snapshot": true,
+    "immutable_verified_closing_market_snapshot": true,
+    "immutable_verified_pre_match_regime_snapshot": true,
+    "regime_cannot_use_outcome_or_market_odds": true,
+    "verified_post_match_settlement": true,
+    "model_cannot_use_bookmaker_odds": true
+  },
+  "freeze_policy": {
+    "first_100_chronological_promotion_eligible_matches": "TEST_B",
+    "rows_after_first_100": "NEXT_COHORT",
+    "freeze_only_after_all_100_are_settled": true,
+    "evaluation_release": "SEPARATE_FUTURE_STEP_AFTER_FREEZE"
+  },
+  "governance": {
+    "procedural_blind_not_cryptographic_encryption": true,
+    "no_interim_brier_logloss_roi_ev_edge_or_ranking": true,
+    "do_not_inspect_internal_row_level_settlement_for_model_tuning": true,
+    "existing_gate4_thresholds_changed": false,
+    "p002_frozen_rules_changed": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
