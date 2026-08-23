@@ -1,0 +1,59 @@
+{
+  "reference": "REAL_GATE4_ROBUSTNESS_REFERENCE_V0_1",
+  "source_dataset_id": "MLS-2025-WARMUP-PLUS-2026-FOOTIQO-CLOSING-RESEARCH-V0.1",
+  "workflow": {
+    "run_id": 32634841095,
+    "job_id": 97182920698,
+    "head_sha": "03530a2fd00f772222bb9ce8d097f77f2051d973",
+    "artifact_id": 9492017289,
+    "artifact_digest": "sha256:d675b448e20cfe8b6904288b75e78c725d5d484bd376219003c1f551bda7fb6f",
+    "conclusion": "success"
+  },
+  "n": 25,
+  "scores": {
+    "market": {
+      "brier": 0.19797293975373573,
+      "logloss": 0.5860065861003126,
+      "hit_rate_at_50": 0.76,
+      "calibration_error": 0.12081175251434083
+    },
+    "poisson": {
+      "brier": 0.21280990652676027,
+      "logloss": 0.6213511228809192,
+      "hit_rate_at_50": 0.68,
+      "calibration_error": 0.09276652174675235
+    }
+  },
+  "descriptive_leader": "market",
+  "incumbent": "market",
+  "challenger": "poisson",
+  "promotion_state": "BLOCK_PROMOTION",
+  "promote_poisson": false,
+  "checks": {
+    "minimum_n": {"required": 100, "actual": 25, "pass": false},
+    "brier_vs_market": false,
+    "logloss_vs_market": false,
+    "walk_forward": {"folds": 0, "required_win_rate": 0.6, "pass": false},
+    "regime_consistency": {"metadata_available": false, "pass": false}
+  },
+  "missing_challengers": ["negative_binomial", "ensemble"],
+  "reasons": [
+    "N 25 < 100",
+    "Poisson challenger does not beat market on Brier",
+    "Poisson challenger does not beat market on LogLoss",
+    "No walk-forward fold: research N is below minimum training requirement",
+    "Verified regime metadata unavailable",
+    "Negative-binomial challenger unavailable from independent production predictions",
+    "Ensemble challenger unavailable from independently generated production predictions"
+  ],
+  "governance": {
+    "descriptive_leader_is_promoted_champion": false,
+    "market_remains_incumbent_when_promotion_blocked": true,
+    "challenger_probability_fabrication": false,
+    "regime_inference_from_outcome_or_market": false,
+    "retune_on_evaluation_sample": false,
+    "gate4_min_n_changed": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
