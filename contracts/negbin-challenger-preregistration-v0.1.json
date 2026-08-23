@@ -1,0 +1,32 @@
+{
+  "contract": "negative-binomial-challenger-preregistration",
+  "version": "v0.1",
+  "model_version": "P002_NEGBIN_CHALLENGER_V0_1",
+  "target": "UNDER_3_5_REGULATION_90",
+  "distribution": "NB2",
+  "mean_source": "GATE2_PRE_LINEUP_LAMBDA_UNCHANGED",
+  "variance": "mu + mu^2 / r",
+  "dispersion_training": {
+    "method": "MLE_LOG_DISPERSION_GOLDEN_SECTION_V0_1",
+    "training_season": 2025,
+    "source": "cross-source verified MLS 2025 history",
+    "minimum_training_n": 30,
+    "bookmaker_odds_allowed": false,
+    "holdout_a_allowed": false
+  },
+  "probability": "sum NB2 PMF for total goals 0 through 3",
+  "preregistration": {
+    "fitted_r_must_be_frozen_before_test_b": true,
+    "specification_hash_required": true,
+    "training_match_ids_required": true,
+    "post_registration_parameter_change_requires_new_version": true
+  },
+  "evaluation": {
+    "holdout_a": "FORBIDDEN",
+    "future_disjoint_test_b": "REQUIRED",
+    "existing_gate4_min_n_and_robustness_rules_unchanged": true
+  },
+  "p002_frozen_rules_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
