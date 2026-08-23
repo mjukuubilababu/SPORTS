@@ -1,0 +1,63 @@
+{
+  "contract": "Half-Specific Intelligence v0.1",
+  "scope": "football pre-match first-half, second-half and cross-half outcome reasoning",
+  "input": {
+    "full_time_model": ["homeLambda", "awayLambda"],
+    "half_profile": [
+      "profileId",
+      "sourceSeason",
+      "sampleSize",
+      "homeFirstHalfGoalShare",
+      "awayFirstHalfGoalShare",
+      "sources",
+      "sourceVerification.primaryHalfStats",
+      "sourceVerification.independenceFromMarket",
+      "sourceVerification.preMatchOnly"
+    ],
+    "minimum_sample": 30
+  },
+  "verification": {
+    "half_profile_required": true,
+    "minimum_sample_required": true,
+    "independent_from_bookmaker_market": true,
+    "pre_match_only": true,
+    "blind_50_50_split_forbidden": true
+  },
+  "derived_model": {
+    "first_half": ["homeLambda", "awayLambda", "expectedGoals"],
+    "second_half": ["homeLambda", "awayLambda", "expectedGoals"],
+    "invariant": "FIRST_HALF_LAMBDA + SECOND_HALF_LAMBDA = FULL_TIME_LAMBDA_PER_TEAM"
+  },
+  "supported_markets_after_verified_half_model": [
+    "1X2_FIRST_HALF",
+    "1X2_SECOND_HALF",
+    "OVER_UNDER_FIRST_HALF",
+    "OVER_UNDER_SECOND_HALF",
+    "DOUBLE_CHANCE_FIRST_HALF",
+    "DOUBLE_CHANCE_SECOND_HALF",
+    "BTTS_FIRST_HALF",
+    "BTTS_SECOND_HALF",
+    "CORRECT_SCORE_FIRST_HALF",
+    "HALF_TIME_FULL_TIME",
+    "HALF_WITH_MORE_GOALS",
+    "HOME_WIN_BOTH_HALVES",
+    "AWAY_WIN_BOTH_HALVES",
+    "HOME_WIN_EITHER_HALF",
+    "AWAY_WIN_EITHER_HALF"
+  ],
+  "joint_reasoning": {
+    "half_time_full_time": "computed from joint first-half and second-half score distributions",
+    "half_with_more_goals": "computed from joint first-half and second-half total-goal distributions",
+    "win_either_or_both_halves": "computed from half-specific result events"
+  },
+  "unsupported_without_specialized_models": ["GOALSCORER", "CARDS", "CORNERS"],
+  "governance": {
+    "bookmaker_odds_cannot_create_half_probabilities": true,
+    "unverified_half_profile_state": "HALF_MODEL_NOT_VERIFIED",
+    "probability_and_value_rankings_separate": true,
+    "canonical_evidence_lineup_context_gates_remain_authoritative": true,
+    "probability_is_not_guarantee": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
