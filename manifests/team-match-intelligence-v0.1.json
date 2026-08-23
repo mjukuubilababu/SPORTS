@@ -1,0 +1,33 @@
+{
+  "capability": "team-match-intelligence",
+  "version": "v0.1",
+  "status": "MERGED_CANONICAL_TESTS_AUTHORED_STATIC_REVIEWED",
+  "merged_via_pr": 11,
+  "merge_commit": "1e21e1ce1cf7558c0e3d2b0a44dc0c2205deda87",
+  "source_branch": "feature/team-match-intelligence-v0.1",
+  "tests": "11 AUTHORED",
+  "full_repository_runtime": "NOT_CLAIMED_CONTAINER_CANNOT_RESOLVE_GITHUB_HOST",
+  "static_review": "PASS_WITH_PREMERGE_FIX_FOR_CROSS_DOMAIN_CORRELATION_AND_CALIBRATION_DOUBLE_COUNTING",
+  "domains": [
+    "PLAYER_MATCHUP",
+    "TEAM_COHESION",
+    "PLAYER_QUALITY_AND_COHESION",
+    "TRANSFER_IMPACT",
+    "ATTACK_VS_DEFENCE",
+    "TEMPORAL_SCORING_DEFENDING",
+    "LEAGUE_AND_CLUB_STRENGTH",
+    "SHOT_AND_CHANCE_QUALITY",
+    "POSITION_HOME_AWAY_ENVIRONMENT",
+    "HEAD_TO_HEAD",
+    "MATCH_STATISTICS_PATTERNS"
+  ],
+  "contract": "contracts/team-match-intelligence-v0.1.json",
+  "docs": "docs/team-match-intelligence-v0.1.md",
+  "runner": "scripts/run_team_match_intelligence.mjs",
+  "command": "npm run team:match -- <input.json> [output.json]",
+  "decision_universe_version": "MATCH_DECISION_UNIVERSE_V0_3_TEAM_INTELLIGENCE",
+  "flow": "INDEPENDENT_TEAM_MODEL -> TEAM_MATCH_INTELLIGENCE -> COUNTER_EVIDENCE_AND_CORRELATION_CONTROL -> OPTIONAL_VERIFIED_CALIBRATED_LAMBDA_ADJUSTMENT -> TEAM_REALITY -> BIDIRECTIONAL_OUTCOMES -> HALF_REASONING -> MARKET_MAPPING -> FAIR_PRICE_EDGE_EV -> FINAL_CANONICAL_GATES",
+  "governance": "TEAM_FIRST_NOT_MARKET_FIRST; POSITIVE_AND_NEGATIVE_EVIDENCE; STALE_UNVERIFIED_WEIGHT_ZERO; CORRELATION_FAMILY_COUNTS_ONCE; BOOKMAKER_ODDS_FORBIDDEN_FROM_CALIBRATION; UNCALIBRATED_INTELLIGENCE_CANNOT_REWRITE_LAMBDA; PARTIAL_INTELLIGENCE_BLOCKS_ROBUST_TRUTH; NO_GUARANTEE",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
