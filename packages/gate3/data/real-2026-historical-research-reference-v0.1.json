@@ -2,10 +2,11 @@
   "reference": "REAL_2026_HISTORICAL_RESEARCH_REFERENCE_V0_1",
   "dataset_id": "MLS-2025-WARMUP-PLUS-2026-FOOTIQO-CLOSING-RESEARCH-V0.1",
   "workflow": {
-    "run_id": 32634568226,
-    "job_id": 97182269537,
-    "artifact_id": 9491948223,
-    "artifact_digest": "sha256:df23a1112339d5c7bd428b6ed83d973be9570da5f268e7be406fa260cc3b30fa",
+    "run_id": 32634639662,
+    "job_id": 97182439522,
+    "artifact_id": 9491966730,
+    "artifact_digest": "sha256:b0c89b8378a7e4380fb6398292ad25fbabaef1b35cbe554fdfdadb42a395d65d",
+    "head_sha": "23ae8d72adc49ead2b0ad31b41e574853d8b7405",
     "conclusion": "success"
   },
   "sources": {
