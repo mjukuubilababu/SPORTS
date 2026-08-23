@@ -7,6 +7,8 @@ import json
 from math import isfinite
 from typing import Dict
 
+from future_test_b_transition import attach_verified_closing_market
+
 
 POLICY_VERSION = "OPERATIONAL_CLOSING_BENCHMARK_V0_1"
 SEMANTICS_ID = "OPERATIONAL_PREKICKOFF_CLOSE_300S_V0_1"
@@ -98,6 +100,31 @@ def validate_operational_close(observation: OperationalCloseObservation) -> Oper
         semantics_id=SEMANTICS_ID,
         seconds_before_kickoff=seconds_before,
         reasons=tuple(reasons),
+    )
+
+
+def attach_operational_close(prematch: Dict, observation: OperationalCloseObservation) -> Dict:
+    if prematch.get("match_id") != observation.match_id:
+        raise ValueError("MARKET_MATCH_ID_MISMATCH")
+    if prematch.get("kickoff_at") != observation.kickoff_at:
+        raise ValueError("MARKET_KICKOFF_MISMATCH")
+    decision = validate_operational_close(observation)
+    if not decision.accepted:
+        raise ValueError("OPERATIONAL_CLOSE_REJECTED:" + ",".join(decision.reasons))
+    return attach_verified_closing_market(
+        prematch,
+        provider=observation.provider,
+        source=observation.source,
+        source_url=observation.source_url,
+        observed_at=observation.observed_at,
+        over35_odds=observation.over35_odds,
+        under35_odds=observation.under35_odds,
+        source_verified=True,
+        closing_semantics_verified=True,
+        closing_semantics_id=SEMANTICS_ID,
+        source_observation_sha256=observation.raw_observation_sha256,
+        source_class=observation.source_class,
+        seconds_before_kickoff=decision.seconds_before_kickoff,
     )
 
 
