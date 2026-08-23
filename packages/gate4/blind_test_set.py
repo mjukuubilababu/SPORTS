@@ -38,11 +38,19 @@ def _sha256(value: object) -> str:
     return sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def _looks_sha256(value: str) -> bool:
+    value = str(value or "")
+    return len(value) == 64 and all(char in "0123456789abcdef" for char in value.lower())
+
+
 @dataclass(frozen=True)
 class BlindCandidate:
     match_id: str
     competition: str
     kickoff_at: str
+
+    prediction_snapshot_id: str
+    prediction_snapshot_sha256: str
     prediction_frozen_at: str
     poisson_model_version: str
     poisson_probability_u35: float
@@ -50,6 +58,9 @@ class BlindCandidate:
     negbin_specification_sha256: str
     negbin_probability_u35: float
     model_uses_market_odds: bool
+
+    market_snapshot_id: str
+    market_snapshot_sha256: str
     market_provider: str
     market_source: str
     market_source_url: str
@@ -57,6 +68,9 @@ class BlindCandidate:
     market_fair_probability_u35: float
     market_source_verified: bool
     closing_semantics_verified: bool
+
+    regime_snapshot_id: str
+    regime_snapshot_sha256: str
     regime_label: str
     regime_source: str
     regime_source_url: str
@@ -64,6 +78,10 @@ class BlindCandidate:
     regime_verified: bool
     regime_uses_outcome: bool
     regime_uses_market_odds: bool
+
+    settlement_source: str
+    settlement_source_url: str
+    settlement_verified: bool
     settled_at: str
     home_goals: int
     away_goals: int
@@ -107,6 +125,9 @@ def candidate_from_mapping(raw: Dict) -> BlindCandidate:
         match_id=str(raw.get("match_id") or ""),
         competition=str(raw.get("competition") or ""),
         kickoff_at=str(raw.get("kickoff_at") or ""),
+
+        prediction_snapshot_id=str(prediction.get("snapshot_id") or ""),
+        prediction_snapshot_sha256=str(prediction.get("snapshot_sha256") or ""),
         prediction_frozen_at=str(prediction.get("frozen_at") or ""),
         poisson_model_version=str(prediction.get("poisson_model_version") or ""),
         poisson_probability_u35=prediction.get("poisson_probability_u35"),
@@ -114,6 +135,9 @@ def candidate_from_mapping(raw: Dict) -> BlindCandidate:
         negbin_specification_sha256=str(prediction.get("negbin_specification_sha256") or ""),
         negbin_probability_u35=prediction.get("negbin_probability_u35"),
         model_uses_market_odds=bool(prediction.get("uses_market_odds", False)),
+
+        market_snapshot_id=str(market.get("snapshot_id") or ""),
+        market_snapshot_sha256=str(market.get("snapshot_sha256") or ""),
         market_provider=str(market.get("provider") or ""),
         market_source=str(market.get("source") or ""),
         market_source_url=str(market.get("source_url") or ""),
@@ -121,6 +145,9 @@ def candidate_from_mapping(raw: Dict) -> BlindCandidate:
         market_fair_probability_u35=market.get("fair_probability_u35"),
         market_source_verified=market.get("source_verified") is True,
         closing_semantics_verified=market.get("closing_semantics_verified") is True,
+
+        regime_snapshot_id=str(regime.get("snapshot_id") or ""),
+        regime_snapshot_sha256=str(regime.get("snapshot_sha256") or ""),
         regime_label=str(regime.get("label") or ""),
         regime_source=str(regime.get("source") or ""),
         regime_source_url=str(regime.get("source_url") or ""),
@@ -128,6 +155,10 @@ def candidate_from_mapping(raw: Dict) -> BlindCandidate:
         regime_verified=regime.get("verified") is True,
         regime_uses_outcome=bool(regime.get("uses_outcome", False)),
         regime_uses_market_odds=bool(regime.get("uses_market_odds", False)),
+
+        settlement_source=str(settlement.get("source") or ""),
+        settlement_source_url=str(settlement.get("source_url") or ""),
+        settlement_verified=settlement.get("verified") is True,
         settled_at=str(settlement.get("settled_at") or ""),
         home_goals=settlement.get("home_goals"),
         away_goals=settlement.get("away_goals"),
@@ -166,6 +197,10 @@ def validate_candidate(
             reasons.append("MATCH_NOT_FUTURE_TO_CHALLENGER_REGISTRATION")
         if prediction_time <= registration_time:
             reasons.append("PREDICTION_NOT_CREATED_AFTER_PREREGISTRATION")
+        if market_time <= registration_time:
+            reasons.append("MARKET_OBSERVATION_NOT_CREATED_AFTER_PREREGISTRATION")
+        if regime_time <= registration_time:
+            reasons.append("REGIME_METADATA_NOT_CREATED_AFTER_PREREGISTRATION")
         if prediction_time >= kickoff:
             reasons.append("PREDICTION_NOT_FROZEN_PRE_KICKOFF")
         if market_time >= kickoff:
@@ -175,6 +210,8 @@ def validate_candidate(
         if settled_time <= kickoff:
             reasons.append("SETTLEMENT_NOT_POST_KICKOFF")
 
+    if not candidate.prediction_snapshot_id or not _looks_sha256(candidate.prediction_snapshot_sha256):
+        reasons.append("IMMUTABLE_PREDICTION_SNAPSHOT_ID_AND_SHA256_REQUIRED")
     if candidate.negbin_model_version != challenger_model_version:
         reasons.append("CHALLENGER_MODEL_VERSION_MISMATCH")
     if candidate.negbin_specification_sha256 != challenger_specification_sha256:
@@ -186,6 +223,8 @@ def validate_candidate(
     if not _prob(candidate.poisson_probability_u35) or not _prob(candidate.negbin_probability_u35):
         reasons.append("MODEL_PROBABILITY_INVALID")
 
+    if not candidate.market_snapshot_id or not _looks_sha256(candidate.market_snapshot_sha256):
+        reasons.append("IMMUTABLE_MARKET_SNAPSHOT_ID_AND_SHA256_REQUIRED")
     if not _prob(candidate.market_fair_probability_u35):
         reasons.append("MARKET_FAIR_PROBABILITY_INVALID")
     if not candidate.market_provider or not candidate.market_source or not candidate.market_source_url:
@@ -195,6 +234,8 @@ def validate_candidate(
     if not candidate.closing_semantics_verified:
         reasons.append("CLOSING_SEMANTICS_NOT_VERIFIED")
 
+    if not candidate.regime_snapshot_id or not _looks_sha256(candidate.regime_snapshot_sha256):
+        reasons.append("IMMUTABLE_REGIME_SNAPSHOT_ID_AND_SHA256_REQUIRED")
     if not candidate.regime_label or not candidate.regime_source or not candidate.regime_source_url:
         reasons.append("VERIFIED_REGIME_PROVENANCE_REQUIRED")
     if not candidate.regime_verified:
@@ -204,6 +245,10 @@ def validate_candidate(
     if candidate.regime_uses_market_odds:
         reasons.append("REGIME_DERIVED_FROM_MARKET_FORBIDDEN")
 
+    if not candidate.settlement_source or not candidate.settlement_source_url:
+        reasons.append("SETTLEMENT_PROVENANCE_REQUIRED")
+    if not candidate.settlement_verified:
+        reasons.append("SETTLEMENT_NOT_VERIFIED")
     if not isinstance(candidate.home_goals, int) or candidate.home_goals < 0:
         reasons.append("HOME_GOALS_INVALID")
     if not isinstance(candidate.away_goals, int) or candidate.away_goals < 0:
@@ -228,8 +273,8 @@ def build_accumulator(
     forbidden_match_ids: Iterable[str],
     target_n: int = DEFAULT_TARGET_N,
 ) -> Dict:
-    if target_n < 30:
-        raise ValueError("BLIND_TARGET_N_BELOW_MINIMUM_30")
+    if target_n < DEFAULT_TARGET_N:
+        raise ValueError(f"TEST_B_TARGET_BELOW_GATE4_MINIMUM:{target_n}<{DEFAULT_TARGET_N}")
 
     candidates = [candidate_from_mapping(raw) for raw in raw_candidates]
     decisions: List[CandidateDecision] = []
@@ -290,14 +335,17 @@ def build_accumulator(
         "challenger_specification_sha256": challenger_specification_sha256,
         "target_n": target_n,
         "status": status,
-        # Internal auditable records are retained for the eventual freeze. Consumers
-        # must use `blind_public_status()` for analyst-facing progress.
+        # Internal auditable records are retained for the eventual freeze. This is
+        # procedural blinding, not encryption. Analyst-facing progress MUST use
+        # `blind_public_status()` rather than inspecting these records.
         "_accepted_records": [asdict(candidate) for candidate, _ in accepted],
         "_accepted_hashes": [decision.record_sha256 for _, decision in accepted],
         "_decisions": [asdict(decision) for decision in decisions],
         "governance": {
             "procedural_blind_not_cryptographic_encryption": True,
             "analyst_facing_progress_must_use_blind_public_status": True,
+            "immutable_prediction_market_regime_snapshot_hashes_required": True,
+            "verified_post_match_settlement_required": True,
             "no_interim_performance_metrics": True,
             "no_interim_model_ranking": True,
             "first_target_n_chronological_records_form_test_b": True,
@@ -331,13 +379,16 @@ def freeze_test_set_b(
         raise ValueError(f"TEST_B_TARGET_NOT_REACHED:{len(records)}<{target_n}")
     if not freeze_id:
         raise ValueError("FREEZE_ID_REQUIRED")
-    _iso(frozen_at)
+    frozen_time = _iso(frozen_at)
 
     selected_records = records[:target_n]
     selected_hashes = hashes[:target_n]
     match_ids = tuple(record["match_id"] for record in selected_records)
     if len(set(match_ids)) != target_n:
         raise ValueError("TEST_B_MATCH_IDS_NOT_UNIQUE")
+    latest_settlement = max(_iso(record["settled_at"]) for record in selected_records)
+    if frozen_time <= latest_settlement:
+        raise ValueError("TEST_B_FREEZE_MUST_FOLLOW_ALL_SELECTED_SETTLEMENTS")
 
     fingerprint_payload = {
         "freeze_id": freeze_id,
