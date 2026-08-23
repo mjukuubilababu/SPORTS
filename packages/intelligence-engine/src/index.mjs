@@ -28,3 +28,4 @@ export * from './market-mapping.mjs';
 export * from './match-decision-universe.mjs';
 export * from './half-specific-model.mjs';
 export * from './half-specific-reasoning.mjs';
+export * from './real-half-profile-processing.mjs';
