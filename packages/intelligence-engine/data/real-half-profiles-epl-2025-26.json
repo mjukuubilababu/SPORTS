@@ -1,0 +1,80 @@
+{
+  "datasetId": "REAL-HALF-PROFILES-EPL-2025-26-2026-08-23",
+  "dataNature": "REAL_INDEPENDENT_HISTORICAL_HALF_GOAL_PROFILE",
+  "capturedAt": "2026-08-23T01:15:56Z",
+  "captureTimezone": "Africa/Dar_es_Salaam",
+  "sourceSeason": "EPL_2025_26",
+  "minimumSample": 30,
+  "source": {
+    "provider": "STATBUNKER",
+    "url": "https://www.statbunker.com/competitions/GoalsFor?comp_id=776",
+    "table": "Premier League 25/26 Goals for",
+    "fieldsUsed": ["Goals For", "FH", "SH", "Pld"],
+    "marketIndependent": true
+  },
+  "method": "TEAM_OVERALL_FIRST_HALF_GOAL_SHARE_APPLIED_TO_EXISTING_VENUE_SPECIFIC_FULL_TIME_LAMBDA_BASELINE",
+  "events": [
+    {
+      "eventId": "EPL-2026-08-23-MCI-BOU",
+      "homeTeam": "Manchester City",
+      "awayTeam": "AFC Bournemouth",
+      "halfProfile": {
+        "profileId": "EPL25_26-MCI-BOU-HALF-PROFILE",
+        "sourceSeason": "EPL_2025_26",
+        "sampleSize": 38,
+        "homeFirstHalfGoalShare": 0.5324675324675324,
+        "awayFirstHalfGoalShare": 0.4482758620689655,
+        "raw": {
+          "home": {"goals": 77, "firstHalfGoals": 41, "secondHalfGoals": 36, "played": 38},
+          "away": {"goals": 58, "firstHalfGoals": 26, "secondHalfGoals": 32, "played": 38}
+        },
+        "sources": ["https://www.statbunker.com/competitions/GoalsFor?comp_id=776"],
+        "sourceVerification": {"primaryHalfStats": true, "independenceFromMarket": true, "preMatchOnly": true}
+      }
+    },
+    {
+      "eventId": "EPL-2026-08-23-BHA-AVL",
+      "homeTeam": "Brighton & Hove Albion",
+      "awayTeam": "Aston Villa",
+      "halfProfile": {
+        "profileId": "EPL25_26-BHA-AVL-HALF-PROFILE",
+        "sourceSeason": "EPL_2025_26",
+        "sampleSize": 38,
+        "homeFirstHalfGoalShare": 0.38461538461538464,
+        "awayFirstHalfGoalShare": 0.375,
+        "raw": {
+          "home": {"goals": 52, "firstHalfGoals": 20, "secondHalfGoals": 32, "played": 38},
+          "away": {"goals": 56, "firstHalfGoals": 21, "secondHalfGoals": 35, "played": 38}
+        },
+        "sources": ["https://www.statbunker.com/competitions/GoalsFor?comp_id=776"],
+        "sourceVerification": {"primaryHalfStats": true, "independenceFromMarket": true, "preMatchOnly": true}
+      }
+    },
+    {
+      "eventId": "EPL-2026-08-23-NEW-LIV",
+      "homeTeam": "Newcastle United",
+      "awayTeam": "Liverpool FC",
+      "halfProfile": {
+        "profileId": "EPL25_26-NEW-LIV-HALF-PROFILE",
+        "sourceSeason": "EPL_2025_26",
+        "sampleSize": 38,
+        "homeFirstHalfGoalShare": 0.5283018867924528,
+        "awayFirstHalfGoalShare": 0.38095238095238093,
+        "raw": {
+          "home": {"goals": 53, "firstHalfGoals": 28, "secondHalfGoals": 25, "played": 38},
+          "away": {"goals": 63, "firstHalfGoals": 24, "secondHalfGoals": 39, "played": 38}
+        },
+        "sources": ["https://www.statbunker.com/competitions/GoalsFor?comp_id=776"],
+        "sourceVerification": {"primaryHalfStats": true, "independenceFromMarket": true, "preMatchOnly": true}
+      }
+    }
+  ],
+  "governance": {
+    "bookmakerOddsUsed": false,
+    "profileSampleGatePassed": true,
+    "venueSpecificHalfSplitAvailable": false,
+    "limitation": "HALF_SHARE_IS_TEAM_OVERALL_2025_26_NOT_VENUE_SPECIFIC; FULL_TIME_LAMBDA_REMAINS_VENUE_SPECIFIC",
+    "capitalEffect": "NONE",
+    "realMoney": "NO"
+  }
+}
