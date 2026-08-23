@@ -1,0 +1,352 @@
+{
+  "datasetId": "REAL-FOOTBALL-FEATURES-EPL-2025-26-TO-2026-08-23-V0.1",
+  "capturedAt": "2026-08-23T02:05:00Z",
+  "historicalAsOf": "2026-05-24T18:00:00Z",
+  "statisticalSampleSize": 38,
+  "dataNature": "REAL_HISTORICAL_TEAM_STATS_PLUS_VERIFIED_PREMATCH_CONTEXT",
+  "competition": "EPL",
+  "sourceSeason": "2025/26",
+  "targetSeason": "2026/27",
+  "sourceBundles": {
+    "seasonTeamStats": {
+      "primary": "https://www.statmuse.com/fc/ask?q=team+stats+premier+league+25%2F26",
+      "secondary": [
+        "https://www.statbunker.com/competitions/GoalsFor?comp_id=776",
+        "https://www.statbunker.com/competitions/GoalsAgainst?comp_id=776",
+        "https://www.premierleague.com/en/tables/premier-league/2025-26"
+      ],
+      "verified": true
+    },
+    "seasonDate": {
+      "primary": "https://www.premierleague.com/en/about/faq/fixtures",
+      "verified": true,
+      "note": "2025/26 final match round was 24 May 2026"
+    },
+    "newcastleLeadRetention": {
+      "primary": "https://www.bbc.co.uk/sport/football/articles/c895vwke79lo",
+      "verified": true,
+      "note": "22 points dropped from winning positions as of 22 March 2026; direct partial-season evidence"
+    }
+  },
+  "leagueBenchmarks": {
+    "scope": "ALL_20_EPL_TEAMS_2025_26",
+    "xG": {"min": 33.43, "max": 70.96},
+    "xGA": {"min": 29.98, "max": 74.99},
+    "shots": {"min": 355, "max": 595},
+    "shotsOnTarget": {"min": 118, "max": 215},
+    "goalsFor": {"min": 27, "max": 77},
+    "goalsAgainst": {"min": 27, "max": 75},
+    "points": {"min": 20, "max": 85},
+    "xGPerShot": {"min": 0.094169, "max": 0.147975},
+    "shotsOnTargetRate": {"min": 0.288981, "max": 0.362963},
+    "goalsForFirst15": {"min": 2, "max": 9},
+    "goalsForLast10": {"min": 4, "max": 19},
+    "goalsForSecondHalf": {"min": 14, "max": 41},
+    "goalsAgainstFirst15": {"min": 0, "max": 14},
+    "goalsAgainstLast10": {"min": 4, "max": 18},
+    "goalsAgainstSecondHalf": {"min": 17, "max": 40},
+    "policy": "LEAGUE_WIDE_MIN_MAX_NORMALIZATION_V0_1_NOT_SIX_TEAM_NORMALIZATION"
+  },
+  "teams": {
+    "MCI": {
+      "name": "Manchester City",
+      "matches": 38,
+      "points": 78,
+      "xG": 70.96,
+      "xGA": 44.54,
+      "shots": 595,
+      "shotsOnTarget": 205,
+      "goalsFor": 77,
+      "goalsAgainst": 35,
+      "zeroGoalMatches": 4,
+      "cleanSheets": 16,
+      "homeMatches": 19,
+      "homeGoalsFor": 45,
+      "homeGoalsAgainst": 14,
+      "awayMatches": 19,
+      "awayGoalsFor": 32,
+      "awayGoalsAgainst": 21,
+      "goalsForFirstHalf": 41,
+      "goalsForSecondHalf": 36,
+      "goalsForFirst15": 9,
+      "goalsForLast10": 13,
+      "goalsAgainstFirstHalf": 10,
+      "goalsAgainstSecondHalf": 25,
+      "goalsAgainstFirst15": 0,
+      "goalsAgainstLast10": 4
+    },
+    "BOU": {
+      "name": "AFC Bournemouth",
+      "matches": 38,
+      "points": 57,
+      "xG": 62.93,
+      "xGA": 55.67,
+      "shots": 526,
+      "shotsOnTarget": 178,
+      "goalsFor": 58,
+      "goalsAgainst": 54,
+      "zeroGoalMatches": 7,
+      "cleanSheets": 11,
+      "homeMatches": 19,
+      "homeGoalsFor": 29,
+      "homeGoalsAgainst": 20,
+      "awayMatches": 19,
+      "awayGoalsFor": 29,
+      "awayGoalsAgainst": 34,
+      "goalsForFirstHalf": 26,
+      "goalsForSecondHalf": 32,
+      "goalsForFirst15": 8,
+      "goalsForLast10": 12,
+      "goalsAgainstFirstHalf": 23,
+      "goalsAgainstSecondHalf": 31,
+      "goalsAgainstFirst15": 5,
+      "goalsAgainstLast10": 10
+    },
+    "BHA": {
+      "name": "Brighton & Hove Albion",
+      "matches": 38,
+      "points": 53,
+      "xG": 56.74,
+      "xGA": 51.04,
+      "shots": 494,
+      "shotsOnTarget": 176,
+      "goalsFor": 52,
+      "goalsAgainst": 46,
+      "zeroGoalMatches": 9,
+      "cleanSheets": 10,
+      "homeMatches": 19,
+      "homeGoalsFor": 30,
+      "homeGoalsAgainst": 20,
+      "awayMatches": 19,
+      "awayGoalsFor": 22,
+      "awayGoalsAgainst": 26,
+      "goalsForFirstHalf": 20,
+      "goalsForSecondHalf": 32,
+      "goalsForFirst15": 9,
+      "goalsForLast10": 15,
+      "goalsAgainstFirstHalf": 25,
+      "goalsAgainstSecondHalf": 21,
+      "goalsAgainstFirst15": 6,
+      "goalsAgainstLast10": 8
+    },
+    "AVL": {
+      "name": "Aston Villa",
+      "matches": 38,
+      "points": 65,
+      "xG": 48.46,
+      "xGA": 55.75,
+      "shots": 483,
+      "shotsOnTarget": 170,
+      "goalsFor": 56,
+      "goalsAgainst": 49,
+      "zeroGoalMatches": 10,
+      "cleanSheets": 9,
+      "homeMatches": 19,
+      "homeGoalsFor": 32,
+      "homeGoalsAgainst": 22,
+      "awayMatches": 19,
+      "awayGoalsFor": 24,
+      "awayGoalsAgainst": 27,
+      "goalsForFirstHalf": 21,
+      "goalsForSecondHalf": 35,
+      "goalsForFirst15": 4,
+      "goalsForLast10": 10,
+      "goalsAgainstFirstHalf": 23,
+      "goalsAgainstSecondHalf": 26,
+      "goalsAgainstFirst15": 9,
+      "goalsAgainstLast10": 6
+    },
+    "NEW": {
+      "name": "Newcastle United",
+      "matches": 38,
+      "points": 49,
+      "xG": 58.12,
+      "xGA": 51.28,
+      "shots": 492,
+      "shotsOnTarget": 176,
+      "goalsFor": 53,
+      "goalsAgainst": 55,
+      "zeroGoalMatches": 9,
+      "cleanSheets": 8,
+      "homeMatches": 19,
+      "homeGoalsFor": 36,
+      "homeGoalsAgainst": 30,
+      "awayMatches": 19,
+      "awayGoalsFor": 17,
+      "awayGoalsAgainst": 25,
+      "goalsForFirstHalf": 28,
+      "goalsForSecondHalf": 25,
+      "goalsForFirst15": 8,
+      "goalsForLast10": 10,
+      "goalsAgainstFirstHalf": 22,
+      "goalsAgainstSecondHalf": 33,
+      "goalsAgainstFirst15": 2,
+      "goalsAgainstLast10": 18
+    },
+    "LIV": {
+      "name": "Liverpool FC",
+      "matches": 38,
+      "points": 60,
+      "xG": 59.25,
+      "xGA": 47.02,
+      "shots": 588,
+      "shotsOnTarget": 175,
+      "goalsFor": 63,
+      "goalsAgainst": 53,
+      "zeroGoalMatches": 4,
+      "cleanSheets": 10,
+      "homeMatches": 19,
+      "homeGoalsFor": 34,
+      "homeGoalsAgainst": 20,
+      "awayMatches": 19,
+      "awayGoalsFor": 29,
+      "awayGoalsAgainst": 33,
+      "goalsForFirstHalf": 24,
+      "goalsForSecondHalf": 39,
+      "goalsForFirst15": 4,
+      "goalsForLast10": 19,
+      "goalsAgainstFirstHalf": 17,
+      "goalsAgainstSecondHalf": 36,
+      "goalsAgainstFirst15": 7,
+      "goalsAgainstLast10": 13
+    }
+  },
+  "events": [
+    {
+      "eventId": "EPL-2026-08-23-MCI-BOU",
+      "homeTeamId": "MCI",
+      "awayTeamId": "BOU",
+      "homeTeam": "Manchester City",
+      "awayTeam": "AFC Bournemouth",
+      "sameLeague": true,
+      "h2h": {
+        "matches": 5,
+        "homeWins": 3,
+        "draws": 1,
+        "awayWins": 1,
+        "relevance": 0.35,
+        "observedAt": "2026-05-19T22:00:00Z",
+        "sourceUrl": "https://www.statmuse.com/fc/ask/last-five-games-between-man-city-vs-bournemouth",
+        "verified": true,
+        "relevancePolicy": "LOW_MODERATE_DUE_NEW_MANAGERS_AND_SQUAD_TRANSITION"
+      },
+      "context": {
+        "observedAt": "2026-08-22T21:32:00Z",
+        "verified": true,
+        "sourceUrls": [
+          "https://www.reuters.com/sports/soccer/maresca-unfazed-by-city-exits-ahead-season-opener-against-bournemouth-2026-08-21/",
+          "https://www.sportsmole.co.uk/football/man-city/injury-news/team-news/man-city-vs-bournemouth-injury-suspension-list-predicted-xis_603414.html",
+          "https://www.theguardian.com/football/2026/aug/21/premier-league-team-news-predicted-lineups-for-the-opening-weekend"
+        ],
+        "home": {"managerContinuity": "NEW", "squadTransitionRisk": "HIGH", "confirmedUnavailable": 1, "doubtful": 0},
+        "away": {"managerContinuity": "NEW", "squadTransitionRisk": "MEDIUM", "confirmedUnavailable": 2, "doubtful": 1},
+        "facts": ["HOME_NEW_MANAGER", "HOME_RODRI_DEPARTED", "HOME_DOKU_OUT", "AWAY_NEW_MANAGER", "AWAY_MULTIPLE_ABSENCES"]
+      },
+      "transferAudit": {
+        "complete": false,
+        "verified": false,
+        "reason": "MAJOR_MOVEMENTS_KNOWN_BUT_COMPLETE_ROLE_AND_MINUTES_REPLACEMENT_AUDIT_NOT_YET_CAPTURED"
+      },
+      "playerEvidence": {"lineupStatus": "PENDING", "verified": false},
+      "leadRetentionEvidence": {
+        "home": {"type": "LATE_CONCESSION_PROXY"},
+        "away": {"type": "LATE_CONCESSION_PROXY"}
+      }
+    },
+    {
+      "eventId": "EPL-2026-08-23-BHA-AVL",
+      "homeTeamId": "BHA",
+      "awayTeamId": "AVL",
+      "homeTeam": "Brighton & Hove Albion",
+      "awayTeam": "Aston Villa",
+      "sameLeague": true,
+      "h2h": {
+        "matches": 5,
+        "homeWins": 1,
+        "draws": 1,
+        "awayWins": 3,
+        "relevance": 0.55,
+        "observedAt": "2026-02-11T22:00:00Z",
+        "sourceUrl": "https://www.statmuse.com/fc/ask/brighton-vs-aston-villa-last-5-matches",
+        "verified": true,
+        "relevancePolicy": "MODERATE_SAME_CORE_COACHING_CONTEXT_BUT_MAJOR_VILLA_SQUAD_TURNOVER"
+      },
+      "context": {
+        "observedAt": "2026-08-22T21:32:00Z",
+        "verified": true,
+        "sourceUrls": [
+          "https://www.theguardian.com/football/2026/aug/23/aston-villa-upheaval-unai-emery-exodus-key-players-youthful-arrivals",
+          "https://www.sportsmole.co.uk/football/brighton-and-hove-albion/team-news/brighton-vs-aston-villa-injury-suspension-list-predicted-xis_603418.html",
+          "https://www.theguardian.com/football/2026/aug/21/premier-league-team-news-predicted-lineups-for-the-opening-weekend"
+        ],
+        "home": {"managerContinuity": "CONTINUING", "squadTransitionRisk": "LOW", "confirmedUnavailable": 1, "doubtful": 0},
+        "away": {"managerContinuity": "CONTINUING", "squadTransitionRisk": "HIGH", "confirmedUnavailable": 0, "doubtful": 2},
+        "facts": ["HOME_RECENT_EUROPEAN_PLAYOFF", "HOME_ATTACKING_ABSENCE", "AWAY_MAJOR_SQUAD_TURNOVER", "AWAY_MULTIPLE_FITNESS_DOUBTS"]
+      },
+      "transferAudit": {
+        "complete": false,
+        "verified": false,
+        "reason": "MAJOR_VILLA_TURNOVER_VERIFIED_BUT_COMPLETE_IN_OUT_ROLE_REPLACEMENT_AUDIT_NOT_YET_CAPTURED"
+      },
+      "playerEvidence": {"lineupStatus": "PENDING", "verified": false},
+      "leadRetentionEvidence": {
+        "home": {"type": "LATE_CONCESSION_PROXY"},
+        "away": {"type": "LATE_CONCESSION_PROXY"}
+      }
+    },
+    {
+      "eventId": "EPL-2026-08-23-NEW-LIV",
+      "homeTeamId": "NEW",
+      "awayTeamId": "LIV",
+      "homeTeam": "Newcastle United",
+      "awayTeam": "Liverpool FC",
+      "sameLeague": true,
+      "h2h": {
+        "matches": 5,
+        "homeWins": 0,
+        "draws": 1,
+        "awayWins": 4,
+        "relevance": 0.25,
+        "observedAt": "2026-01-31T22:00:00Z",
+        "sourceUrl": "https://www.statmuse.com/fc/ask/newcastle-last-5-games-vs-liverpool",
+        "verified": true,
+        "relevancePolicy": "LOW_DUE_BOTH_NEW_MANAGERS_AND_MAJOR_SQUAD_CHANGE"
+      },
+      "context": {
+        "observedAt": "2026-08-22T21:32:00Z",
+        "verified": true,
+        "sourceUrls": [
+          "https://www.reuters.com/sports/soccer/liverpools-new-look-defence-will-take-time-gel-says-van-dijk-2026-08-18/",
+          "https://www.sportsmole.co.uk/football/liverpool/injury-news/team-news/newcastle-vs-liverpool-injury-suspension-list-predicted-xis_603432.html",
+          "https://www.theguardian.com/football/2026/aug/21/premier-league-team-news-predicted-lineups-for-the-opening-weekend",
+          "https://www.bbc.co.uk/sport/football/articles/c895vwke79lo"
+        ],
+        "home": {"managerContinuity": "NEW", "squadTransitionRisk": "HIGH", "confirmedUnavailable": 2, "doubtful": 1},
+        "away": {"managerContinuity": "NEW", "squadTransitionRisk": "HIGH", "confirmedUnavailable": 1, "doubtful": 1},
+        "facts": ["BOTH_NEW_MANAGERS", "HOME_MAJOR_MIDFIELD_DEPARTURES", "HOME_JOELINTON_AND_LIVRAMENTO_OUT", "AWAY_SALAH_DEPARTED", "AWAY_DEFENCE_REBUILT", "AWAY_INJURY_CONCERNS"]
+      },
+      "transferAudit": {
+        "complete": false,
+        "verified": false,
+        "reason": "MAJOR_DEPARTURES_AND_ARRIVALS_VERIFIED_BUT_COMPLETE_ROLE_AND_MINUTES_REPLACEMENT_AUDIT_NOT_YET_CAPTURED"
+      },
+      "playerEvidence": {"lineupStatus": "PENDING", "verified": false},
+      "leadRetentionEvidence": {
+        "home": {"type": "DIRECT_DROPPED_POINTS", "droppedPoints": 22, "cap": 30, "observedAt": "2026-03-22T18:00:00Z", "sourceUrl": "https://www.bbc.co.uk/sport/football/articles/c895vwke79lo", "scope": "PARTIAL_SEASON_DIRECT_EVIDENCE"},
+        "away": {"type": "LATE_CONCESSION_PROXY"}
+      }
+    }
+  ],
+  "governance": {
+    "bookmakerOddsUsed": false,
+    "rawStatsRemainImmutableObservations": true,
+    "leagueWideNormalization": true,
+    "transferImpactBlockedUntilCompleteAudit": true,
+    "playerMatchupBlockedUntilConfirmedVerifiedLineups": true,
+    "playerQualityAndCohesionBlockedUntilVerifiedPlayerLayer": true,
+    "subjectivePsychologyScore": "NEUTRAL_0_5_UNTIL_OBJECTIVE_MEASURE_EXISTS",
+    "contextHeuristicsMayExplainButCannotRewriteLambdaWithoutCalibration": true,
+    "capitalEffect": "NONE",
+    "realMoney": "NO"
+  }
+}

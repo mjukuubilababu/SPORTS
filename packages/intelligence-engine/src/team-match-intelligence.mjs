@@ -16,6 +16,11 @@ function validateSignal(signal) {
   if (!Number.isFinite(signal.impact) || signal.impact < -1 || signal.impact > 1) throw new Error('SIGNAL_IMPACT_INVALID');
   if (!Number.isFinite(signal.confidence) || signal.confidence < 0 || signal.confidence > 1) throw new Error('SIGNAL_CONFIDENCE_INVALID');
   if (!Number.isInteger(signal.sampleSize) || signal.sampleSize < 0) throw new Error('SIGNAL_SAMPLE_SIZE_INVALID');
+  if (signal.minimumSampleRequired !== null && signal.minimumSampleRequired !== undefined) {
+    if (!Number.isInteger(signal.minimumSampleRequired) || signal.minimumSampleRequired < 1) {
+      throw new Error('SIGNAL_MINIMUM_SAMPLE_REQUIRED_INVALID');
+    }
+  }
   if (!signal.source || !signal.observedAt) throw new Error('SIGNAL_PROVENANCE_REQUIRED');
   if (!signal.correlationGroup) throw new Error('SIGNAL_CORRELATION_GROUP_REQUIRED');
 }
@@ -32,11 +37,21 @@ function groupWithinDomain(signals, asOfMs, minimumSample, maxAgeDays) {
   for (const signal of signals) {
     validateSignal(signal);
     const freshness = freshnessFactor(signal, asOfMs, maxAgeDays);
-    const eligible = signal.verified === true && signal.sampleSize >= minimumSample && freshness.factor > 0;
-    const sampleFactor = eligible ? clamp(signal.sampleSize / Math.max(minimumSample, 1), 0, 1) : 0;
+    const requiredSample = Number.isInteger(signal.minimumSampleRequired)
+      ? signal.minimumSampleRequired
+      : minimumSample;
+    const eligible = signal.verified === true && signal.sampleSize >= requiredSample && freshness.factor > 0;
+    const sampleFactor = eligible ? clamp(signal.sampleSize / Math.max(requiredSample, 1), 0, 1) : 0;
     const effectiveWeight = eligible ? signal.confidence * sampleFactor * freshness.factor : 0;
     const key = `${signal.domain}::${signal.correlationGroup}`;
-    const row = { ...signal, eligible, ageDays: freshness.ageDays, freshnessFactor: freshness.factor, effectiveWeight };
+    const row = {
+      ...signal,
+      requiredSample,
+      eligible,
+      ageDays: freshness.ageDays,
+      freshnessFactor: freshness.factor,
+      effectiveWeight
+    };
     const list = groups.get(key) ?? [];
     list.push(row);
     groups.set(key, list);
@@ -208,6 +223,7 @@ export function buildTeamMatchIntelligence({
       positiveAndNegativeEvidenceRequired: true,
       correlatedSignalsRemainVisibleForExplanation: true,
       compositeCountsEachCorrelationFamilyOnceAcrossDomains: true,
+      perSignalMinimumSampleCanRepresentVerifiedContextFacts: true,
       staleOrUnverifiedSignalsDoNotContribute: true,
       rawOverallScoreDoesNotChangeLambdaWithoutCalibration: true,
       probabilityIsNotGuarantee: true

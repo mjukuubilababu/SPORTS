@@ -1,0 +1,36 @@
+{
+  "capability": "real-football-feature-ingestion",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_TESTS_AUTHORED_STATIC_REVIEW_PENDING_PR",
+  "source_branch": "feature/real-football-feature-ingestion-v0.1",
+  "tests": "10 AUTHORED",
+  "full_repository_runtime": "NOT_CLAIMED",
+  "dataset": "packages/intelligence-engine/data/real-football-features-epl-2025-26-to-2026-08-23.json",
+  "contract": "contracts/real-football-feature-ingestion-v0.1.json",
+  "docs": "docs/real-football-feature-ingestion-v0.1.md",
+  "runner": "scripts/run_real_football_feature_ingestion.mjs",
+  "commands": ["npm run real:football-features", "npm run real:football-features:write"],
+  "current_events": [
+    "EPL-2026-08-23-MCI-BOU",
+    "EPL-2026-08-23-BHA-AVL",
+    "EPL-2026-08-23-NEW-LIV"
+  ],
+  "active_real_domains": [
+    "TEAM_COHESION",
+    "ATTACK_VS_DEFENCE",
+    "TEMPORAL_SCORING_DEFENDING",
+    "LEAGUE_AND_CLUB_STRENGTH",
+    "SHOT_AND_CHANCE_QUALITY",
+    "POSITION_HOME_AWAY_ENVIRONMENT",
+    "HEAD_TO_HEAD",
+    "MATCH_STATISTICS_PATTERNS"
+  ],
+  "pending_domains": ["PLAYER_MATCHUP", "PLAYER_QUALITY_AND_COHESION", "TRANSFER_IMPACT"],
+  "expected_current_runtime_state": "3 EVENTS -> 3 ANALYSIS_PARTIAL UNTIL CONFIRMED_PLAYER_AND_COMPLETE_TRANSFER_EVIDENCE",
+  "normalization": "EPL_2025_26_ALL_20_TEAM_BENCHMARKS",
+  "lead_retention": "DIRECT_WHERE_AVAILABLE_ELSE_LABELED_LATE_CONCESSION_PROXY",
+  "sample_policy": "STATISTICAL_DEFAULT_MINIMUM_WITH_EXPLICIT_MINIMUM_1_FOR_VERIFIED_CONTEXT_FACTS",
+  "governance": "RAW_FACTS_SEPARATE; TEAM_FIRST; SAME_LEAGUE_NEUTRAL; NO_FAKE_PLAYER_QUALITY; NO_PARTIAL_TRANSFER_SCORE; CORRELATION_FAMILY_COUNTS_ONCE; SUBJECTIVE_PSYCHOLOGY_NEUTRAL; NO_LAMBDA_REWRITE_WITHOUT_INDEPENDENT_CALIBRATION; BOOKMAKER_ODDS_FORBIDDEN_AS_FOOTBALL_FEATURES",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
