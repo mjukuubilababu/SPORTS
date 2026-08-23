@@ -23,3 +23,6 @@ export * from './venue-strength-model.mjs';
 export * from './independent-model-processing.mjs';
 export * from './lineup-final-gate.mjs';
 export * from './final-prematch-processing.mjs';
+export * from './bidirectional-match-reasoning.mjs';
+export * from './market-mapping.mjs';
+export * from './match-decision-universe.mjs';

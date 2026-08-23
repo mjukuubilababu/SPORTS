@@ -1,0 +1,72 @@
+{
+  "name": "Bidirectional Match Reasoning & Market Mapping",
+  "version": "v0.1",
+  "scope": "global football, full-time score-distribution-derived markets",
+  "analysis_order": [
+    "INDEPENDENT_TEAM_MODEL",
+    "TEAM_REALITY_MAP",
+    "BIDIRECTIONAL_MATCH_TRUTHS",
+    "COUNTER_OUTCOME_PRESSURE",
+    "AVAILABLE_MARKET_MAPPING",
+    "MARKET_PRICE_AND_EDGE_LAYER",
+    "FINAL_GOVERNED_DECISION"
+  ],
+  "core_invariants": {
+    "team_analysis_before_market": true,
+    "every_binary_claim_has_counter_claim": true,
+    "affirmative_plus_counter_probability": 1.0,
+    "negative_outcomes_are_first_class_predictions": true,
+    "bookmaker_odds_forbidden_from_team_reasoning": true,
+    "probability_ranking_separate_from_value_ranking": true,
+    "probability_is_not_guarantee": true
+  },
+  "supported_full_time_families_v0_1": [
+    "1X2_FULL_TIME",
+    "DOUBLE_CHANCE_FULL_TIME",
+    "TOTAL_GOALS_OVER_UNDER_FULL_TIME",
+    "HOME_TEAM_OVER_UNDER_FULL_TIME",
+    "AWAY_TEAM_OVER_UNDER_FULL_TIME",
+    "BTTS_FULL_TIME",
+    "CLEAN_SHEET_HOME",
+    "CLEAN_SHEET_AWAY",
+    "CORRECT_SCORE_FULL_TIME",
+    "TEAM_TO_SCORE_4WAY_FULL_TIME",
+    "ODD_EVEN_FULL_TIME",
+    "TOTAL_GOALS_EXACT_FULL_TIME",
+    "MULTIGOALS_FULL_TIME",
+    "DRAW_NO_BET_FULL_TIME"
+  ],
+  "blocked_until_specialized_model": {
+    "half_model": [
+      "1X2_FIRST_HALF",
+      "OVER_UNDER_FIRST_HALF",
+      "DOUBLE_CHANCE_FIRST_HALF",
+      "DOUBLE_CHANCE_SECOND_HALF",
+      "BTTS_FIRST_HALF",
+      "BTTS_SECOND_HALF",
+      "CORRECT_SCORE_FIRST_HALF",
+      "HALF_TIME_FULL_TIME",
+      "HALF_WITH_MORE_GOALS",
+      "HOME_WIN_BOTH_HALVES",
+      "AWAY_WIN_BOTH_HALVES",
+      "HOME_WIN_EITHER_HALF",
+      "AWAY_WIN_EITHER_HALF"
+    ],
+    "player_event_model": ["GOALSCORER"],
+    "card_event_model": ["CARDS"],
+    "corner_event_model": ["CORNERS"]
+  },
+  "truth_classification": {
+    "ROBUST_MODEL_TRUTH": "probability >= 0.70, counter <= 0.30, evidence maturity >= 70, lineup PASS, context risk not HIGH",
+    "MODEL_LEAN": "probability >= 0.60 but one or more robustness gates are not satisfied",
+    "UNCERTAIN": "probability < 0.60"
+  },
+  "value_candidate": {
+    "requires_market_fair_probability": true,
+    "default_min_edge": 0.05,
+    "positive_ev_required": true,
+    "highest_probability_alone_is_insufficient": true
+  },
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
