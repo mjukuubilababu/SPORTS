@@ -10,6 +10,9 @@ on:
       - 'scripts/train_negbin_challenger.py'
       - 'scripts/test_negbin_challenger.py'
       - 'scripts/verify_negbin_preregistration.py'
+      - 'contracts/negbin-challenger-preregistration-v0.1.json'
+      - 'docs/negbin-challenger-preregistration-v0.1.md'
+      - 'manifests/negbin-challenger-preregistration-v0.1.json'
       - '.github/workflows/negbin-challenger-training.yml'
   workflow_dispatch:
 
