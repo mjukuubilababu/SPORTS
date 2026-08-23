@@ -1,0 +1,96 @@
+name: Future Test B Capture
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/gate4/future_test_b_capture.py'
+      - 'packages/gate4/future_test_b_transition.py'
+      - 'packages/gate4/data/mls-2026-test-b-prematch-targets-2026-08-23.json'
+      - 'packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json'
+      - 'scripts/capture_future_test_b_prematch.py'
+      - 'scripts/test_future_test_b_capture.py'
+      - 'scripts/test_future_test_b_transitions.py'
+      - 'scripts/verify_future_test_b_prematch_frozen.py'
+      - 'scripts/verify_unified.py'
+      - 'contracts/future-test-b-capture-v0.1.json'
+      - 'manifests/future-test-b-capture-v0.1.json'
+      - '.github/workflows/future-test-b-capture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  future-test-b-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run capture and transition unit tests
+        run: |
+          python scripts/test_future_test_b_capture.py
+          python scripts/test_future_test_b_transitions.py
+          python scripts/verify_future_test_b_prematch_frozen.py
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Assert canonical frozen capture remains prematch only
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json')
+          report=json.loads(p.read_text())
+          assert report['summary']['prematch_frozen'] == 2
+          assert report['summary']['test_b_eligible'] == 0
+          assert report['performance_metrics_exposed'] is False
+          assert len(report['records']) == 2
+          for row in report['records']:
+              assert row['state'] == 'PREMATCH_FROZEN'
+              assert row['market'] is None
+              assert row['settlement'] is None
+              assert row['test_b_eligible'] is False
+              assert row['prediction']['uses_market_odds'] is False
+          unified=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          assert unified['core_integrated_assurance'] == 'PROMOTE'
+          assert unified['tests_total'] == unified['tests_passed']
+          print(json.dumps({
+              'captured_at': report['captured_at'],
+              'prematch_frozen': report['summary']['prematch_frozen'],
+              'test_b_eligible': report['summary']['test_b_eligible'],
+              'matches': [{
+                  'match_id': r['match_id'],
+                  'kickoff_at': r['kickoff_at'],
+                  'home': r['fixture']['home_team'],
+                  'away': r['fixture']['away_team'],
+                  'lambda': r['prediction']['pre_lineup_lambda'],
+                  'poisson_u35': r['prediction']['poisson_probability_u35'],
+                  'negbin_u35': r['prediction']['negbin_probability_u35'],
+                  'prediction_snapshot_sha256': r['prediction']['snapshot_sha256'],
+                  'regime_snapshot_sha256': r['regime']['snapshot_sha256'],
+                  'record_sha256': r['record_sha256'],
+              } for r in report['records']],
+              'unified_tests': f"{unified['tests_passed']}/{unified['tests_total']}",
+              'capital_assurance': unified['capital_assurance'],
+          }, indent=2))
+          PY
+
+      - name: Upload frozen capture verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: future-test-b-prematch-capture-v0.1
+          path: |
+            packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+          if-no-files-found: error

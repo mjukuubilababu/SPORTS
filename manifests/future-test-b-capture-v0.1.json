@@ -1,0 +1,33 @@
+{
+  "capability": "future-test-b-capture",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_CI_PENDING",
+  "source_branch": "feature/future-test-b-capture-v0.1",
+  "core": "packages/gate4/future_test_b_capture.py",
+  "transitions": "packages/gate4/future_test_b_transition.py",
+  "runner": "scripts/capture_future_test_b_prematch.py",
+  "tests": [
+    "scripts/test_future_test_b_capture.py",
+    "scripts/test_future_test_b_transitions.py"
+  ],
+  "contract": "contracts/future-test-b-capture-v0.1.json",
+  "docs": "docs/future-test-b-capture-v0.1.md",
+  "targets": "packages/gate4/data/mls-2026-test-b-prematch-targets-2026-08-23.json",
+  "capture_states": [
+    "DISCOVERED",
+    "PREMATCH_FROZEN",
+    "CLOSING_MARKET_CAPTURED",
+    "SETTLED_ELIGIBLE"
+  ],
+  "initial_target_count": 2,
+  "initial_test_b_increment": 0,
+  "model_generation_uses_market_odds": false,
+  "future_results_used_for_prediction": false,
+  "closing_market_required_for_test_b": true,
+  "verified_settlement_required_for_test_b": true,
+  "gate4_min_n_changed": false,
+  "p002_frozen_rules_changed": false,
+  "performance_claim": "NONE_CAPTURE_ONLY",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}

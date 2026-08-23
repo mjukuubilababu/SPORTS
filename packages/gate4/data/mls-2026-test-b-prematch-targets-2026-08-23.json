@@ -1,0 +1,36 @@
+{
+  "dataset_id": "MLS-2026-TEST-B-PREMATCH-TARGETS-2026-08-23",
+  "created_for_capture_date": "2026-08-23",
+  "fixture_source": {
+    "provider": "FixtureDownload",
+    "url": "https://fixturedownload.com/download/mls-2026-UTC.csv",
+    "public_results_page": "https://fixturedownload.com/results/mls-2026",
+    "time_semantics": "UTC"
+  },
+  "official_competition_source": "https://www.mlssoccer.com/news/mls-announces-2026-regular-season-schedule",
+  "targets": [
+    {
+      "match_id": "MLS-2026-2026-08-23-ad6bd99a845b",
+      "home_team": "new england revolution",
+      "away_team": "new york city fc",
+      "kickoff_at": "2026-08-23T20:30:00Z",
+      "canonical_venue_local_date": "2026-08-23"
+    },
+    {
+      "match_id": "MLS-2026-2026-08-23-974daa85d59a",
+      "home_team": "atlanta united",
+      "away_team": "sporting kansas city",
+      "kickoff_at": "2026-08-23T23:00:00Z",
+      "canonical_venue_local_date": "2026-08-23"
+    }
+  ],
+  "governance": {
+    "genuine_future_fixtures_only": true,
+    "no_result_is_stored_in_target_file": true,
+    "no_closing_market_is_claimed_at_discovery": true,
+    "prediction_must_be_frozen_before_kickoff": true,
+    "test_b_eligibility_requires_later_verified_closing_market_and_settlement": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
