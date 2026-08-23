@@ -1,0 +1,172 @@
+{
+  "captureId": "lineups-odds-check-2026-08-23T120830Z",
+  "capturedAt": "2026-08-23T12:08:30Z",
+  "captureType": "RAW_PREMATCH_OBSERVATION_ONLY",
+  "contractReference": "contracts/kickoff-lineup-final-gate-v0.1.json",
+  "finalCaptureBuilt": false,
+  "lambdaAdjusted": false,
+  "transferImpactCreated": false,
+  "events": [
+    {
+      "eventId": "premier-league-2026-08-23-manchester-city-bournemouth",
+      "kickoffObservation": {
+        "status": "SCHEDULED",
+        "scheduledKickoffAt": "2026-08-23T13:00:00Z",
+        "observedAt": "2026-08-23T12:08:30Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.mancity.com/news/mens/city-v-bournemouth-kick-off-time-and-tv-information-63922554"
+      },
+      "lineupSnapshot": {
+        "status": "PARTIAL_CONFIRMED",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.mancity.com/news/mens/manchester-city-v-bournemouth-team-news-tactics-63923078",
+        "home": {
+          "team": "Manchester City",
+          "startingXI": ["Donnarumma","Khusanov","Dias","Guehi","Gvardiol","Lewis","Anderson","O'Reilly","Semenyo","Foden","Haaland"]
+        },
+        "away": {
+          "team": "AFC Bournemouth",
+          "startingXI": null,
+          "note": "Official Manchester City team-news page stated Bournemouth XI: To follow at observation time."
+        },
+        "playerDomainsActivated": false
+      },
+      "bookmakerObservations": [
+        {
+          "provider": "Bet365",
+          "observationSource": "https://www.wincomparator.com/predictions/manchester-city-bournemouth-8559208/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "FT_1X2",
+          "odds": {"home":1.45,"draw":4.5,"away":6.5},
+          "devigFair": {"home":0.647124,"draw":0.208518,"away":0.144358},
+          "overround": 1.065724
+        },
+        {
+          "provider": "William Hill",
+          "observationSource": "https://www.wincomparator.com/predictions/manchester-city-bournemouth-8559208/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "FT_1X2",
+          "odds": {"home":1.44,"draw":4.75,"away":5.8},
+          "devigFair": {"home":0.644565,"draw":0.195405,"away":0.16003},
+          "overround": 1.077385
+        },
+        {
+          "provider": "Bet365",
+          "observationSource": "https://www.wincomparator.com/predictions/manchester-city-bournemouth-8559208/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "HT_1X2",
+          "odds": {"home":1.91,"draw":2.63,"away":5.5},
+          "devigFair": {"home":0.482274,"draw":0.350245,"away":0.167481},
+          "overround": 1.085607
+        }
+      ],
+      "decision": "WATCH",
+      "qualificationBlockers": ["AWAY_STARTING_XI_NOT_CONFIRMED", "FINAL_LINEUP_GATE_NOT_PASSABLE"]
+    },
+    {
+      "eventId": "premier-league-2026-08-23-brighton-aston-villa",
+      "kickoffObservation": {
+        "status": "SCHEDULED",
+        "scheduledKickoffAt": "2026-08-23T13:00:00Z",
+        "observedAt": "2026-08-23T12:08:30Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.brightonandhovealbion.com/match-centre?gameId=2645201"
+      },
+      "lineupSnapshot": {
+        "status": "NOT_CONFIRMED_IN_OFFICIAL_PAGE",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.brightonandhovealbion.com/match-centre-lineups?gameId=2645201",
+        "home": {"team":"Brighton & Hove Albion","startingXI":null},
+        "away": {"team":"Aston Villa","startingXI":null},
+        "playerDomainsActivated": false
+      },
+      "bookmakerObservations": [
+        {
+          "provider": "Bet365",
+          "observationSource": "https://www.wincomparator.com/predictions/brighton-aston-villa-8559207/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "FT_1X2",
+          "odds": {"home":2.1,"draw":3.5,"away":3.3},
+          "devigFair": {"home":0.447154,"draw":0.268293,"away":0.284553},
+          "overround": 1.064935
+        },
+        {
+          "provider": "William Hill",
+          "observationSource": "https://www.wincomparator.com/predictions/brighton-aston-villa-8559207/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "FT_1X2",
+          "odds": {"home":2.2,"draw":3.3,"away":3.2},
+          "devigFair": {"home":0.424779,"draw":0.283186,"away":0.292035},
+          "overround": 1.070076
+        },
+        {
+          "provider": "Bet365",
+          "observationSource": "https://www.wincomparator.com/predictions/brighton-aston-villa-8559207/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "HT_1X2",
+          "odds": {"home":2.75,"draw":2.2,"away":3.75},
+          "devigFair": {"home":0.335196,"draw":0.418994,"away":0.24581},
+          "overround": 1.084848
+        }
+      ],
+      "decision": "WATCH",
+      "qualificationBlockers": ["CONFIRMED_STARTING_XIS_MISSING"]
+    },
+    {
+      "eventId": "premier-league-2026-08-23-newcastle-liverpool",
+      "kickoffObservation": {
+        "status": "SCHEDULED",
+        "scheduledKickoffAt": "2026-08-23T15:30:00Z",
+        "observedAt": "2026-08-23T12:08:30Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.premierleague.com/en/news/4675097/all-380-fixtures-for-202627-premier-league-season"
+      },
+      "lineupSnapshot": {
+        "status": "NOT_YET_CONFIRMED",
+        "home": {"team":"Newcastle United","startingXI":null},
+        "away": {"team":"Liverpool","startingXI":null},
+        "playerDomainsActivated": false
+      },
+      "bookmakerObservations": [
+        {
+          "provider": "Bet365",
+          "observationSource": "https://www.wincomparator.com/predictions/newcastle-liverpool-8559209/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "FT_1X2",
+          "odds": {"home":3.8,"draw":3.6,"away":1.95},
+          "devigFair": {"home":0.249733,"draw":0.263607,"away":0.48666},
+          "overround": 1.053756
+        },
+        {
+          "provider": "William Hill",
+          "observationSource": "https://www.wincomparator.com/predictions/newcastle-liverpool-8559209/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "FT_1X2",
+          "odds": {"home":3.6,"draw":3.7,"away":1.91},
+          "devigFair": {"home":0.259216,"draw":0.25221,"away":0.488574},
+          "overround": 1.071608
+        },
+        {
+          "provider": "Bet365",
+          "observationSource": "https://www.wincomparator.com/predictions/newcastle-liverpool-8559209/",
+          "observedAt": "2026-08-23T12:08:30Z",
+          "market": "HT_1X2",
+          "odds": {"home":3.75,"draw":2.5,"away":2.38},
+          "devigFair": {"home":0.245361,"draw":0.368041,"away":0.386598},
+          "overround": 1.086835
+        }
+      ],
+      "decision": "WATCH",
+      "qualificationBlockers": ["CONFIRMED_STARTING_XIS_MISSING"]
+    }
+  ],
+  "ingestionOutcome": {
+    "realFootballFeatureIngestion": "PARTIAL_CONTEXT_REFRESH_ONLY",
+    "historicalBaseline": "UNCHANGED_EXISTING_2025_26_BASELINE",
+    "PLAYER_MATCHUP": "INACTIVE",
+    "PLAYER_QUALITY_AND_COHESION": "INACTIVE",
+    "TRANSFER_IMPACT": "NOT_CREATED",
+    "lambdaChange": "NONE",
+    "reason": "No fixture had two fully confirmed starting XIs at observation time; no verified lineup-impact/calibration model was supplied by the new evidence."
+  }
+}
