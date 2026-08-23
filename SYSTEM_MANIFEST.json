@@ -27,7 +27,9 @@
     "operational-trial-processing capability v0.1",
     "real-observed-market-ingestion capability v0.1",
     "independent-real-model-inputs capability v0.1",
-    "kickoff-confirmed-lineup-final-gate capability v0.1"
+    "kickoff-confirmed-lineup-final-gate capability v0.1",
+    "bidirectional-match-reasoning-market-mapping capability v0.1",
+    "half-specific-intelligence capability v0.1"
   ],
   "verified_runtime_checks": "15/15 PASS",
   "known_blocker": "A real isolated PostgreSQL TEST endpoint plus psql is required to execute migrations 0009-0014 and verify catalog constraints/triggers/rollback. Runner is implemented at scripts/verify_postgres_migrations.py.",
@@ -163,6 +165,40 @@
     "command": "npm run final:prematch -- <market-batch> <model-dataset> <final-capture> [output]",
     "flow": "BASELINE_MARKET_AND_MODEL -> VERIFIED_KICKOFF -> CONFIRMED_XI -> LATEST_ODDS -> OPTIONAL_VERIFIED_LINEUP_IMPACT -> VERIFIED_FINAL_CONTEXT -> FINAL_1X2 -> WATCH_REJECTED_QUALIFIED -> IMMUTABLE_FINAL_PREMATCH_SNAPSHOT",
     "governance": "NO_FAKE_LINEUPS; EXACTLY_11_UNIQUE_STARTERS_PER_TEAM; LINEUP_BEFORE_KICKOFF; NO_SILENT_LAMBDA_REWRITE; VERIFIED_IMPACT_PROVENANCE_REQUIRED; DIRECTION_CONFLICT_BLOCKS_QUALIFICATION; HIGH_TRANSITION_LARGE_DIVERGENCE_BLOCKS_QUALIFICATION; PRIOR_SNAPSHOTS_IMMUTABLE; NO_HINDSIGHT",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "bidirectional_match_reasoning_market_mapping": {
+    "version": "v0.1",
+    "status": "MERGED_CANONICAL_RUNTIME_VERIFIED",
+    "merged_via_pr": 7,
+    "merge_commit": "630fed42c1f317f4cfecc829651fe7110a84362a",
+    "source_branch": "feature/bidirectional-match-reasoning-v0.1",
+    "tests": "14/14 PASS_LOCAL_NODE",
+    "full_repository_ci": "NOT_CLAIMED",
+    "contract": "contracts/bidirectional-match-reasoning-market-mapping-v0.1.json",
+    "docs": "docs/bidirectional-match-reasoning-v0.1.md",
+    "flow": "TEAM_MODEL -> TEAM_REALITY -> BIDIRECTIONAL_OUTCOMES -> COUNTER_OUTCOMES -> CERTAINTY -> MARKET_MAPPING -> FAIR_PRICE_EDGE_EV -> GOVERNED_DECISION",
+    "supported_full_time_markets": ["1X2", "DOUBLE_CHANCE", "TOTALS", "TEAM_TOTALS", "BTTS", "CLEAN_SHEET", "CORRECT_SCORE", "TEAM_TO_SCORE", "ODD_EVEN", "EXACT_TOTALS", "DRAW_NO_BET"],
+    "governance": "TEAM_FIRST_NOT_MARKET_FIRST; NEGATIVE_OUTCOMES_FIRST_CLASS; EVERY_BINARY_CLAIM_HAS_COUNTER; PROBABILITY_NOT_VALUE; UNSUPPORTED_MARKETS_BLOCKED; NO_GUARANTEE",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "half_specific_intelligence": {
+    "version": "v0.1",
+    "status": "MERGED_CANONICAL_DEPENDENCY_SET_RUNTIME_VERIFIED",
+    "merged_via_pr": 8,
+    "merge_commit": "9cc8b3544a274a62d7bf7a6c3934c728101115a7",
+    "source_branch": "feature/half-specific-intelligence-v0.1",
+    "tests": "12/12 PASS_DEPENDENCY_SET_LOCAL_NODE",
+    "full_repository_ci": "NOT_CLAIMED",
+    "real_data_status": "PENDING_VERIFIED_HISTORICAL_HALF_PROFILE",
+    "minimum_half_profile_sample": 30,
+    "contract": "contracts/half-specific-intelligence-v0.1.json",
+    "docs": "docs/half-specific-intelligence-v0.1.md",
+    "flow": "FULL_TIME_TEAM_MODEL -> VERIFIED_HALF_PROFILE -> 1H_AND_2H_LAMBDAS -> SEPARATE_HALF_REALITY_MAPS -> JOINT_CROSS_HALF_REASONING -> HALF_MARKET_MAPPING -> FAIR_PRICE_EDGE_EV -> GOVERNED_DECISION",
+    "supported_markets": ["1X2_FIRST_HALF", "1X2_SECOND_HALF", "OVER_UNDER_FIRST_HALF", "OVER_UNDER_SECOND_HALF", "DOUBLE_CHANCE_FIRST_HALF", "DOUBLE_CHANCE_SECOND_HALF", "BTTS_FIRST_HALF", "BTTS_SECOND_HALF", "CORRECT_SCORE_FIRST_HALF", "HALF_TIME_FULL_TIME", "HALF_WITH_MORE_GOALS", "HOME_WIN_BOTH_HALVES", "AWAY_WIN_BOTH_HALVES", "HOME_WIN_EITHER_HALF", "AWAY_WIN_EITHER_HALF"],
+    "governance": "NO_BLIND_50_50_SPLIT; BOOKMAKER_ODDS_FORBIDDEN_FROM_HALF_PROFILE; MIN_SAMPLE_30; HALF_PROFILE_MUST_BE_INDEPENDENT_AND_PREMATCH; HTFT_JOINT_PATH_NOT_HEADLINE_MULTIPLICATION; PROBABILITY_NOT_GUARANTEE",
     "capital_effect": "NONE",
     "real_money": "NO"
   }
