@@ -1,0 +1,73 @@
+name: Negative Binomial Challenger Training
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/gate4/negbin_challenger.py'
+      - 'packages/gate4/data/negbin-challenger-preregistration-v0.1.json'
+      - 'scripts/train_negbin_challenger.py'
+      - 'scripts/test_negbin_challenger.py'
+      - 'scripts/verify_negbin_preregistration.py'
+      - 'contracts/negbin-challenger-preregistration-v0.1.json'
+      - 'docs/negbin-challenger-preregistration-v0.1.md'
+      - 'manifests/negbin-challenger-preregistration-v0.1.json'
+      - '.github/workflows/negbin-challenger-training.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train-preregister-negbin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run negative-binomial unit tests
+        run: |
+          python scripts/test_negbin_challenger.py
+          python scripts/test_evaluation_freeze_challenger_protocol.py
+
+      - name: Train challenger only on pinned 2025 history
+        run: python scripts/train_negbin_challenger.py
+
+      - name: Assert no evaluation leakage
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/negbin-challenger-training-report-v0.1.json').read_text())
+          assert report['training']['n'] >= 30
+          assert report['training']['holdout_a_overlap_n'] == 0
+          assert report['training']['uses_market_odds'] is False
+          assert report['training']['uses_holdout_a'] is False
+          assert report['evaluation']['holdout_a_evaluated'] is False
+          assert report['evaluation']['test_set_b_evaluated'] is False
+          print(json.dumps({
+              'training_n': report['training']['n'],
+              'training_date_start': report['training']['date_start'],
+              'training_date_end': report['training']['date_end'],
+              'fit': report['fit'],
+              'evaluation': report['evaluation'],
+          }, indent=2))
+          PY
+
+      - name: Verify canonical preregistration when present
+        if: ${{ hashFiles('packages/gate4/data/negbin-challenger-preregistration-v0.1.json') != '' }}
+        run: python scripts/verify_negbin_preregistration.py artifacts/negbin-challenger-training-report-v0.1.json
+
+      - name: Upload training report
+        uses: actions/upload-artifact@v4
+        with:
+          name: negbin-challenger-training-report-v0.1
+          path: artifacts/negbin-challenger-training-report-v0.1.json
+          if-no-files-found: error
