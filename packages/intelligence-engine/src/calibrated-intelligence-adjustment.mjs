@@ -11,6 +11,10 @@ function validateCoefficientRow(domain, row) {
   }
 }
 
+function mean(values) {
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
 export function applyCalibratedTeamIntelligence({
   homeLambda,
   awayLambda,
@@ -22,12 +26,13 @@ export function applyCalibratedTeamIntelligence({
 }) {
   if (!Number.isFinite(homeLambda) || homeLambda <= 0) throw new Error('HOME_LAMBDA_INVALID');
   if (!Number.isFinite(awayLambda) || awayLambda <= 0) throw new Error('AWAY_LAMBDA_INVALID');
-  if (!intelligence?.domainBoard) throw new Error('TEAM_MATCH_INTELLIGENCE_REQUIRED');
+  if (!intelligence?.domainBoard || !intelligence?.compositeCorrelationGroups) throw new Error('TEAM_MATCH_INTELLIGENCE_REQUIRED');
   if (!Number.isInteger(minimumCalibrationSample) || minimumCalibrationSample < 1) throw new Error('MINIMUM_CALIBRATION_SAMPLE_INVALID');
   if (!(multiplierFloor > 0 && multiplierCeiling >= multiplierFloor)) throw new Error('MULTIPLIER_BOUNDS_INVALID');
 
   const blocked = !calibration
     || calibration.verified !== true
+    || calibration.usesBookmakerOdds === true
     || !calibration.version
     || !calibration.provenance
     || !Number.isInteger(calibration.sampleSize)
@@ -38,32 +43,46 @@ export function applyCalibratedTeamIntelligence({
     return Object.freeze({
       version: 'CALIBRATED_TEAM_INTELLIGENCE_ADJUSTMENT_V0_1',
       adjustmentApplied: false,
-      reason: 'VERIFIED_CALIBRATION_REQUIRED',
+      reason: 'VERIFIED_INDEPENDENT_CALIBRATION_REQUIRED',
       baseline: Object.freeze({ homeLambda, awayLambda }),
       adjusted: Object.freeze({ homeLambda, awayLambda }),
       multipliers: Object.freeze({ home: 1, away: 1 }),
-      governance: Object.freeze({ uncalibratedFootballIntelligenceCannotRewriteLambda: true })
+      governance: Object.freeze({
+        uncalibratedFootballIntelligenceCannotRewriteLambda: true,
+        bookmakerOddsForbiddenFromCalibration: true
+      })
     });
   }
 
   let homeLog = 0;
   let awayLog = 0;
   const contributions = [];
-  for (const row of intelligence.domainBoard) {
-    if (row.state !== 'ACTIVE') continue;
-    const coeff = calibration.domainCoefficients[row.domain];
-    if (!coeff) continue;
-    validateCoefficientRow(row.domain, coeff);
-    const effectiveScore = row.score * row.confidence;
-    const homeContribution = effectiveScore * coeff.homeLambdaBeta;
-    const awayContribution = effectiveScore * coeff.awayLambdaBeta;
+  for (const group of intelligence.compositeCorrelationGroups) {
+    const coefficientRows = group.domains
+      .map((domain) => {
+        const coeff = calibration.domainCoefficients[domain];
+        if (!coeff) return null;
+        validateCoefficientRow(domain, coeff);
+        return { domain, ...coeff };
+      })
+      .filter(Boolean);
+    if (!coefficientRows.length) continue;
+
+    const homeBeta = mean(coefficientRows.map((row) => row.homeLambdaBeta));
+    const awayBeta = mean(coefficientRows.map((row) => row.awayLambdaBeta));
+    const effectiveScore = group.impact * group.confidence;
+    const homeContribution = effectiveScore * homeBeta;
+    const awayContribution = effectiveScore * awayBeta;
     homeLog += homeContribution;
     awayLog += awayContribution;
     contributions.push(Object.freeze({
-      domain: row.domain,
-      score: row.score,
-      confidence: row.confidence,
+      correlationGroup: group.correlationGroup,
+      domains: group.domains,
+      score: group.impact,
+      confidence: group.confidence,
       effectiveScore,
+      homeLambdaBeta: homeBeta,
+      awayLambdaBeta: awayBeta,
       homeLambdaContribution: homeContribution,
       awayLambdaContribution: awayContribution
     }));
@@ -88,9 +107,10 @@ export function applyCalibratedTeamIntelligence({
     governance: Object.freeze({
       verifiedCalibrationRequired: true,
       minimumCalibrationSample,
-      domainContributionsExplicit: true,
+      calibrationUsesDeCorrelatedCompositeGroups: true,
+      correlationFamilyContributesAtMostOnce: true,
       multiplierCapsRequired: true,
-      bookmakerOddsCannotCalibrateFootballIntelligence: calibration.usesBookmakerOdds !== true
+      bookmakerOddsForbiddenFromCalibration: true
     })
   });
 }
