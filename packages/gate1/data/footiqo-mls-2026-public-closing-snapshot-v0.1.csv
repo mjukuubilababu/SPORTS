@@ -1,0 +1,26 @@
+footiqo_id,source_match_datetime,season,league,home_team,away_team,home_goals,away_goals,o25,u25,o35,u35,market_source,market_provider,market_source_url,quote_type
+97190,21-02-26 20:30,2026,MLS,St. Louis City,Charlotte,1,1,1.75,2.10,2.82,1.45,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97189,21-02-26 22:45,2026,MLS,FC Cincinnati,Atlanta Utd,2,0,1.75,2.17,2.57,1.40,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97193,22-02-26 01:30,2026,MLS,DC United,Philadelphia Union,1,0,2.32,1.67,4.05,1.25,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97194,22-02-26 01:30,2026,MLS,Orlando City,New York Red Bulls,1,2,1.66,2.25,2.53,1.54,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97195,22-02-26 01:30,2026,MLS,Vancouver Whitecaps,Real Salt Lake,1,0,1.46,2.75,2.21,1.73,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97197,22-02-26 02:30,2026,MLS,Austin FC,Minnesota United,2,2,2.06,1.83,3.37,1.34,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97198,22-02-26 02:30,2026,MLS,FC Dallas,Toronto FC,3,2,1.89,2.00,3.01,1.40,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97199,22-02-26 02:30,2026,MLS,Houston Dynamo,Chicago Fire,2,1,1.75,2.10,2.82,1.45,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97200,22-02-26 02:30,2026,MLS,Nashville SC,New England Revolution,4,1,1.60,2.38,2.53,1.54,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97201,22-02-26 03:30,2026,MLS,Los Angeles FC,Inter Miami,3,0,1.46,2.77,2.21,1.73,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97202,22-02-26 04:30,2026,MLS,Portland Timbers,Columbus Crew,3,2,1.60,2.38,2.53,1.54,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97203,22-02-26 04:30,2026,MLS,San Diego FC,CF Montreal,5,0,1.60,2.38,2.53,1.54,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97204,22-02-26 04:30,2026,MLS,San Jose Earthquakes,Sporting Kansas City,3,0,1.50,2.63,2.32,1.67,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97266,23-02-26 01:00,2026,MLS,Los Angeles Galaxy,New York City,1,1,1.80,2.10,3.01,1.40,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97269,23-02-26 03:15,2026,MLS,Seattle Sounders,Colorado Rapids,2,0,1.40,2.57,2.19,1.74,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97481,28-02-26 20:30,2026,MLS,Chicago Fire,CF Montreal,3,0,1.66,2.25,2.53,1.54,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97482,28-02-26 20:30,2026,MLS,New York Red Bulls,New England Revolution,1,0,1.69,2.20,2.63,1.50,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97492,28-02-26 22:30,2026,MLS,Colorado Rapids,Portland Timbers,2,0,1.60,2.37,2.41,1.58,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+97493,28-02-26 22:30,2026,MLS,Minnesota United,FC Cincinnati,1,0,1.86,2.03,3.01,1.40,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+98696,01-03-26 01:30,2026,MLS,Real Salt Lake,Seattle Sounders,2,1,2.06,1.83,3.37,1.34,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+98697,01-03-26 01:30,2026,MLS,San Jose Earthquakes,Atlanta Utd,2,0,1.80,2.10,2.82,1.45,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+98700,01-03-26 02:30,2026,MLS,FC Dallas,Nashville SC,0,0,1.89,2.00,3.01,1.40,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+98701,01-03-26 02:30,2026,MLS,Houston Dynamo,Los Angeles FC,0,2,1.70,2.18,2.69,1.48,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+98702,01-03-26 02:30,2026,MLS,Sporting Kansas City,Columbus Crew,2,2,1.49,2.67,2.16,1.77,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
+98704,01-03-26 03:30,2026,MLS,Vancouver Whitecaps,Toronto FC,3,0,1.60,2.38,2.53,1.54,Footiqo,1xBet,https://footiqo.com/database/leagues/usa-mls/,CLOSING
