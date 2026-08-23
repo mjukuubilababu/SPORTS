@@ -1,0 +1,37 @@
+{
+  "contract": "gate2-gate3-settled-corpus-adapter",
+  "version": "v0.1",
+  "adapter_version": "GATE2_TO_GATE3_SETTLED_CORPUS_ADAPTER_V0_1",
+  "inputs": [
+    "CANONICAL_HISTORICAL_TRUTH_STORE_V0_1",
+    "GATE1_TO_GATE2_CANONICAL_BACKFILL_V0_1"
+  ],
+  "target": "P002_U3.5",
+  "research_eligibility": {
+    "model_probability_required": true,
+    "same_match_market_probability_required": true,
+    "verified_settlement_result_required": true,
+    "pattern_qualification_required": false,
+    "promotion_allowed": false
+  },
+  "strict_validation_eligibility": {
+    "research_eligibility_required": true,
+    "gate1_validation_n_eligible_required": true,
+    "gate2_final_model_gate_pass_required": true,
+    "promotion_readiness_scope": "STRICT_ONLY"
+  },
+  "settlement": {
+    "outcome_u35": "1_IF_TOTAL_GOALS_LE_3_ELSE_0",
+    "join_key": "match_id",
+    "outcome_embedded_in_feature_snapshot": false
+  },
+  "price_semantics": {
+    "u35_closing_quote_used_as_reference_price": true,
+    "execution_entry_price_claimed": false,
+    "clv_available_without_distinct_entry_price": false,
+    "fabricated_clv": "FORBIDDEN"
+  },
+  "gate3_default_evaluate_semantics_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
