@@ -1,0 +1,146 @@
+{
+  "batch_version": "FUTURE_TEST_B_PREMATCH_CAPTURE_V0_1",
+  "captured_at": "2026-08-23T16:08:52.749016Z",
+  "records": [
+    {
+      "capture_version": "FUTURE_TEST_B_PREMATCH_CAPTURE_V0_1",
+      "state": "PREMATCH_FROZEN",
+      "match_id": "MLS-2026-2026-08-23-974daa85d59a",
+      "competition": "MLS",
+      "season": 2026,
+      "kickoff_at": "2026-08-23T23:00:00Z",
+      "fixture": {
+        "source": "FixtureDownload",
+        "source_url": "https://fixturedownload.com/download/mls-2026-UTC.csv",
+        "source_row_id": "315",
+        "source_sha256": "b22cc2269f0f5a6c28a396d3327c5f55c08eabe622e00f6d5f28307ea336c0ac",
+        "venue": "Mercedes-Benz Stadium",
+        "home_team": "atlanta united",
+        "away_team": "sporting kansas city",
+        "canonical_venue_local_date": "2026-08-23"
+      },
+      "prediction": {
+        "snapshot_id": "PRED-MLS-2026-2026-08-23-974daa85d59a-20260823T160852Z",
+        "frozen_at": "2026-08-23T16:08:52.749016Z",
+        "poisson_model_version": "P002_GATE2_POISSON_U35_V0_1",
+        "poisson_probability_u35": 0.5668777509918694,
+        "negbin_model_version": "P002_NEGBIN_CHALLENGER_V0_1",
+        "negbin_specification_sha256": "650d6cdd6eccc31ec0756cd1bfe80b51032e079ba90c00ad950b86db85508c00",
+        "negbin_probability_u35": 0.5871880763482035,
+        "pre_lineup_lambda": 3.361111111111111,
+        "uses_market_odds": false,
+        "history_rows_available": 475,
+        "home_prior_n": 20,
+        "away_prior_n": 31,
+        "snapshot_sha256": "8a858ab98852fab522e1a1a739132377d833d3b3631a6a9d22d5aeb4dc2634bf"
+      },
+      "regime": {
+        "snapshot_id": "REG-MLS-2026-2026-08-23-974daa85d59a-20260823T160852Z",
+        "label": "MLS_2026_REGULAR_SEASON",
+        "source": "MLS_OFFICIAL_2026_REGULAR_SEASON_SCHEDULE",
+        "source_url": "https://www.mlssoccer.com/news/mls-announces-2026-regular-season-schedule",
+        "observed_at": "2026-08-23T16:08:52.749016Z",
+        "verified": true,
+        "uses_outcome": false,
+        "uses_market_odds": false,
+        "snapshot_sha256": "86eb0e763db52725024f45bca09163f76d65729b1f0d15b1c0457012aacb889b"
+      },
+      "market": null,
+      "settlement": null,
+      "test_b_eligible": false,
+      "next_required_state": "CLOSING_MARKET_CAPTURED",
+      "governance": {
+        "prediction_frozen_before_kickoff": true,
+        "future_fixture_not_added_to_other_fixture_history": true,
+        "bookmaker_odds_used_by_model": false,
+        "closing_market_not_fabricated": true,
+        "settlement_not_available_pre_match": true,
+        "capital_effect": "NONE",
+        "real_money": "NO"
+      },
+      "record_sha256": "5b715cf17bcbe2260f88421cb2f3d82764794b4665082ea5db941636dba8e37a"
+    },
+    {
+      "capture_version": "FUTURE_TEST_B_PREMATCH_CAPTURE_V0_1",
+      "state": "PREMATCH_FROZEN",
+      "match_id": "MLS-2026-2026-08-23-ad6bd99a845b",
+      "competition": "MLS",
+      "season": 2026,
+      "kickoff_at": "2026-08-23T20:30:00Z",
+      "fixture": {
+        "source": "FixtureDownload",
+        "source_url": "https://fixturedownload.com/download/mls-2026-UTC.csv",
+        "source_row_id": "316",
+        "source_sha256": "b22cc2269f0f5a6c28a396d3327c5f55c08eabe622e00f6d5f28307ea336c0ac",
+        "venue": "Gillette Stadium",
+        "home_team": "new england revolution",
+        "away_team": "new york city fc",
+        "canonical_venue_local_date": "2026-08-23"
+      },
+      "prediction": {
+        "snapshot_id": "PRED-MLS-2026-2026-08-23-ad6bd99a845b-20260823T160852Z",
+        "frozen_at": "2026-08-23T16:08:52.749016Z",
+        "poisson_model_version": "P002_GATE2_POISSON_U35_V0_1",
+        "poisson_probability_u35": 0.7154040462028188,
+        "negbin_model_version": "P002_NEGBIN_CHALLENGER_V0_1",
+        "negbin_specification_sha256": "650d6cdd6eccc31ec0756cd1bfe80b51032e079ba90c00ad950b86db85508c00",
+        "negbin_probability_u35": 0.7065308326958891,
+        "pre_lineup_lambda": 2.6940476190476192,
+        "uses_market_odds": false,
+        "history_rows_available": 475,
+        "home_prior_n": 29,
+        "away_prior_n": 31,
+        "snapshot_sha256": "6cc9dafd1afcd83a6fde77e6144944044477e515514f44af7c8e70cad69949c7"
+      },
+      "regime": {
+        "snapshot_id": "REG-MLS-2026-2026-08-23-ad6bd99a845b-20260823T160852Z",
+        "label": "MLS_2026_REGULAR_SEASON",
+        "source": "MLS_OFFICIAL_2026_REGULAR_SEASON_SCHEDULE",
+        "source_url": "https://www.mlssoccer.com/news/mls-announces-2026-regular-season-schedule",
+        "observed_at": "2026-08-23T16:08:52.749016Z",
+        "verified": true,
+        "uses_outcome": false,
+        "uses_market_odds": false,
+        "snapshot_sha256": "dcb150c91500d684759679a5166a75f6c498a84aa7b46c4d40015b239ba3d0a3"
+      },
+      "market": null,
+      "settlement": null,
+      "test_b_eligible": false,
+      "next_required_state": "CLOSING_MARKET_CAPTURED",
+      "governance": {
+        "prediction_frozen_before_kickoff": true,
+        "future_fixture_not_added_to_other_fixture_history": true,
+        "bookmaker_odds_used_by_model": false,
+        "closing_market_not_fabricated": true,
+        "settlement_not_available_pre_match": true,
+        "capital_effect": "NONE",
+        "real_money": "NO"
+      },
+      "record_sha256": "cf62bc80d5c3803c53fcb216078b1e8b69dc032305a6b1c97d79de2b01690b3b"
+    }
+  ],
+  "summary": {
+    "prematch_frozen": 2,
+    "test_b_eligible": 0
+  },
+  "performance_metrics_exposed": false,
+  "source_audit": {
+    "cross_source_2025_verified": 164,
+    "fixturedownload_2026": {
+      "source_sha256": "b22cc2269f0f5a6c28a396d3327c5f55c08eabe622e00f6d5f28307ea336c0ac",
+      "fixtures_received": 510,
+      "settled_history_rows_before_capture": 311
+    }
+  },
+  "ci_evidence": {
+    "workflow_run_id": 32650755137,
+    "workflow_job_id": 97221859459,
+    "head_sha": "1e8be3c05064ee601bbd718a4738b4e209a28bfe",
+    "artifact_id": 9496104977,
+    "artifact_digest": "sha256:777e19085420e7074f4d4dd81e6bf9f5db01dea59edc7d9b8009178ed5652f73",
+    "conclusion": "SUCCESS",
+    "unified_tests": "20/20 PASS",
+    "core_integrated_assurance": "PROMOTE",
+    "capital_assurance": "LOCKED"
+  }
+}
