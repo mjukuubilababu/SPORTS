@@ -1,0 +1,113 @@
+{
+  "captureId": "lineups-odds-check-2026-08-23T130320Z",
+  "capturedAt": "2026-08-23T13:03:20Z",
+  "captureType": "RAW_STATUS_AND_LINEUP_DELTA_OBSERVATION",
+  "contractReference": "contracts/kickoff-lineup-final-gate-v0.1.json",
+  "finalCaptureBuilt": false,
+  "lambdaAdjusted": false,
+  "transferImpactCreated": false,
+  "supersedes": null,
+  "preservesEarlierSnapshots": true,
+  "events": [
+    {
+      "eventId": "premier-league-2026-08-23-manchester-city-bournemouth",
+      "kickoffObservation": {
+        "status": "KICKOFF_TIME_REACHED",
+        "scheduledKickoffAt": "2026-08-23T13:00:00Z",
+        "observedAt": "2026-08-23T13:03:20Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.mancity.com/news/mens/city-v-bournemouth-kick-off-time-and-tv-information-63922554"
+      },
+      "lineupSnapshot": {
+        "status": "BOTH_STARTING_XIS_CONFIRMED",
+        "observedAt": "2026-08-23T13:03:20Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.mancity.com/news/mens/manchester-city-v-bournemouth-team-news-tactics-63923078",
+        "home": {
+          "team": "Manchester City",
+          "startingXI": ["Donnarumma","Khusanov","Dias","Guehi","Gvardiol","Lewis","Anderson","O'Reilly","Semenyo","Foden","Haaland"]
+        },
+        "away": {
+          "team": "AFC Bournemouth",
+          "startingXI": ["Petrovic","Smith","Hill","Silva","Truffert","Cook","Scott","Tavernier","Rayan","Kluivert","Evanilson"]
+        },
+        "playerDomainsActivated": false,
+        "playerDomainReason": "Confirmed XI is attributable, but this capture contains no complete attributable player-level evidence package sufficient to populate PLAYER_MATCHUP or PLAYER_QUALITY_AND_COHESION."
+      },
+      "bookmakerDelta": {
+        "newPreKickoffSnapshotsAdded": false,
+        "reason": "Effective kickoff had already been reached at observation time; no post-kickoff/live price was substituted for an immutable pre-kickoff bookmaker snapshot. Earlier pre-kickoff observations remain unchanged."
+      },
+      "decision": "BLOCKED_POST_KICKOFF_FOR_FINAL_CAPTURE",
+      "qualificationBlockers": ["EFFECTIVE_KICKOFF_ALREADY_REACHED", "FINAL_CAPTURE_NOT_OBSERVED_PRE_KICKOFF", "PLAYER_LEVEL_EVIDENCE_PACKAGE_INCOMPLETE"]
+    },
+    {
+      "eventId": "premier-league-2026-08-23-brighton-aston-villa",
+      "kickoffObservation": {
+        "status": "KICKOFF_TIME_REACHED",
+        "scheduledKickoffAt": "2026-08-23T13:00:00Z",
+        "observedAt": "2026-08-23T13:03:20Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.oddschecker.com/insight/football/20260823-brighton-vs-aston-villa-confirmed-lineups"
+      },
+      "lineupSnapshot": {
+        "status": "BOTH_STARTING_XIS_CONFIRMED",
+        "observedAt": "2026-08-23T13:03:20Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.oddschecker.com/insight/football/20260823-brighton-vs-aston-villa-confirmed-lineups",
+        "home": {
+          "team": "Brighton & Hove Albion",
+          "startingXI": ["Bart Verbruggen","Mats Wieffer","Luka Vuskovic","Olivier Boscagli","Lewis Dunk","Pascal Gross","Yasin Ayari","Diego Gomez","Jack Hinshelwood","Maxim De Cuyper","Georginio Rutter"]
+        },
+        "away": {
+          "team": "Aston Villa",
+          "startingXI": ["Marco Bizot","Matty Cash","Victor Lindelof","Pau Torres","Ian Maatsen","Ross Barkley","Boubacar Kamara","John McGinn","Joao Gomes","George Hemmings","Emiliano Buendia"]
+        },
+        "playerDomainsActivated": false,
+        "playerDomainReason": "Confirmed XI is attributable, but no complete attributable player-level evidence package was verified in this run."
+      },
+      "bookmakerDelta": {
+        "newPreKickoffSnapshotsAdded": false,
+        "reason": "Effective kickoff had already been reached at observation time; no live/post-kickoff prices were used as pre-kickoff evidence. Earlier bookmaker snapshots remain immutable."
+      },
+      "decision": "BLOCKED_POST_KICKOFF_FOR_FINAL_CAPTURE",
+      "qualificationBlockers": ["EFFECTIVE_KICKOFF_ALREADY_REACHED", "FINAL_CAPTURE_NOT_OBSERVED_PRE_KICKOFF", "PLAYER_LEVEL_EVIDENCE_PACKAGE_INCOMPLETE"]
+    },
+    {
+      "eventId": "premier-league-2026-08-23-newcastle-liverpool",
+      "kickoffObservation": {
+        "status": "SCHEDULED",
+        "scheduledKickoffAt": "2026-08-23T15:30:00Z",
+        "observedAt": "2026-08-23T13:03:20Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.newcastleunited.com/en/matches/mens-team/newcastle-united-v-liverpool-english-premier-league-20260823"
+      },
+      "lineupSnapshot": {
+        "status": "NOT_YET_CONFIRMED",
+        "observedAt": "2026-08-23T13:03:20Z",
+        "home": {"team":"Newcastle United","startingXI":null},
+        "away": {"team":"Liverpool","startingXI":null},
+        "predictedLineupsIgnored": true,
+        "playerDomainsActivated": false
+      },
+      "bookmakerDelta": {
+        "newQualifiedSnapshotsAdded": false,
+        "observedPublicComparisonSource": "https://www.oddschecker.com/football/english/premier-league/newcastle-v-liverpool/winner",
+        "sourceLastUpdated": "2026-08-23T08:57:00Z",
+        "reason": "The public comparison page exposed a last-updated timestamp materially older than the prior canonical 2026-08-23T12:08:30Z bookmaker observations, so it was not promoted as a fresher bookmaker snapshot."
+      },
+      "decision": "WATCH",
+      "qualificationBlockers": ["CONFIRMED_STARTING_XIS_MISSING", "NO_NEW_FRESHER_ATTRIBUTABLE_BOOKMAKER_SNAPSHOT"]
+    }
+  ],
+  "ingestionOutcome": {
+    "realFootballFeatureIngestion": "LINEUP_AND_KICKOFF_STATUS_DELTA_ONLY",
+    "historicalBaseline": "UNCHANGED_EXISTING_2025_26_BASELINE",
+    "PLAYER_MATCHUP": "INACTIVE",
+    "PLAYER_QUALITY_AND_COHESION": "INACTIVE",
+    "TRANSFER_IMPACT": "NOT_CREATED",
+    "lambdaChange": "NONE",
+    "modelMarketComparison": "NO_NEW_COMPARISON_PROMOTED",
+    "reason": "Two 14:00 BST fixtures reached effective kickoff before this observation, so no hindsight-contaminated final pre-kickoff capture was created. Newcastle-Liverpool remains pre-kickoff but lacks confirmed starting XIs and no fresher attributable bookmaker snapshot than the prior canonical capture was verified."
+  }
+}
