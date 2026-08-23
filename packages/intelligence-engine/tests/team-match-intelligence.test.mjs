@@ -76,11 +76,13 @@ test('stale and unverified signals cannot contribute', () => {
 });
 
 test('counter evidence creates contradiction pressure instead of being discarded', () => {
-  const signals = deriveTeamMatchSignals(fullFeatureSet());
-  signals.push(Object.freeze({
-    id: 'AWAY_COUNTER', domain: 'MATCH_STATISTICS_PATTERNS', impact: -0.8, confidence: 0.95, sampleSize: 38,
-    observedAt, source: 'TEST_COUNTER_SOURCE', verified: true, correlationGroup: 'AWAY_COUNTER_PATTERN', detail: Object.freeze({})
-  }));
+  const signals = [
+    ...deriveTeamMatchSignals(fullFeatureSet()),
+    Object.freeze({
+      id: 'AWAY_COUNTER', domain: 'MATCH_STATISTICS_PATTERNS', impact: -0.8, confidence: 0.95, sampleSize: 38,
+      observedAt, source: 'TEST_COUNTER_SOURCE', verified: true, correlationGroup: 'AWAY_COUNTER_PATTERN', detail: Object.freeze({})
+    })
+  ];
   const intelligence = buildTeamMatchIntelligence({ asOf, signals });
   assert.ok(intelligence.counterEvidence.length >= 1);
   assert.ok(intelligence.contradictionPressure > 0);
@@ -94,7 +96,15 @@ test('uncalibrated intelligence cannot rewrite lambdas', () => {
   assert.equal(adjusted.adjusted.awayLambda, 1.2);
 });
 
-test('verified calibration can adjust lambdas but remains inside caps', () => {
+test('bookmaker-derived calibration is forbidden', () => {
+  const intelligence = buildTeamMatchIntelligence({ asOf, featureSet: fullFeatureSet() });
+  const badCalibration = { ...calibration(), usesBookmakerOdds: true };
+  const adjusted = applyCalibratedTeamIntelligence({ homeLambda: 1.7, awayLambda: 1.2, intelligence, calibration: badCalibration });
+  assert.equal(adjusted.adjustmentApplied, false);
+  assert.equal(adjusted.reason, 'VERIFIED_INDEPENDENT_CALIBRATION_REQUIRED');
+});
+
+test('verified calibration uses de-correlated groups and remains inside caps', () => {
   const intelligence = buildTeamMatchIntelligence({ asOf, featureSet: fullFeatureSet() });
   const adjusted = applyCalibratedTeamIntelligence({ homeLambda: 1.7, awayLambda: 1.2, intelligence, calibration: calibration() });
   assert.equal(adjusted.adjustmentApplied, true);
@@ -102,6 +112,7 @@ test('verified calibration can adjust lambdas but remains inside caps', () => {
   assert.ok(adjusted.multipliers.away >= 0.8 && adjusted.multipliers.away <= 1.2);
   assert.ok(adjusted.adjusted.homeLambda > 1.7);
   assert.ok(adjusted.adjusted.awayLambda < 1.2);
+  assert.equal(adjusted.contributions.filter((x) => x.correlationGroup === 'CHANCE_CREATION_AND_PREVENTION').length, 1);
 });
 
 test('decision universe keeps baseline lambdas when calibration is absent', () => {
