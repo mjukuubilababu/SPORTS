@@ -1,0 +1,19 @@
+{
+  "capability": "player-matchup-intelligence",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_TESTS_AUTHORED_STATIC_REVIEW_PENDING_PR",
+  "source_branch": "feature/player-matchup-intelligence-v0.1",
+  "tests": "9 AUTHORED",
+  "full_repository_runtime": "NOT_CLAIMED",
+  "contract": "contracts/player-matchup-intelligence-v0.1.json",
+  "docs": "docs/player-matchup-intelligence-v0.1.md",
+  "runner": "scripts/run_player_matchup_intelligence.mjs",
+  "command": "npm run player:matchup -- <confirmed-lineup-player-input.json> [output.json]",
+  "current_real_data_status": "WAIT_CONFIRMED_STARTING_XI_AND_VERIFIED_PLAYER_PROFILES",
+  "outputs": ["PLAYER_MATCHUP", "PLAYER_QUALITY_AND_COHESION", "REAL_FOOTBALL_PLAYER_EVIDENCE"],
+  "tactical_lanes": 7,
+  "default_minimum_player_sample": 8,
+  "governance": "CONFIRMED_XI_ONLY; EXACTLY_11_UNIQUE_STARTERS; ONE_GOALKEEPER; LINEUP_AND_PROFILES_PRE_KICKOFF; ROLE_SPECIFIC_METRICS; COMPETITION_ADJUSTED; NO_REPUTATION_SCORE; BOOKMAKER_ODDS_FORBIDDEN; NO_UNCALIBRATED_LAMBDA_REWRITE; NO_HINDSIGHT",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
