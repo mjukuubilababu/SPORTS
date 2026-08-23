@@ -8,9 +8,11 @@ on:
       - 'packages/gate4/future_test_b_capture.py'
       - 'packages/gate4/future_test_b_transition.py'
       - 'packages/gate4/data/mls-2026-test-b-prematch-targets-2026-08-23.json'
+      - 'packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json'
       - 'scripts/capture_future_test_b_prematch.py'
       - 'scripts/test_future_test_b_capture.py'
       - 'scripts/test_future_test_b_transitions.py'
+      - 'scripts/verify_future_test_b_prematch_frozen.py'
       - 'scripts/verify_unified.py'
       - 'contracts/future-test-b-capture-v0.1.json'
       - 'manifests/future-test-b-capture-v0.1.json'
@@ -37,19 +39,17 @@ jobs:
         run: |
           python scripts/test_future_test_b_capture.py
           python scripts/test_future_test_b_transitions.py
+          python scripts/verify_future_test_b_prematch_frozen.py
 
       - name: Run unified repository verifier
         run: python scripts/verify_unified.py
 
-      - name: Capture genuine future prematch snapshots
-        run: python scripts/capture_future_test_b_prematch.py
-
-      - name: Assert capture remains prematch only
+      - name: Assert canonical frozen capture remains prematch only
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          p=Path('artifacts/future-test-b-prematch-capture-2026-08-23.json')
+          p=Path('packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json')
           report=json.loads(p.read_text())
           assert report['summary']['prematch_frozen'] == 2
           assert report['summary']['test_b_eligible'] == 0
@@ -85,12 +85,12 @@ jobs:
           }, indent=2))
           PY
 
-      - name: Upload prematch capture evidence
+      - name: Upload frozen capture verification evidence
         uses: actions/upload-artifact@v4
         with:
           name: future-test-b-prematch-capture-v0.1
           path: |
-            artifacts/future-test-b-prematch-capture-2026-08-23.json
+            packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json
             artifacts/unified-verification-report.json
             artifacts/unified-verification.log
           if-no-files-found: error
