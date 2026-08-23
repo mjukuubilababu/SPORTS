@@ -1,0 +1,43 @@
+{
+  "contract": "cross-source-historical-result-reconciliation",
+  "version": "v0.1",
+  "reconciler_version": "CROSS_SOURCE_RESULT_RECONCILER_V0_1",
+  "target": "MLS_2025_HISTORICAL_RESULTS",
+  "sources": [
+    {
+      "key": "MLSOPENSKILL",
+      "date_semantics": "UTC_DATETIME",
+      "git_blob_sha1": "022c9bc83a3196adc702bf84a64217571b087630"
+    },
+    {
+      "key": "OPENFOOTBALL",
+      "date_semantics": "SOURCE_LOCAL_MATCH_DATE",
+      "git_blob_sha1": "2896d283601615739418575cbe6b6c9b316a3151"
+    }
+  ],
+  "matching": {
+    "normalized_home_team_required": true,
+    "normalized_away_team_required": true,
+    "final_score_exact_match_required": true,
+    "maximum_source_date_difference_days": 1,
+    "canonical_date_source": "OPENFOOTBALL_SOURCE_DATE",
+    "utc_source_date_preserved": true
+  },
+  "quarantine_reasons": [
+    "NO_CROSS_SOURCE_MATCH",
+    "CROSS_SOURCE_SCORE_DISAGREEMENT",
+    "CROSS_SOURCE_TARGET_ALREADY_CONSUMED"
+  ],
+  "source_integrity": {
+    "runtime_fetch_must_match_reviewed_git_blob_sha1": true,
+    "blob_hash_mismatch_behavior": "FAIL_CLOSED"
+  },
+  "output": {
+    "canonical_truth_store": "CANONICAL_HISTORICAL_TRUTH_STORE_V0_1",
+    "gate2_backfill_eligible_only_after_cross_source_match": true,
+    "market_odds_required_for_result_history": false,
+    "gate3_validation_claim": false
+  },
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
