@@ -26,3 +26,5 @@ export * from './final-prematch-processing.mjs';
 export * from './bidirectional-match-reasoning.mjs';
 export * from './market-mapping.mjs';
 export * from './match-decision-universe.mjs';
+export * from './half-specific-model.mjs';
+export * from './half-specific-reasoning.mjs';
