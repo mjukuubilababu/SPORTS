@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from gate2_engine import Match, build_features, feature_row_to_dict
 
 
 SUPPORTED_STORE_VERSION = "CANONICAL_HISTORICAL_TRUTH_STORE_V0_1"
+
+
+def _identity(date: str, home: str, away: str) -> Tuple[str, str, str]:
+    return (date, home, away)
 
 
 def matches_from_truth_store(store: Dict) -> List[Match]:
@@ -42,6 +46,23 @@ def matches_from_truth_store(store: Dict) -> List[Match]:
 def build_backfill_from_truth_store(store: Dict) -> Dict:
     matches = matches_from_truth_store(store)
     feature_rows = build_features(matches)
+    record_by_identity = {
+        _identity(record["canonical_match_date"], record["home_team"], record["away_team"]): record
+        for record in store.get("records", [])
+        if record.get("gate2_backfill_eligible") is True
+    }
+
+    serialized = []
+    for row in feature_rows:
+        record = record_by_identity.get(_identity(row.date, row.home, row.away))
+        if record is None:
+            raise ValueError("BACKFILL_CANONICAL_IDENTITY_LOST")
+        payload = feature_row_to_dict(row)
+        payload["match_id"] = record["match_id"]
+        payload["season"] = int(record["season"])
+        payload["league"] = record["league"]
+        serialized.append(payload)
+
     return {
         "pipeline_version": "GATE1_TO_GATE2_CANONICAL_BACKFILL_V0_1",
         "source_dataset_id": store.get("dataset_id"),
@@ -56,9 +77,11 @@ def build_backfill_from_truth_store(store: Dict) -> Dict:
             "market_probability_available": sum(1 for row in feature_rows if row.market_u35_prob is not None),
             "final_model_pass": sum(1 for row in feature_rows if row.final_model_gate == "PASS"),
         },
-        "features": [feature_row_to_dict(row) for row in feature_rows],
+        "features": serialized,
         "governance": {
             "gate1_truth_store_is_only_input": True,
+            "canonical_match_id_preserved": True,
+            "settlement_outcome_not_embedded_in_feature_snapshot": True,
             "current_match_appended_after_feature_computation": True,
             "no_template_row_injection": True,
             "insufficient_history_remains_pending": True,
