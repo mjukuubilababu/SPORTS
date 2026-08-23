@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
 from gate1_engine import OddsRecord, QuoteType, canonical_match_id, normalize_date, normalize_team, validate_truth_record
@@ -23,6 +23,11 @@ class HistoricalTruthInput:
     result_source: str
     result_source_url: str
     result_verified: bool
+    result_source_match_date: str = ""
+    result_crosscheck_source: str = ""
+    result_crosscheck_source_url: str = ""
+    result_crosscheck_match_date: str = ""
+    result_verification_method: str = "SINGLE_SOURCE_VERIFIED"
     o25: Optional[float] = None
     u25: Optional[float] = None
     o35: Optional[float] = None
@@ -78,6 +83,17 @@ def canonicalize_historical_row(row: HistoricalTruthInput) -> Dict:
         reasons.append("RESULT_PROVENANCE_MISSING")
     if not _valid_score(row.home_goals) or not _valid_score(row.away_goals):
         reasons.append("FINAL_SCORE_INVALID")
+
+    crosscheck = None
+    if row.result_crosscheck_source or row.result_crosscheck_source_url:
+        crosscheck = {
+            "source": row.result_crosscheck_source or None,
+            "source_url": row.result_crosscheck_source_url or None,
+            "source_match_date": normalize_date(row.result_crosscheck_match_date) if row.result_crosscheck_match_date else None,
+        }
+        if not row.result_crosscheck_source.strip() or not row.result_crosscheck_source_url.strip():
+            reasons.append("RESULT_CROSSCHECK_PROVENANCE_INCOMPLETE")
+            result_verified = False
 
     market = {
         "status": "MISSING",
@@ -147,8 +163,11 @@ def canonicalize_historical_row(row: HistoricalTruthInput) -> Dict:
         "final_score": {"home": row.home_goals, "away": row.away_goals},
         "result": {
             "verified": result_verified,
+            "verification_method": row.result_verification_method or "UNSPECIFIED",
             "source": row.result_source or None,
             "source_url": row.result_source_url or None,
+            "source_match_date": normalize_date(row.result_source_match_date) if row.result_source_match_date else canonical_date,
+            "crosscheck": crosscheck,
         },
         "market": market,
         "gate2_backfill_eligible": gate2_backfill_eligible,
@@ -190,9 +209,15 @@ def import_historical_rows(rows: Iterable[HistoricalTruthInput], *, dataset_id: 
         group_sorted = sorted(group, key=_quality_rank, reverse=True)
         chosen = dict(group_sorted[0])
         chosen["duplicate_observations"] = max(0, len(group) - 1)
-        chosen["supporting_result_sources"] = sorted({
-            x["result"]["source"] for x in group if x.get("result", {}).get("source")
-        })
+        supporting_results = set()
+        for item in group:
+            source = item.get("result", {}).get("source")
+            cross = item.get("result", {}).get("crosscheck") or {}
+            if source:
+                supporting_results.add(source)
+            if cross.get("source"):
+                supporting_results.add(cross["source"])
+        chosen["supporting_result_sources"] = sorted(supporting_results)
         chosen["supporting_market_sources"] = sorted({
             x["market"]["source"] for x in group if x.get("market", {}).get("source")
         })
@@ -206,6 +231,11 @@ def import_historical_rows(rows: Iterable[HistoricalTruthInput], *, dataset_id: 
         "conflicting_matches_quarantined": len(conflicts),
         "gate2_backfill_eligible": sum(1 for x in records if x["gate2_backfill_eligible"]),
         "gate1_validation_n_eligible": sum(1 for x in records if x["gate1_validation_n_eligible"]),
+        "cross_source_verified": sum(
+            1 for x in records
+            if x.get("result", {}).get("verified")
+            and x.get("result", {}).get("crosscheck") is not None
+        ),
         "market_missing": sum(1 for x in records if x["market"]["status"] == "MISSING"),
     }
 
@@ -220,6 +250,7 @@ def import_historical_rows(rows: Iterable[HistoricalTruthInput], *, dataset_id: 
         "governance": {
             "result_provenance_required": True,
             "verified_result_required_for_gate2": True,
+            "cross_source_result_provenance_preserved": True,
             "market_provenance_independent_from_result_provenance": True,
             "source_reported_market_date_preserved": True,
             "canonical_identity_uses_venue_local_match_date": True,
@@ -245,6 +276,11 @@ def input_from_mapping(row: Dict[str, str]) -> HistoricalTruthInput:
         result_source=row["result_source"],
         result_source_url=row["result_source_url"],
         result_verified=str(row.get("result_verified", "false")).lower() == "true",
+        result_source_match_date=row.get("result_source_match_date", ""),
+        result_crosscheck_source=row.get("result_crosscheck_source", ""),
+        result_crosscheck_source_url=row.get("result_crosscheck_source_url", ""),
+        result_crosscheck_match_date=row.get("result_crosscheck_match_date", ""),
+        result_verification_method=row.get("result_verification_method", "SINGLE_SOURCE_VERIFIED"),
         o25=opt_float("o25"),
         u25=opt_float("u25"),
         o35=opt_float("o35"),
