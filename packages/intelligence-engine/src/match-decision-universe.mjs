@@ -2,15 +2,18 @@ import { buildBidirectionalMatchReasoning } from './bidirectional-match-reasonin
 import { deriveHalfSpecificLambdas } from './half-specific-model.mjs';
 import { buildHalfSpecificReasoning } from './half-specific-reasoning.mjs';
 import { rankAvailableMarketSelections, evaluatePricedMarketSelections } from './market-mapping.mjs';
+import { buildTeamMatchIntelligence } from './team-match-intelligence.mjs';
+import { applyCalibratedTeamIntelligence } from './calibrated-intelligence-adjustment.mjs';
 
-function truthState(truth, { evidenceMaturity, lineupGate, contextRisk }) {
+function truthState(truth, { evidenceMaturity, lineupGate, contextRisk, intelligenceState = null }) {
   const probability = truth.probability;
   const counter = truth.counterProbability;
   const strongMath = probability >= 0.70 && counter <= 0.30;
   const mature = evidenceMaturity >= 70;
   const lineupReady = lineupGate === 'PASS';
   const contextReady = contextRisk !== 'HIGH';
-  if (strongMath && mature && lineupReady && contextReady) return 'ROBUST_MODEL_TRUTH';
+  const intelligenceReady = intelligenceState === null || intelligenceState === 'ANALYSIS_MATURE';
+  if (strongMath && mature && lineupReady && contextReady && intelligenceReady) return 'ROBUST_MODEL_TRUTH';
   if (probability >= 0.60) return 'MODEL_LEAN';
   return 'UNCERTAIN';
 }
@@ -59,6 +62,11 @@ export function buildMatchDecisionUniverse({
   evidenceMaturity = 0,
   lineupGate = 'PENDING',
   contextRisk = 'HIGH',
+  teamIntelligenceFeatureSet = null,
+  teamIntelligenceSignals = null,
+  teamIntelligenceAsOf = null,
+  teamIntelligenceOptions = {},
+  intelligenceCalibration = null,
   halfProfile = null,
   minimumHalfProfileSample = 30,
   availableMarketSelections = [],
@@ -66,8 +74,45 @@ export function buildMatchDecisionUniverse({
   minDisplayProbability = 0.5,
   minEdge = 0.05
 }) {
-  const context = { evidenceMaturity, lineupGate, contextRisk };
-  const reasoning = buildBidirectionalMatchReasoning({ eventId, homeTeam, awayTeam, homeLambda, awayLambda });
+  let teamIntelligence = null;
+  let intelligenceAdjustment = null;
+  if (teamIntelligenceFeatureSet || teamIntelligenceSignals) {
+    teamIntelligence = buildTeamMatchIntelligence({
+      eventId,
+      homeTeam,
+      awayTeam,
+      asOf: teamIntelligenceAsOf,
+      featureSet: teamIntelligenceFeatureSet,
+      signals: teamIntelligenceSignals,
+      ...teamIntelligenceOptions
+    });
+    intelligenceAdjustment = applyCalibratedTeamIntelligence({
+      homeLambda,
+      awayLambda,
+      intelligence: teamIntelligence,
+      calibration: intelligenceCalibration
+    });
+  }
+
+  const effectiveHomeLambda = intelligenceAdjustment?.adjustmentApplied
+    ? intelligenceAdjustment.adjusted.homeLambda
+    : homeLambda;
+  const effectiveAwayLambda = intelligenceAdjustment?.adjustmentApplied
+    ? intelligenceAdjustment.adjusted.awayLambda
+    : awayLambda;
+  const context = {
+    evidenceMaturity,
+    lineupGate,
+    contextRisk,
+    intelligenceState: teamIntelligence?.state ?? null
+  };
+  const reasoning = buildBidirectionalMatchReasoning({
+    eventId,
+    homeTeam,
+    awayTeam,
+    homeLambda: effectiveHomeLambda,
+    awayLambda: effectiveAwayLambda
+  });
   const truthBoard = reasoning.strongestTruths.map((truth) => Object.freeze({
     ...truth,
     state: truthState(truth, context)
@@ -77,8 +122,8 @@ export function buildMatchDecisionUniverse({
   let halfReasoning = null;
   if (halfProfile) {
     halfModel = deriveHalfSpecificLambdas({
-      fullTimeHomeLambda: homeLambda,
-      fullTimeAwayLambda: awayLambda,
+      fullTimeHomeLambda: effectiveHomeLambda,
+      fullTimeAwayLambda: effectiveAwayLambda,
       halfProfile,
       minimumSample: minimumHalfProfileSample
     });
@@ -102,11 +147,14 @@ export function buildMatchDecisionUniverse({
   const pricing = evaluatePricedMarketSelections(reasoning, pricedMarketSelections, { minEdge, halfReasoning });
 
   return Object.freeze({
-    engineVersion: 'MATCH_DECISION_UNIVERSE_V0_2_HALF_SPECIFIC',
+    engineVersion: 'MATCH_DECISION_UNIVERSE_V0_3_TEAM_INTELLIGENCE',
     eventId,
     teams: Object.freeze({ home: homeTeam, away: awayTeam }),
     analysisOrder: Object.freeze([
       'INDEPENDENT_TEAM_MODEL',
+      'TEAM_MATCH_INTELLIGENCE',
+      'COUNTER_EVIDENCE_AND_CORRELATION_CONTROL',
+      'CALIBRATED_LAMBDA_ADJUSTMENT_IF_VERIFIED',
       'TEAM_REALITY_MAP',
       'BIDIRECTIONAL_MATCH_TRUTHS',
       'COUNTER_OUTCOME_PRESSURE',
@@ -116,7 +164,16 @@ export function buildMatchDecisionUniverse({
       'MARKET_PRICE_AND_EDGE_LAYER',
       'FINAL_GOVERNED_DECISION'
     ]),
-    modelContext: Object.freeze({ evidenceMaturity, lineupGate, contextRisk }),
+    modelContext: Object.freeze({
+      evidenceMaturity,
+      lineupGate,
+      contextRisk,
+      intelligenceState: teamIntelligence?.state ?? 'NOT_PROVIDED'
+    }),
+    baselineModel: Object.freeze({ homeLambda, awayLambda }),
+    effectiveModel: Object.freeze({ homeLambda: effectiveHomeLambda, awayLambda: effectiveAwayLambda }),
+    teamIntelligence,
+    intelligenceAdjustment,
     reasoning,
     truthBoard: Object.freeze(truthBoard),
     strongestRobustTruths: Object.freeze(truthBoard.filter((x) => x.state === 'ROBUST_MODEL_TRUTH')),
@@ -129,6 +186,11 @@ export function buildMatchDecisionUniverse({
     pricing,
     governance: Object.freeze({
       analysisBeginsWithTeamsNotBookmakerMarkets: true,
+      playerTeamTransferAttackDefenceTemporalLeagueShotVenueH2HPatternsSupported: true,
+      positiveAndNegativeFootballEvidencePreserved: true,
+      correlatedSignalsCannotCreateArtificialConfidence: true,
+      unverifiedOrStaleFootballEvidenceCannotAdjustModel: true,
+      uncalibratedTeamIntelligenceCannotRewriteLambda: true,
       negativeConclusionsAllowed: true,
       complementMustBeEvaluated: true,
       marketMappingOccursAfterMatchReasoning: true,
