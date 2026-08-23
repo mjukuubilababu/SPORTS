@@ -19,56 +19,18 @@ results=[]
 for i in range(1,7):
     results.append(run(f'gate{i}_acceptance',[sys.executable,f'test_gate{i}.py'],ROOT/f'packages/gate{i}'))
 
-results.append(run(
-    'canonical_historical_truth_backfill',
-    [sys.executable,'test_canonical_historical_pipeline.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'cross_source_result_reconciler',
-    [sys.executable,'test_cross_source_result_reconciler.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'historical_closing_market_join',
-    [sys.executable,'test_historical_closing_market_join.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'gate2_gate3_settled_corpus',
-    [sys.executable,'test_gate2_gate3_settled_corpus.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'footiqo_fixture_reconciler',
-    [sys.executable,'test_footiqo_fixture_reconciler.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'gate3_gate4_real_robustness',
-    [sys.executable,'test_gate3_gate4_real_robustness.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'evaluation_freeze_challenger_protocol',
-    [sys.executable,'test_evaluation_freeze_challenger_protocol.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'negative_binomial_challenger',
-    [sys.executable,'test_negbin_challenger.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'blind_future_test_b',
-    [sys.executable,'test_blind_future_test_b.py'],
-    ROOT/'scripts'
-))
-results.append(run(
-    'blind_future_test_b_state',
-    [sys.executable,'verify_blind_future_test_b_state.py'],
-    ROOT/'scripts'
-))
+results.append(run('canonical_historical_truth_backfill',[sys.executable,'test_canonical_historical_pipeline.py'],ROOT/'scripts'))
+results.append(run('cross_source_result_reconciler',[sys.executable,'test_cross_source_result_reconciler.py'],ROOT/'scripts'))
+results.append(run('historical_closing_market_join',[sys.executable,'test_historical_closing_market_join.py'],ROOT/'scripts'))
+results.append(run('gate2_gate3_settled_corpus',[sys.executable,'test_gate2_gate3_settled_corpus.py'],ROOT/'scripts'))
+results.append(run('footiqo_fixture_reconciler',[sys.executable,'test_footiqo_fixture_reconciler.py'],ROOT/'scripts'))
+results.append(run('gate3_gate4_real_robustness',[sys.executable,'test_gate3_gate4_real_robustness.py'],ROOT/'scripts'))
+results.append(run('evaluation_freeze_challenger_protocol',[sys.executable,'test_evaluation_freeze_challenger_protocol.py'],ROOT/'scripts'))
+results.append(run('negative_binomial_challenger',[sys.executable,'test_negbin_challenger.py'],ROOT/'scripts'))
+results.append(run('blind_future_test_b',[sys.executable,'test_blind_future_test_b.py'],ROOT/'scripts'))
+results.append(run('blind_future_test_b_state',[sys.executable,'verify_blind_future_test_b_state.py'],ROOT/'scripts'))
+results.append(run('future_test_b_prematch_capture',[sys.executable,'test_future_test_b_capture.py'],ROOT/'scripts'))
+results.append(run('future_test_b_transitions',[sys.executable,'test_future_test_b_transitions.py'],ROOT/'scripts'))
 
 # Reference E2E has no external npm dependencies; npm scripts execute node stdlib code.
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
@@ -78,7 +40,9 @@ required=[
     ROOT/'contracts/artifact-registry.json', ROOT/'contracts/canonical-invariants.json',
     ROOT/'contracts/p002-frozen-rules.json', ROOT/'docs/ARCHITECTURE.md',
     ROOT/'contracts/blind-future-test-b-v0.1.json',
-    ROOT/'packages/gate4/data/mls-2026-future-test-b-state-v0.1.json'
+    ROOT/'packages/gate4/data/mls-2026-future-test-b-state-v0.1.json',
+    ROOT/'contracts/future-test-b-capture-v0.1.json',
+    ROOT/'packages/gate4/data/mls-2026-test-b-prematch-targets-2026-08-23.json'
 ]
 struct_ok=all(p.exists() and p.stat().st_size>0 for p in required)
 results.append({'name':'unified_structure','command':[],'cwd':'.','returncode':0 if struct_ok else 1,'passed':struct_ok,'stdout':f'required_files={len(required)}','stderr':''})
