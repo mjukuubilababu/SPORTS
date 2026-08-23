@@ -39,6 +39,11 @@ results.append(run(
     [sys.executable,'test_gate2_gate3_settled_corpus.py'],
     ROOT/'scripts'
 ))
+results.append(run(
+    'footiqo_fixture_reconciler',
+    [sys.executable,'test_footiqo_fixture_reconciler.py'],
+    ROOT/'scripts'
+))
 
 # Reference E2E has no external npm dependencies; npm scripts execute node stdlib code.
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))

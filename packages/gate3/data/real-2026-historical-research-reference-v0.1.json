@@ -1,0 +1,103 @@
+{
+  "reference": "REAL_2026_HISTORICAL_RESEARCH_REFERENCE_V0_1",
+  "dataset_id": "MLS-2025-WARMUP-PLUS-2026-FOOTIQO-CLOSING-RESEARCH-V0.1",
+  "workflow": {
+    "run_id": 32634568226,
+    "job_id": 97182269537,
+    "artifact_id": 9491948223,
+    "artifact_digest": "sha256:df23a1112339d5c7bd428b6ed83d973be9570da5f268e7be406fa260cc3b30fa",
+    "conclusion": "success"
+  },
+  "sources": {
+    "mls_2025_cross_source": {
+      "source_a_scored_rows": 222,
+      "source_b_scored_rows": 164,
+      "cross_source_verified": 164,
+      "source_a_quarantined": 58,
+      "source_b_unmatched": 0
+    },
+    "mls_2026_footiqo_fixturedownload": {
+      "footiqo_rows_received": 25,
+      "fixture_scored_rows_received": 311,
+      "cross_source_verified": 25,
+      "quarantined": 0
+    }
+  },
+  "canonical_truth_store": {
+    "rows_received": 189,
+    "canonical_matches": 189,
+    "gate2_backfill_eligible": 189,
+    "gate1_validation_n_eligible": 5,
+    "market_missing": 164
+  },
+  "gate2": {
+    "matches_backfilled": 189,
+    "warmup_pass": 144,
+    "warmup_pending": 45,
+    "model_probability_available": 142,
+    "market_probability_available": 25,
+    "final_model_pass": 0
+  },
+  "gate3": {
+    "research_eligible": 25,
+    "strict_pattern_qualified": 0,
+    "clv_available": 0
+  },
+  "headline": {
+    "research_n": 25,
+    "strict_p002_n": 0,
+    "model_brier": 0.21280990652676027,
+    "market_brier": 0.19797293975373573,
+    "delta_brier_vs_market": -0.01483696677302454,
+    "model_logloss": 0.6213511228809192,
+    "market_logloss": 0.5860065861003126,
+    "delta_logloss_vs_market": -0.03534453678060656,
+    "expected_calibration_error": 0.14452528795227929,
+    "strict_p002_promotion_pass": false
+  },
+  "diagnostic_examples": [
+    {
+      "match": "Austin FC vs Minnesota United FC",
+      "outcome_u35": 0,
+      "model_probability": 0.8492,
+      "market_probability": 0.7155,
+      "note": "MODEL_OVERCONFIDENT_AND_WRONG"
+    },
+    {
+      "match": "Nashville SC vs New England Revolution",
+      "outcome_u35": 0,
+      "model_probability": 0.7668,
+      "market_probability": 0.6216,
+      "note": "MODEL_OVERCONFIDENT_AND_WRONG"
+    },
+    {
+      "match": "San Diego FC vs CF Montreal",
+      "outcome_u35": 0,
+      "model_probability": 0.7288,
+      "market_probability": 0.6216,
+      "note": "MODEL_OVERCONFIDENT_AND_WRONG"
+    },
+    {
+      "match": "Los Angeles FC vs Inter Miami",
+      "outcome_u35": 1,
+      "model_probability": 0.73,
+      "market_probability": 0.5609,
+      "note": "MODEL_LARGE_DIVERGENCE_CORRECT_ON_THIS_MATCH"
+    }
+  ],
+  "interpretation": {
+    "brier_delta_semantics": "market_brier - model_brier; positive means model better",
+    "logloss_delta_semantics": "market_logloss - model_logloss; positive means model better",
+    "result": "MARKET_BETTER_THAN_MODEL_ON_THIS_25_MATCH_RESEARCH_SAMPLE",
+    "sample_sufficiency": "BELOW_FROZEN_INDEPENDENT_VALIDATION_MIN_N_30",
+    "promotion_effect": "NONE"
+  },
+  "governance": {
+    "research_report_can_promote": false,
+    "strict_p002_rules_changed": false,
+    "closing_reference_is_execution_entry": false,
+    "clv_fabricated": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}

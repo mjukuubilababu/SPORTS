@@ -1,0 +1,55 @@
+name: Real Historical Research
+
+on:
+  push:
+    branches:
+      - feature/real-2026-research-corpus-v0.1
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-historical-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run historical pipeline unit tests
+        run: |
+          python scripts/test_canonical_historical_pipeline.py
+          python scripts/test_cross_source_result_reconciler.py
+          python scripts/test_historical_closing_market_join.py
+          python scripts/test_gate2_gate3_settled_corpus.py
+          python scripts/test_footiqo_fixture_reconciler.py
+
+      - name: Run real historical research runtime
+        run: python scripts/run_real_2026_historical_research.py --bootstrap-reps 2000
+
+      - name: Print headline metrics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('artifacts/real-2026-historical-research-report.json')
+          r=json.loads(p.read_text())
+          print(json.dumps(r['headline'], indent=2))
+          print(json.dumps(r['source_summaries'], indent=2))
+          PY
+
+      - name: Upload research report
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-2026-historical-research-report
+          path: artifacts/real-2026-historical-research-report.json
+          if-no-files-found: error

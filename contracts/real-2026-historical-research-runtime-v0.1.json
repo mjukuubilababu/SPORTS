@@ -1,0 +1,42 @@
+{
+  "contract": "real-2026-historical-research-runtime",
+  "version": "v0.1",
+  "dataset_id": "MLS-2025-WARMUP-PLUS-2026-FOOTIQO-CLOSING-RESEARCH-V0.1",
+  "inputs": {
+    "history_2025": {
+      "sources": ["MLSOpenSkill", "OpenFootball"],
+      "verification": "PINNED_GIT_BLOB_PLUS_TEAM_SCORE_DATE_RECONCILIATION",
+      "purpose": "CHRONOLOGICAL_HISTORY_ONLY"
+    },
+    "market_and_result_2026": {
+      "market_source": "Footiqo",
+      "market_provider": "1xBet",
+      "market_semantics": "CLOSING",
+      "result_crosscheck": "FixtureDownload UTC results",
+      "reviewed_market_rows": 25
+    }
+  },
+  "pipeline": [
+    "CROSS_SOURCE_RESULT_RECONCILIATION",
+    "CANONICAL_HISTORICAL_TRUTH_STORE",
+    "GATE2_CHRONOLOGICAL_BACKFILL",
+    "GATE3_MATCH_ID_SETTLEMENT",
+    "RESEARCH_MODEL_VS_MARKET_EVALUATION",
+    "STRICT_P002_EVALUATION"
+  ],
+  "rules": {
+    "canonical_match_date": "VENUE_LOCAL_DATE_DERIVED_FROM_FIXTURE_UTC",
+    "same_team_pair_required": true,
+    "exact_final_score_crosscheck_required": true,
+    "source_date_tolerance_days": 1,
+    "research_report_can_promote": false,
+    "strict_report_preserves_existing_gate1_and_gate2_states": true,
+    "closing_price_is_execution_entry": false,
+    "clv_without_distinct_entry_price": "UNAVAILABLE",
+    "outcome_in_feature_snapshot": false,
+    "no_hindsight": true
+  },
+  "frozen_p002_rules_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
