@@ -1,7 +1,9 @@
 {
   "capability": "historical-closing-market-join",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "status": "MERGED_CANONICAL_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "merged_via_pr": 16,
+  "merge_commit": "77195a79c7dead282e80a81a0d73e6ac00bf0d41",
   "source_branch": "feature/historical-closing-market-join-v0.1",
   "joiner": "packages/gate1/historical_market_join.py",
   "runner": "packages/gate1/join_historical_markets.py",
@@ -9,6 +11,7 @@
   "contract": "contracts/historical-closing-market-join-v0.1.json",
   "docs": "docs/historical-closing-market-join-v0.1.md",
   "root_verifier_updated": true,
+  "runtime": "NOT_CLAIMED_NO_GITHUB_ACTIONS_RUN_AND_LOCAL_CONTAINER_CANNOT_RESOLVE_GITHUB_HOST",
   "supported_source": "FOOTIQO_PUBLIC_EXPORT_1XBET_CLOSING",
   "target_markets": ["O2.5", "U2.5", "O3.5", "U3.5"],
   "eligibility_separation": {
