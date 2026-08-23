@@ -1,7 +1,9 @@
 {
   "capability": "cross-source-mls-2025-historical-corpus",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "status": "MERGED_CANONICAL_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "merged_via_pr": 15,
+  "merge_commit": "1dc5c50372aab62ff2cc9738089682d3ea5983e7",
   "source_branch": "feature/cross-source-mls-2025-corpus-v0.1",
   "reconciler": "packages/gate1/cross_source_result_reconciler.py",
   "builder": "packages/gate1/build_cross_source_mls2025.py",
@@ -12,6 +14,7 @@
   "docs": "docs/cross-source-mls-2025-historical-corpus-v0.1.md",
   "test": "scripts/test_cross_source_result_reconciler.py",
   "root_verifier_updated": true,
+  "runtime": "NOT_CLAIMED_NO_GITHUB_ACTIONS_RUN_AND_LOCAL_CONTAINER_CANNOT_RESOLVE_GITHUB_HOST",
   "sources": {
     "MLSOPENSKILL": {
       "git_blob_sha1": "022c9bc83a3196adc702bf84a64217571b087630",
