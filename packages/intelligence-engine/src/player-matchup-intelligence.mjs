@@ -16,6 +16,15 @@ function mean(values, name) {
   return clean.reduce((sum, value) => sum + value, 0) / clean.length;
 }
 
+function requiredMetrics(profile, keys, name) {
+  return mean(keys.map((key) => assert01(`${name}_${key.toUpperCase()}`, profile[key])), name);
+}
+
+function optionalMetrics(profile, keys, name, fallback = 0.5) {
+  const values = keys.filter((key) => Number.isFinite(profile[key])).map((key) => assert01(`${name}_${key.toUpperCase()}`, profile[key]));
+  return values.length ? mean(values, name) : fallback;
+}
+
 function validateLineup(side, lineup) {
   if (!Array.isArray(lineup) || lineup.length !== 11) throw new Error(`${side}_CONFIRMED_XI_MUST_HAVE_11_PLAYERS`);
   const ids = lineup.map((row) => row.playerId);
@@ -24,6 +33,7 @@ function validateLineup(side, lineup) {
   for (const row of lineup) {
     if (!VALID_PHASE_ROLES.has(row.phaseRole)) throw new Error(`${side}_PHASE_ROLE_INVALID`);
     if (!VALID_ZONES.has(row.zone)) throw new Error(`${side}_ZONE_INVALID`);
+    if (row.phaseRole === 'GOALKEEPER' && row.zone !== 'GOALKEEPER') throw new Error(`${side}_GOALKEEPER_ZONE_INVALID`);
   }
 }
 
@@ -37,48 +47,34 @@ function profileFor(profiles, playerId, minimumSample) {
   return profile;
 }
 
-function offensiveCapability(profile) {
-  return mean([
-    assert01('FINISHING', profile.finishing),
-    assert01('SHOT_QUALITY', profile.shotQuality),
-    assert01('CHANCE_CREATION', profile.chanceCreation),
-    assert01('BALL_PROGRESSION', profile.ballProgression),
-    assert01('DRIBBLING', profile.dribbling)
-  ], 'OFFENSIVE_CAPABILITY');
+function attackerCapability(profile) {
+  return requiredMetrics(profile, ['finishing', 'shotQuality', 'chanceCreation', 'ballProgression', 'dribbling'], 'ATTACKER_CAPABILITY');
 }
 
 function midfieldCapability(profile) {
-  return mean([
-    assert01('CHANCE_CREATION', profile.chanceCreation),
-    assert01('BALL_PROGRESSION', profile.ballProgression),
-    assert01('PRESS_RESISTANCE', profile.pressResistance),
-    assert01('BALL_SECURITY', profile.ballSecurity),
-    assert01('DEFENSIVE_DUELS', profile.defensiveDuels)
-  ], 'MIDFIELD_CAPABILITY');
+  return requiredMetrics(profile, ['chanceCreation', 'ballProgression', 'pressResistance', 'ballSecurity', 'defensiveDuels'], 'MIDFIELD_CAPABILITY');
 }
 
-function defensiveCapability(profile) {
-  return mean([
-    assert01('DEFENSIVE_DUELS', profile.defensiveDuels),
-    assert01('AERIAL_DEFENDING', profile.aerialDefending),
-    assert01('INTERCEPTIONS', profile.interceptions),
-    assert01('RECOVERY', profile.recovery),
-    assert01('BALL_SECURITY', profile.ballSecurity)
-  ], 'DEFENSIVE_CAPABILITY');
+function midfieldAttackSupport(profile) {
+  return optionalMetrics(profile, ['chanceCreation', 'ballProgression', 'dribbling', 'shotQuality'], 'MIDFIELD_ATTACK_SUPPORT', 0.5);
+}
+
+function midfieldDefensiveSupport(profile) {
+  return optionalMetrics(profile, ['defensiveDuels', 'interceptions', 'recovery', 'ballSecurity'], 'MIDFIELD_DEFENSIVE_SUPPORT', 0.5);
+}
+
+function defenderCapability(profile) {
+  return requiredMetrics(profile, ['defensiveDuels', 'aerialDefending', 'interceptions', 'recovery', 'ballSecurity'], 'DEFENDER_CAPABILITY');
 }
 
 function goalkeeperCapability(profile) {
-  return mean([
-    assert01('SHOT_STOPPING', profile.shotStopping),
-    assert01('GOALKEEPER_DISTRIBUTION', profile.goalkeeperDistribution),
-    assert01('HIGH_CLAIMS', profile.highClaims)
-  ], 'GOALKEEPER_CAPABILITY');
+  return requiredMetrics(profile, ['shotStopping', 'goalkeeperDistribution', 'highClaims'], 'GOALKEEPER_CAPABILITY');
 }
 
 function roleCapability(row, profile) {
-  if (row.phaseRole === 'ATTACK') return offensiveCapability(profile);
+  if (row.phaseRole === 'ATTACK') return attackerCapability(profile);
   if (row.phaseRole === 'MIDFIELD') return midfieldCapability(profile);
-  if (row.phaseRole === 'DEFENCE') return defensiveCapability(profile);
+  if (row.phaseRole === 'DEFENCE') return defenderCapability(profile);
   return goalkeeperCapability(profile);
 }
 
@@ -93,20 +89,33 @@ function individualQuality(row, profile) {
 function buildSide(side, lineup, profiles, minimumSample) {
   const rows = lineup.map((row) => {
     const profile = profileFor(profiles, row.playerId, minimumSample);
+    let offensive = null;
+    let midfield = null;
+    let defensive = null;
+    if (row.phaseRole === 'ATTACK') offensive = attackerCapability(profile);
+    if (row.phaseRole === 'MIDFIELD') {
+      offensive = midfieldAttackSupport(profile);
+      midfield = midfieldCapability(profile);
+      defensive = midfieldDefensiveSupport(profile);
+    }
+    if (row.phaseRole === 'DEFENCE') defensive = defenderCapability(profile);
+    if (row.phaseRole === 'GOALKEEPER') defensive = goalkeeperCapability(profile);
     return Object.freeze({
       ...row,
       profile,
-      offensive: row.phaseRole === 'GOALKEEPER' ? 0 : offensiveCapability(profile),
-      midfield: row.phaseRole === 'GOALKEEPER' ? 0 : midfieldCapability(profile),
-      defensive: row.phaseRole === 'GOALKEEPER' ? goalkeeperCapability(profile) : defensiveCapability(profile),
+      offensive,
+      midfield,
+      defensive,
       individualQuality: individualQuality(row, profile),
       continuity: assert01('TEAM_CONTINUITY', profile.teamContinuity)
     });
   });
+
   const by = (phaseRole, zone) => rows.filter((row) => row.phaseRole === phaseRole && (!zone || row.zone === zone));
-  const aggregate = (selected, field, fallback = null) => selected.length
-    ? mean(selected.map((row) => row[field]), `${side}_${field}`)
-    : fallback;
+  const aggregate = (selected, field, fallback = null) => {
+    const values = selected.map((row) => row[field]).filter(Number.isFinite);
+    return values.length ? mean(values, `${side}_${field}`) : fallback;
+  };
   const attackers = by('ATTACK');
   const midfielders = by('MIDFIELD');
   const defenders = by('DEFENCE');
@@ -136,7 +145,7 @@ function buildSide(side, lineup, profiles, minimumSample) {
   });
 }
 
-function matchupRow({ id, lane, homeCapability, awayCapability, source, observedAt, sampleSize, confidence = 0.82, detail = {} }) {
+function matchupRow({ id, lane, homeCapability, awayCapability, source, observedAt, sampleSize, confidence = 0.82 }) {
   return Object.freeze({
     id,
     lane,
@@ -148,8 +157,7 @@ function matchupRow({ id, lane, homeCapability, awayCapability, source, observed
     observedAt,
     source,
     verified: true,
-    correlationGroup: lane,
-    detail: Object.freeze(detail)
+    correlationGroup: lane
   });
 }
 
@@ -172,9 +180,11 @@ export function buildConfirmedLineupPlayerIntelligence({
 
   const home = buildSide('HOME', lineupObservation.home, playerProfiles, minimumPlayerSample);
   const away = buildSide('AWAY', lineupObservation.away, playerProfiles, minimumPlayerSample);
-  const sampleSize = Math.min(...[...lineupObservation.home, ...lineupObservation.away].map((row) => playerProfiles[row.playerId].sampleSize));
+  const allIds = [...lineupObservation.home, ...lineupObservation.away].map((row) => row.playerId);
+  const sampleSize = Math.min(...allIds.map((id) => playerProfiles[id].sampleSize));
+  const profileSources = [...new Set(allIds.map((id) => playerProfiles[id].source))];
   const common = {
-    source: lineupObservation.source,
+    source: `${lineupObservation.source} | ${profileSources.join(' | ')}`,
     observedAt: lineupObservation.observedAt,
     sampleSize,
     confidence: 0.82
@@ -198,10 +208,10 @@ export function buildConfirmedLineupPlayerIntelligence({
     confidence: 0.8,
     sampleSize,
     observedAt: lineupObservation.observedAt,
-    source: lineupObservation.source,
+    source: common.source,
     verified: true,
     correlationGroup: 'CONFIRMED_XI_PLAYER_QUALITY_AND_CONTINUITY',
-    notes: 'QUALITY_FROM_COMPETITION_ADJUSTED_PLAYER_PROFILES; COHESION_FROM_PRIOR_TEAM_CONTINUITY'
+    notes: 'QUALITY_FROM_ROLE_SPECIFIC_COMPETITION_ADJUSTED_PLAYER_PROFILES; COHESION_FROM_PRIOR_TEAM_CONTINUITY'
   });
 
   return Object.freeze({
@@ -219,12 +229,14 @@ export function buildConfirmedLineupPlayerIntelligence({
     away,
     playerMatchups,
     playerQualityAndCohesion,
+    profileSources: Object.freeze(profileSources),
     readiness: 'PLAYER_DOMAINS_READY',
     governance: Object.freeze({
       confirmedLineupRequired: true,
       predictedLineupForbidden: true,
       playerProfilesMustBeVerified: true,
       competitionAdjustmentRequired: true,
+      roleSpecificMetricsRequired: true,
       reputationOrNameAloneForbidden: true,
       bookmakerOddsUsed: false,
       rawPlayerMatchupsCannotRewriteLambdaWithoutCalibration: true
