@@ -29,6 +29,11 @@ results.append(run(
     [sys.executable,'test_cross_source_result_reconciler.py'],
     ROOT/'scripts'
 ))
+results.append(run(
+    'historical_closing_market_join',
+    [sys.executable,'test_historical_closing_market_join.py'],
+    ROOT/'scripts'
+))
 
 # Reference E2E has no external npm dependencies; npm scripts execute node stdlib code.
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
