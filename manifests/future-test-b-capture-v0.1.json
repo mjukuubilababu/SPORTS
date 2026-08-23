@@ -1,18 +1,25 @@
 {
   "capability": "future-test-b-capture",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_CI_PENDING",
+  "status": "MERGED_CANONICAL_CI_VERIFIED_PREMATCH_FROZEN",
+  "merged_via_pr": 23,
+  "merge_commit": "7781a43419cb9563ddee7ddb82c9d9132a232158",
   "source_branch": "feature/future-test-b-capture-v0.1",
+  "verified_head_sha": "f69ad1a15959f743a6010007e4b7d71fe7ffc81f",
   "core": "packages/gate4/future_test_b_capture.py",
   "transitions": "packages/gate4/future_test_b_transition.py",
   "runner": "scripts/capture_future_test_b_prematch.py",
   "tests": [
     "scripts/test_future_test_b_capture.py",
-    "scripts/test_future_test_b_transitions.py"
+    "scripts/test_future_test_b_transitions.py",
+    "scripts/verify_future_test_b_prematch_frozen.py"
   ],
+  "unified_verifier": "scripts/verify_unified.py",
+  "workflow": ".github/workflows/future-test-b-capture.yml",
   "contract": "contracts/future-test-b-capture-v0.1.json",
   "docs": "docs/future-test-b-capture-v0.1.md",
   "targets": "packages/gate4/data/mls-2026-test-b-prematch-targets-2026-08-23.json",
+  "frozen_snapshot": "packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json",
   "capture_states": [
     "DISCOVERED",
     "PREMATCH_FROZEN",
@@ -20,11 +27,69 @@
     "SETTLED_ELIGIBLE"
   ],
   "initial_target_count": 2,
+  "prematch_frozen": 2,
+  "test_b_eligible": 0,
   "initial_test_b_increment": 0,
+  "captured_at": "2026-08-23T16:08:52.749016Z",
+  "initial_capture_ci": {
+    "workflow_run_id": 32650755137,
+    "workflow_job_id": 97221859459,
+    "head_sha": "1e8be3c05064ee601bbd718a4738b4e209a28bfe",
+    "conclusion": "SUCCESS",
+    "artifact_id": 9496104977,
+    "artifact_digest": "sha256:777e19085420e7074f4d4dd81e6bf9f5db01dea59edc7d9b8009178ed5652f73",
+    "unified_tests": "20/20 PASS"
+  },
+  "final_verification_ci": {
+    "workflow_run_id": 32650866267,
+    "workflow_job_id": 97222135054,
+    "head_sha": "f69ad1a15959f743a6010007e4b7d71fe7ffc81f",
+    "conclusion": "SUCCESS",
+    "artifact_id": 9496135477,
+    "artifact_digest": "sha256:c83c8ea89cfb1e4aa516095b16eebfeace9f17801ef8eb07ee4019f32da7fb70",
+    "frozen_snapshot_verifier": "PASS",
+    "unified_core_integrated_assurance": "PROMOTE",
+    "unified_full_platform_assurance": "PROMOTE",
+    "unified_tests": "21/21 PASS",
+    "capital_assurance": "LOCKED"
+  },
+  "regression_ci": {
+    "real_historical_research_run_id": 32650866256,
+    "real_historical_research_conclusion": "SUCCESS",
+    "blind_future_test_b_run_id": 32650866255,
+    "blind_future_test_b_conclusion": "SUCCESS"
+  },
+  "frozen_records": [
+    {
+      "match_id": "MLS-2026-2026-08-23-ad6bd99a845b",
+      "fixture": "New England Revolution vs New York City FC",
+      "kickoff_at": "2026-08-23T20:30:00Z",
+      "pre_lineup_lambda": 2.6940476190476192,
+      "poisson_u35": 0.7154040462028188,
+      "negbin_u35": 0.7065308326958891,
+      "prediction_snapshot_sha256": "6cc9dafd1afcd83a6fde77e6144944044477e515514f44af7c8e70cad69949c7",
+      "regime_snapshot_sha256": "dcb150c91500d684759679a5166a75f6c498a84aa7b46c4d40015b239ba3d0a3",
+      "record_sha256": "cf62bc80d5c3803c53fcb216078b1e8b69dc032305a6b1c97d79de2b01690b3b",
+      "state": "PREMATCH_FROZEN"
+    },
+    {
+      "match_id": "MLS-2026-2026-08-23-974daa85d59a",
+      "fixture": "Atlanta United vs Sporting Kansas City",
+      "kickoff_at": "2026-08-23T23:00:00Z",
+      "pre_lineup_lambda": 3.361111111111111,
+      "poisson_u35": 0.5668777509918694,
+      "negbin_u35": 0.5871880763482035,
+      "prediction_snapshot_sha256": "8a858ab98852fab522e1a1a739132377d833d3b3631a6a9d22d5aeb4dc2634bf",
+      "regime_snapshot_sha256": "86eb0e763db52725024f45bca09163f76d65729b1f0d15b1c0457012aacb889b",
+      "record_sha256": "5b715cf17bcbe2260f88421cb2f3d82764794b4665082ea5db941636dba8e37a",
+      "state": "PREMATCH_FROZEN"
+    }
+  ],
   "model_generation_uses_market_odds": false,
   "future_results_used_for_prediction": false,
   "closing_market_required_for_test_b": true,
   "verified_settlement_required_for_test_b": true,
+  "no_recapture_after_freeze": true,
   "gate4_min_n_changed": false,
   "p002_frozen_rules_changed": false,
   "performance_claim": "NONE_CAPTURE_ONLY",
