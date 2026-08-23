@@ -1,0 +1,30 @@
+{
+  "contract": "historical-closing-market-join",
+  "version": "v0.1",
+  "join_version": "HISTORICAL_CLOSING_MARKET_JOIN_V0_1",
+  "truth_store": "CANONICAL_HISTORICAL_TRUTH_STORE_V0_1",
+  "market_source": {
+    "source": "Footiqo",
+    "provider": "1xBet",
+    "quote_type": "CLOSING",
+    "public_page": "https://footiqo.com/database/leagues/usa-mls/"
+  },
+  "required_identity": ["season", "normalized_home_team", "normalized_away_team"],
+  "maximum_source_date_difference_days": 1,
+  "target_market_fields": ["O25", "U25", "O35", "U35"],
+  "rules": {
+    "join_uses_match_identity_not_final_score": true,
+    "market_odds_must_never_be_inferred_from_result": true,
+    "source_must_be_registered_in_gate1": true,
+    "quote_type_must_be_closing": true,
+    "conflicting_closing_observations_fail_closed": true,
+    "o35_and_u35_required_for_gate2_target_line_market_probability": true,
+    "p002_validation_n_still_requires_existing_frozen_price_gate": true,
+    "market_join_eligible_does_not_equal_pattern_qualified": true,
+    "market_provenance_separate_from_result_provenance": true
+  },
+  "input_mode": "FOOTIQO_PUBLIC_EXPORT_OR_MANUAL_CSV",
+  "private_endpoint_reverse_engineering": "FORBIDDEN",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
