@@ -1,0 +1,71 @@
+{
+  "contract": "TEAM_MATCH_INTELLIGENCE_V0_1",
+  "purpose": "Analyze football teams and matchup reality before bookmaker-market mapping.",
+  "normalized_feature_scale": {"min": 0, "max": 1},
+  "directional_signal_scale": {"min": -1, "max": 1, "positive": "HOME_ADVANTAGE", "negative": "AWAY_ADVANTAGE"},
+  "domains": [
+    "PLAYER_MATCHUP",
+    "TEAM_COHESION",
+    "PLAYER_QUALITY_AND_COHESION",
+    "TRANSFER_IMPACT",
+    "ATTACK_VS_DEFENCE",
+    "TEMPORAL_SCORING_DEFENDING",
+    "LEAGUE_AND_CLUB_STRENGTH",
+    "SHOT_AND_CHANCE_QUALITY",
+    "POSITION_HOME_AWAY_ENVIRONMENT",
+    "HEAD_TO_HEAD",
+    "MATCH_STATISTICS_PATTERNS"
+  ],
+  "required_provenance_per_signal": [
+    "source",
+    "observedAt",
+    "verified",
+    "confidence",
+    "sampleSize",
+    "correlationGroup"
+  ],
+  "temporal_periods": ["0-15", "16-30", "31-45+", "46-60", "61-75", "76-90+"],
+  "analysis_requirements": {
+    "player_matchups": "Compare individual player capability against direct or tactical opponent matchup; names/reputation alone are insufficient.",
+    "team_cohesion": "Measure collective coordination separately from individual quality.",
+    "player_quality_and_cohesion": "Represent teams that combine elite individual quality with collective performance.",
+    "transfer_impact": "Account for incoming and outgoing player impact, minutes replaced, role importance, adaptation and squad continuity upstream before normalization.",
+    "attack_vs_defence": "Compare each attack against the opposing defence and vice versa.",
+    "temporal_scoring_defending": "Model when teams score/concede and whether they retain or lose leads.",
+    "league_and_club_strength": "Support cross-league comparisons without treating club size or league reputation as automatic outcomes.",
+    "shot_and_chance_quality": "Use shots, shots on target, chance quality and defensive shot vulnerability; raw shot count alone is insufficient.",
+    "position_home_away_environment": "Include league position, home/away splits, venue/environment and psychology/context evidence.",
+    "head_to_head": "H2H must be relevance-weighted by recency, manager continuity, squad continuity and tactical continuity.",
+    "match_statistics_patterns": "Permit evidence-backed patterns such as late concessions, poor lead retention, high-quality chance creation or press vulnerability."
+  },
+  "correlation_policy": {
+    "rule": "Each correlation family may contribute at most once to the composite/calibrated model even when visible in several explanatory domains.",
+    "example": "xG, shots on target, big chances and attack-vs-defence evidence may share a chance-creation correlation family.",
+    "goal": "Prevent artificial confidence through double counting."
+  },
+  "maturity_policy": {
+    "minimum_signal_sample_default": 5,
+    "analysis_mature_min_domain_coverage": 0.75,
+    "analysis_mature_min_reliability": 0.55,
+    "stale_or_unverified_signal_weight": 0
+  },
+  "lambda_adjustment_policy": {
+    "raw_team_intelligence_may_rewrite_lambda": false,
+    "verified_out_of_sample_calibration_required": true,
+    "minimum_calibration_sample": 30,
+    "bookmaker_odds_in_calibration": "FORBIDDEN",
+    "default_multiplier_floor": 0.8,
+    "default_multiplier_ceiling": 1.2,
+    "correlation_family_contribution": "AT_MOST_ONCE"
+  },
+  "decision_policy": {
+    "analysis_before_market": true,
+    "negative_outcomes_are_valid": true,
+    "counter_evidence_must_be_preserved": true,
+    "probability_is_not_value": true,
+    "probability_is_not_guarantee": true,
+    "final_qualification_requires_existing_canonical_gates": true,
+    "realMoney": "NO",
+    "capital_effect": "NONE"
+  }
+}
