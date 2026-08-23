@@ -1,0 +1,118 @@
+{
+  "reportVersion": "REAL_HALF_PROFILE_REASONING_V0_1",
+  "generatedFromModelMarketReport": "real-model-market-output-reference-2026-08-23.json",
+  "generatedFromHalfProfileDataset": "real-half-profiles-epl-2025-26.json",
+  "runtimeVerification": "16/16 PASS_DEPENDENCY_SET_LOCAL_NODE",
+  "fullRepositoryCI": "NOT_CLAIMED",
+  "summary": {
+    "eventsReceived": 3,
+    "halfModelReady": 3,
+    "waiting": 0,
+    "pricedHalfMarketsEvaluated": 0,
+    "qualifiedHalfMarketSignals": 0
+  },
+  "events": [
+    {
+      "eventId": "EPL-2026-08-23-MCI-BOU",
+      "match": "Manchester City vs AFC Bournemouth",
+      "state": "HALF_MODEL_READY_MARKET_PRICE_PENDING",
+      "sampleSize": 38,
+      "firstHalf": {
+        "expectedGoals": 1.7764227600771587,
+        "HOME": 0.5885936981587385,
+        "DRAW": 0.2862482844217255,
+        "AWAY": 0.1251580174195362,
+        "BTTS_NO": 0.7340547824820993,
+        "OVER_1_5": 0.5301062617932379
+      },
+      "secondHalf": {
+        "expectedGoals": 1.7182799123881323,
+        "HOME": 0.5095948384667391,
+        "DRAW": 0.31498066826680043,
+        "AWAY": 0.17542449326646006,
+        "BTTS_NO": 0.7076716431838115,
+        "OVER_1_5": 0.5124082312743639
+      },
+      "crossHalf": {
+        "FIRST_HALF_MORE_GOALS": 0.40047733433211713,
+        "EQUAL_GOALS": 0.22290279797473841,
+        "SECOND_HALF_MORE_GOALS": 0.3766198676931417,
+        "HOME_WIN_EITHER_HALF": 0.7982442260897334,
+        "HOME_WIN_BOTH_HALVES": 0.29994431053574194,
+        "topHTFT": {"selection": "HOME_HOME", "probability": 0.5283227185106998}
+      },
+      "qualification": "PENDING_HALF_MARKET_PRICE_AND_FINAL_GATES"
+    },
+    {
+      "eventId": "EPL-2026-08-23-BHA-AVL",
+      "match": "Brighton & Hove Albion vs Aston Villa",
+      "state": "HALF_MODEL_READY_MARKET_PRICE_PENDING",
+      "sampleSize": 38,
+      "firstHalf": {
+        "expectedGoals": 0.9886661761779253,
+        "HOME": 0.3180282197411345,
+        "DRAW": 0.46629469504152027,
+        "AWAY": 0.21567708521734516,
+        "BTTS_NO": 0.8513899022364579,
+        "UNDER_1_5": 0.7399282816763108
+      },
+      "secondHalf": {
+        "expectedGoals": 1.6097673649480173,
+        "HOME": 0.3867006309883207,
+        "DRAW": 0.3488826790840606,
+        "AWAY": 0.2644166899276193,
+        "BTTS_NO": 0.6995033462310452,
+        "OVER_1_5": 0.4782181497587264
+      },
+      "crossHalf": {
+        "FIRST_HALF_MORE_GOALS": 0.23226229306121796,
+        "EQUAL_GOALS": 0.24910385144338051,
+        "SECOND_HALF_MORE_GOALS": 0.5186338554954019,
+        "HOME_WIN_EITHER_HALF": 0.5817471374834675,
+        "AWAY_WIN_EITHER_HALF": 0.4230651541785538,
+        "topHTFT": {"selection": "HOME_HOME", "probability": 0.24982726278293776}
+      },
+      "qualification": "PENDING_HALF_MARKET_PRICE_AND_FINAL_GATES"
+    },
+    {
+      "eventId": "EPL-2026-08-23-NEW-LIV",
+      "match": "Newcastle United vs Liverpool FC",
+      "state": "HALF_MODEL_READY_MARKET_PRICE_PENDING",
+      "sampleSize": 38,
+      "firstHalf": {
+        "expectedGoals": 1.7508750373399233,
+        "HOME": 0.441374231905686,
+        "DRAW": 0.3255440064067654,
+        "AWAY": 0.23308176168754835,
+        "BTTS_NO": 0.6748063974051104,
+        "OVER_1_5": 0.5223867884238609
+      },
+      "secondHalf": {
+        "expectedGoals": 2.065205812524123,
+        "HOME": 0.30735789297865695,
+        "DRAW": 0.30121892751637236,
+        "AWAY": 0.39142317950497024,
+        "BTTS_NO": 0.5877284713280337,
+        "OVER_1_5": 0.6113544994931162
+      },
+      "crossHalf": {
+        "FIRST_HALF_MORE_GOALS": 0.33321009363619597,
+        "EQUAL_GOALS": 0.21006368412549697,
+        "SECOND_HALF_MORE_GOALS": 0.4567262222383058,
+        "HOME_WIN_EITHER_HALF": 0.6130722709507396,
+        "AWAY_WIN_EITHER_HALF": 0.5332713369481566,
+        "topHTFT": {"selection": "HOME_HOME", "probability": 0.3167818705697971}
+      },
+      "qualification": "PENDING_HALF_MARKET_PRICE_AND_FINAL_GATES"
+    }
+  ],
+  "governance": {
+    "realHistoricalHalfProfilesUsed": true,
+    "bookmakerOddsUsedToCreateHalfProfile": false,
+    "marketPricesStillRequiredForEdgeAndEV": true,
+    "finalEvidenceLineupContextGatesStillRequired": true,
+    "noBetQualificationFromProbabilityAlone": true,
+    "capitalLocked": true,
+    "realMoney": "NO"
+  }
+}
