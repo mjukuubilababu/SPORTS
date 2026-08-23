@@ -43,7 +43,7 @@ function groupWithinDomain(signals, asOfMs, minimumSample, maxAgeDays) {
   }
 
   const reduced = [];
-  let suppressedDuplicateSignals = 0;
+  let suppressedWithinDomain = 0;
   for (const [key, rows] of groups.entries()) {
     const eligibleRows = rows.filter((row) => row.eligible && row.effectiveWeight > 0);
     if (!eligibleRows.length) {
@@ -62,7 +62,7 @@ function groupWithinDomain(signals, asOfMs, minimumSample, maxAgeDays) {
     const totalWeight = eligibleRows.reduce((sum, row) => sum + row.effectiveWeight, 0);
     const impact = eligibleRows.reduce((sum, row) => sum + row.impact * row.effectiveWeight, 0) / totalWeight;
     const confidence = eligibleRows.reduce((sum, row) => sum + row.confidence * row.effectiveWeight, 0) / totalWeight;
-    suppressedDuplicateSignals += Math.max(0, eligibleRows.length - 1);
+    suppressedWithinDomain += Math.max(0, eligibleRows.length - 1);
     reduced.push({
       key,
       domain: rows[0].domain,
@@ -74,11 +74,43 @@ function groupWithinDomain(signals, asOfMs, minimumSample, maxAgeDays) {
       status: 'ACTIVE_CORRELATION_GROUP'
     });
   }
-  return { groups: reduced, suppressedDuplicateSignals };
+  return { groups: reduced, suppressedWithinDomain };
 }
 
 function defaultDomainWeights() {
   return Object.fromEntries(TEAM_MATCH_INTELLIGENCE_DOMAINS.map((domain) => [domain, 1]));
+}
+
+function buildGlobalCorrelationBoard(domainGroups, weights) {
+  const grouped = new Map();
+  for (const row of domainGroups.filter((x) => x.status === 'ACTIVE_CORRELATION_GROUP')) {
+    const list = grouped.get(row.correlationGroup) ?? [];
+    list.push(row);
+    grouped.set(row.correlationGroup, list);
+  }
+
+  const global = [];
+  let suppressedCrossDomain = 0;
+  for (const [correlationGroup, rows] of grouped.entries()) {
+    const contributionWeights = rows.map((row) => row.weight * row.confidence * (weights[row.domain] ?? 1));
+    const totalWeight = contributionWeights.reduce((sum, value) => sum + value, 0);
+    const impact = totalWeight > 0
+      ? rows.reduce((sum, row, index) => sum + row.impact * contributionWeights[index], 0) / totalWeight
+      : 0;
+    const confidence = totalWeight > 0
+      ? rows.reduce((sum, row, index) => sum + row.confidence * contributionWeights[index], 0) / totalWeight
+      : 0;
+    suppressedCrossDomain += Math.max(0, rows.length - 1);
+    global.push(Object.freeze({
+      correlationGroup,
+      domains: Object.freeze(rows.map((row) => row.domain)),
+      impact,
+      confidence,
+      weight: Math.min(1, totalWeight),
+      sourceDomainGroups: Object.freeze(rows)
+    }));
+  }
+  return { groups: global, suppressedCrossDomain };
 }
 
 export function buildTeamMatchIntelligence({
@@ -123,26 +155,29 @@ export function buildTeamMatchIntelligence({
     });
   });
 
-  const active = domainBoard.filter((row) => row.state === 'ACTIVE' && row.configuredWeight > 0);
-  const totalDomainWeight = active.reduce((sum, row) => sum + row.configuredWeight * row.confidence, 0);
-  const overallDirectionalScore = totalDomainWeight > 0
-    ? active.reduce((sum, row) => sum + row.score * row.configuredWeight * row.confidence, 0) / totalDomainWeight
+  const globalCorrelation = buildGlobalCorrelationBoard(reduced.groups, weights);
+  const compositeGroups = globalCorrelation.groups.filter((row) => row.weight > 0);
+  const totalCompositeWeight = compositeGroups.reduce((sum, row) => sum + row.weight * row.confidence, 0);
+  const overallDirectionalScore = totalCompositeWeight > 0
+    ? compositeGroups.reduce((sum, row) => sum + row.impact * row.weight * row.confidence, 0) / totalCompositeWeight
     : 0;
-  const coverage = active.length / TEAM_MATCH_INTELLIGENCE_DOMAINS.length;
-  const averageConfidence = active.length
-    ? active.reduce((sum, row) => sum + row.confidence, 0) / active.length
+
+  const activeDomains = domainBoard.filter((row) => row.state === 'ACTIVE' && row.configuredWeight > 0);
+  const coverage = activeDomains.length / TEAM_MATCH_INTELLIGENCE_DOMAINS.length;
+  const averageConfidence = activeDomains.length
+    ? activeDomains.reduce((sum, row) => sum + row.confidence, 0) / activeDomains.length
     : 0;
-  const homeSupport = active.filter((row) => row.score > 0).reduce((sum, row) => sum + row.score * row.confidence, 0);
-  const awaySupport = active.filter((row) => row.score < 0).reduce((sum, row) => sum + Math.abs(row.score) * row.confidence, 0);
+  const homeSupport = compositeGroups.filter((row) => row.impact > 0).reduce((sum, row) => sum + row.impact * row.confidence, 0);
+  const awaySupport = compositeGroups.filter((row) => row.impact < 0).reduce((sum, row) => sum + Math.abs(row.impact) * row.confidence, 0);
   const maxSupport = Math.max(homeSupport, awaySupport);
   const contradictionPressure = maxSupport > 0 ? Math.min(homeSupport, awaySupport) / maxSupport : 0;
   const reliability = clamp(coverage * averageConfidence * (1 - 0.5 * contradictionPressure), 0, 1);
 
-  const supportingEvidence = reduced.groups
-    .filter((group) => group.status === 'ACTIVE_CORRELATION_GROUP' && group.impact > 0)
+  const supportingEvidence = compositeGroups
+    .filter((group) => group.impact > 0)
     .sort((a, b) => (b.impact * b.confidence) - (a.impact * a.confidence));
-  const counterEvidence = reduced.groups
-    .filter((group) => group.status === 'ACTIVE_CORRELATION_GROUP' && group.impact < 0)
+  const counterEvidence = compositeGroups
+    .filter((group) => group.impact < 0)
     .sort((a, b) => (Math.abs(b.impact) * b.confidence) - (Math.abs(a.impact) * a.confidence));
 
   return Object.freeze({
@@ -159,16 +194,20 @@ export function buildTeamMatchIntelligence({
     reliability,
     reliabilityScore100: reliability * 100,
     domainBoard: Object.freeze(domainBoard),
-    correlationGroups: Object.freeze(reduced.groups.map((group) => Object.freeze(group))),
-    supportingEvidence: Object.freeze(supportingEvidence.map((group) => Object.freeze(group))),
-    counterEvidence: Object.freeze(counterEvidence.map((group) => Object.freeze(group))),
-    suppressedDuplicateSignals: reduced.suppressedDuplicateSignals,
+    domainCorrelationGroups: Object.freeze(reduced.groups.map((group) => Object.freeze(group))),
+    compositeCorrelationGroups: Object.freeze(compositeGroups),
+    supportingEvidence: Object.freeze(supportingEvidence),
+    counterEvidence: Object.freeze(counterEvidence),
+    suppressedDuplicateSignals: reduced.suppressedWithinDomain + globalCorrelation.suppressedCrossDomain,
+    suppressedWithinDomainSignals: reduced.suppressedWithinDomain,
+    suppressedCrossDomainCorrelations: globalCorrelation.suppressedCrossDomain,
     missingDomains: Object.freeze(domainBoard.filter((row) => row.state !== 'ACTIVE').map((row) => row.domain)),
-    state: coverage >= 0.75 && reliability >= 0.55 ? 'ANALYSIS_MATURE' : (active.length ? 'ANALYSIS_PARTIAL' : 'ANALYSIS_BLOCKED'),
+    state: coverage >= 0.75 && reliability >= 0.55 ? 'ANALYSIS_MATURE' : (activeDomains.length ? 'ANALYSIS_PARTIAL' : 'ANALYSIS_BLOCKED'),
     governance: Object.freeze({
       teamAnalysisBeforeMarket: true,
       positiveAndNegativeEvidenceRequired: true,
-      correlatedSignalsCountOncePerDomainGroup: true,
+      correlatedSignalsRemainVisibleForExplanation: true,
+      compositeCountsEachCorrelationFamilyOnceAcrossDomains: true,
       staleOrUnverifiedSignalsDoNotContribute: true,
       rawOverallScoreDoesNotChangeLambdaWithoutCalibration: true,
       probabilityIsNotGuarantee: true
