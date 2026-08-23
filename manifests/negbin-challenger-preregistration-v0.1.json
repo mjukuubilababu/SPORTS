@@ -1,8 +1,11 @@
 {
   "capability": "negative-binomial-challenger-preregistration",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_PREREGISTERED_FINAL_CI_PENDING",
+  "status": "MERGED_CANONICAL_PREREGISTERED_CI_REPRODUCIBLE_UNEVALUATED",
+  "merged_via_pr": 21,
+  "merge_commit": "c395b6d8b4fefe912db3d6969a375f5fdaf01d82",
   "source_branch": "feature/negbin-challenger-prereg-v0.1",
+  "verified_head_sha": "19ee6f909f866c1600d31a1740c639e22a9960b6",
   "model_version": "P002_NEGBIN_CHALLENGER_V0_1",
   "core": "packages/gate4/negbin_challenger.py",
   "training_runner": "scripts/train_negbin_challenger.py",
@@ -25,12 +28,18 @@
   "boundary_warning": false,
   "training_negbin_mean_nll": 2.046640406179446,
   "training_poisson_mean_nll": 2.0863524669685445,
-  "initial_training_ci": {
-    "run_id": 32642979784,
-    "job_id": 97202829926,
-    "head_sha": "737c132a8f929df312ae74de5af97867e8fc4cf1",
-    "artifact_id": 9494099801,
-    "artifact_digest": "sha256:b1c95ca66bed7f92d393a6a7ee6966c2c8edc0f2254ab1eb2d3357ab7c8721a1",
+  "final_preregistration_ci": {
+    "run_id": 32643169933,
+    "job_id": 97203293946,
+    "head_sha": "19ee6f909f866c1600d31a1740c639e22a9960b6",
+    "artifact_id": 9494147402,
+    "artifact_digest": "sha256:f6ec6395771893627fbe3498361346d306bf6ecf239698f1333875ce3e916a82",
+    "conclusion": "SUCCESS",
+    "verification": "NEGBIN_PREREGISTRATION=PASS"
+  },
+  "full_gate1_gate4_regression_ci": {
+    "run_id": 32643169940,
+    "job_id": 97203293880,
     "conclusion": "SUCCESS"
   },
   "bookmaker_odds_as_model_input": false,
@@ -38,6 +47,7 @@
   "holdout_a_overlap_n": 0,
   "holdout_a_evaluation": false,
   "test_set_b_evaluation": false,
+  "evaluation_state": "UNEVALUATED_FUTURE_TEST_B_REQUIRED",
   "performance_claim": "NONE_TRAINING_ONLY",
   "future_test_b_required": true,
   "existing_gate4_thresholds_changed": false,
