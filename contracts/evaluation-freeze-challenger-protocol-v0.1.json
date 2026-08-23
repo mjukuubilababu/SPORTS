@@ -1,0 +1,39 @@
+{
+  "contract": "evaluation-freeze-challenger-protocol",
+  "version": "v0.1",
+  "protocol_version": "EVALUATION_FREEZE_CHALLENGER_PROTOCOL_V0_1",
+  "purpose": "Prevent tuning or promotion reuse of an evaluation set after its outcomes and benchmark metrics have been observed.",
+  "freeze_requirements": {
+    "successful_verified_workflow": true,
+    "dataset_id_required": true,
+    "source_reference_git_blob_sha_required": true,
+    "workflow_artifact_digest_required": true,
+    "exact_unique_match_ids_required": true,
+    "match_id_count_must_equal_research_n": true,
+    "fingerprint_includes_match_ids_and_metrics": true,
+    "tuning_reuse_allowed": false,
+    "promotion_reuse_allowed": false
+  },
+  "challenger_preregistration": {
+    "challenger_id_required": true,
+    "model_version_required": true,
+    "specification_hash_required": true,
+    "training_dataset_ids_required": true,
+    "training_cutoff_required": true,
+    "frozen_dataset_reuse_for_training": "FORBIDDEN",
+    "frozen_match_reuse_for_training": "FORBIDDEN",
+    "post_registration_specification_change": "REQUIRES_NEW_REGISTRATION_VERSION"
+  },
+  "future_test_set": {
+    "must_be_disjoint_from_all_frozen_match_ids": true,
+    "must_have_exact_match_ids": true,
+    "data_capture_must_be_after_challenger_registration": true,
+    "same_frozen_dataset_or_freeze_id": "FORBIDDEN",
+    "promotion_possible_only_after_existing_gate4_metrics_and_min_n_pass": true
+  },
+  "holdout_a": "packages/gate4/data/mls-2026-evaluation-holdout-a-v0.1.json",
+  "existing_gate4_challenger_thresholds_changed": false,
+  "frozen_p002_rules_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
