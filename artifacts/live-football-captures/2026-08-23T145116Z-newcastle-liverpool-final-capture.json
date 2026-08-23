@@ -1,0 +1,151 @@
+{
+  "captureId": "newcastle-liverpool-final-prematch-2026-08-23T145116Z",
+  "capturedAt": "2026-08-23T14:51:16Z",
+  "captureTimezone": "Africa/Dar_es_Salaam",
+  "contractReference": "contracts/kickoff-lineup-final-gate-v0.1.json",
+  "preservesEarlierSnapshots": true,
+  "events": [
+    {
+      "eventId": "EPL-2026-08-23-NEW-LIV",
+      "kickoffObservation": {
+        "status": "SCHEDULED",
+        "scheduledKickoffAt": "2026-08-23T15:30:00Z",
+        "observedAt": "2026-08-23T14:51:16Z",
+        "sourceVerified": true,
+        "sourceUrl": "https://www.newcastleunited.com/en/news/confimed-line-up-opening-day-debuts-for-hornicek-dedic-and-steur-against-liverpool"
+      },
+      "lineupSnapshot": {
+        "status": "CONFIRMED",
+        "confirmedAt": "2026-08-23T14:51:16Z",
+        "sourceVerified": true,
+        "sources": [
+          "https://www.newcastleunited.com/en/news/confimed-line-up-opening-day-debuts-for-hornicek-dedic-and-steur-against-liverpool",
+          "https://www.liverpoolfc.com/news/confirmed-liverpool-line-v-newcastle-united-9"
+        ],
+        "home": {
+          "team": "Newcastle United",
+          "startingXI": [
+            "Lukas Hornicek",
+            "Lewis Hall",
+            "Sven Botman",
+            "Yoane Wissa",
+            "Will Osula",
+            "Harvey Barnes",
+            "Malick Thiaw",
+            "Sean Steur",
+            "Anthony Elanga",
+            "Amar Dedic",
+            "Lewis Miley"
+          ]
+        },
+        "away": {
+          "team": "Liverpool FC",
+          "startingXI": [
+            "Alisson",
+            "Virgil van Dijk",
+            "Jeremy Jacquet",
+            "Milos Kerkez",
+            "Florian Wirtz",
+            "Dominik Szoboszlai",
+            "Alexander Isak",
+            "Cody Gakpo",
+            "Jeremie Frimpong",
+            "Ryan Gravenberch",
+            "Rio Ngumoha"
+          ]
+        },
+        "playerMatchupDomainActivated": false,
+        "playerQualityAndCohesionDomainActivated": false,
+        "playerDomainReason": "Confirmed starting XIs are verified, but no complete attributable player-level evidence package with calibrated impact model was verified in this capture."
+      },
+      "bookmakerSnapshots": [
+        {
+          "provider": "BET365",
+          "market": "1X2_FULL_TIME",
+          "observedAt": "2026-08-23T14:51:16Z",
+          "source": "bet365 public football page",
+          "sourceUrl": "https://www.bet365.com/hub/sv-se/football",
+          "odds": {"HOME": 4.10, "DRAW": 3.75, "AWAY": 1.85},
+          "overround": 1.0511096462,
+          "fairProbabilities": {"HOME": 0.2320428129, "DRAW": 0.2537001422, "AWAY": 0.5142570449},
+          "sourceVerified": true,
+          "freshAtCapture": true
+        },
+        {
+          "provider": "SUPERSPORTBET",
+          "market": "1X2_FULL_TIME",
+          "observedAt": "2026-08-23T14:51:16Z",
+          "source": "SuperSportBet public football page",
+          "sourceUrl": "https://www.supersportbet.com/en-za/sports/football/competitionlist/popular-list/23417838%2C20000909%2C20000863%2C20000939%2C20001108%2C20000841",
+          "odds": {"HOME": 3.95, "DRAW": 3.90, "AWAY": 1.89},
+          "overround": 1.0386753425,
+          "fairProbabilities": {"HOME": 0.2437379098, "DRAW": 0.2468627548, "AWAY": 0.5093993354},
+          "sourceVerified": true,
+          "freshAtCapture": true
+        }
+      ],
+      "marketConsensusFairProbabilities": {
+        "HOME": 0.2378903614,
+        "DRAW": 0.2502814485,
+        "AWAY": 0.5118281902
+      },
+      "lineupImpact": null,
+      "finalContextAssessment": {
+        "verified": true,
+        "evidenceMaturityDelta": 0,
+        "transitionRisk": "HIGH",
+        "provenance": [
+          "packages/intelligence-engine/data/real-model-market-output-reference-2026-08-23.json",
+          "https://www.newcastleunited.com/en/news/confimed-line-up-opening-day-debuts-for-hornicek-dedic-and-steur-against-liverpool",
+          "https://www.liverpoolfc.com/news/confirmed-liverpool-line-v-newcastle-united-9"
+        ],
+        "notes": "Confirmed XIs do not silently change lambdas. No TRANSFER_IMPACT is created because a complete verified in/out role-and-minutes replacement audit is not available."
+      },
+      "canonicalModelReference": {
+        "source": "packages/intelligence-engine/data/real-model-market-output-reference-2026-08-23.json",
+        "homeLambda": 2.016497781810849,
+        "awayLambda": 1.7995830680531972,
+        "probabilities": {"HOME": 0.4370475184, "DRAW": 0.2112880134, "AWAY": 0.3516644682},
+        "predictedOutcome": "HOME_WIN",
+        "lambdaAdjustedByThisCapture": false
+      },
+      "modelMarketComparison": {
+        "marketDirection": "AWAY_WIN",
+        "modelDirection": "HOME_WIN",
+        "directionConflict": true,
+        "homeProbabilityGapPp": 19.91571570,
+        "awayProbabilityGapPp": -16.01637220,
+        "highTransitionLargeDivergence": true
+      },
+      "halfModelReference": {
+        "source": "packages/intelligence-engine/data/real-half-reasoning-output-reference-2026-08-23.json",
+        "state": "HALF_MODEL_READY_MARKET_PRICE_PENDING",
+        "firstHalf": {"HOME": 0.4413742319, "DRAW": 0.3255440064, "AWAY": 0.2330817617},
+        "secondHalf": {"HOME": 0.3073578930, "DRAW": 0.3012189275, "AWAY": 0.3914231795},
+        "freshHalfSpecificBookmakerMarketsCaptured": false,
+        "reason": "No fresh attributable half-specific bookmaker price set was verified in this run; no market/model half comparison was fabricated."
+      },
+      "qualification": {
+        "state": "WATCH",
+        "blockers": [
+          "MODEL_MARKET_DIRECTION_CONFLICT",
+          "HIGH_TRANSITION_RISK_LARGE_MARKET_DIVERGENCE",
+          "PLAYER_LEVEL_EVIDENCE_PACKAGE_INCOMPLETE",
+          "HALF_SPECIFIC_FRESH_MARKET_PRICES_NOT_VERIFIED"
+        ],
+        "gate5DraftCreated": false,
+        "capitalEffect": "NONE",
+        "realMoney": "NO"
+      }
+    }
+  ],
+  "governance": {
+    "noHindsight": true,
+    "predictedLineupsUsed": false,
+    "confirmedXIAloneChangedLambda": false,
+    "transferImpactCreated": false,
+    "earlierMarketModelHalfTeamSnapshotsMutated": false,
+    "qualificationBlockedOnDirectionConflict": true,
+    "realMoney": "NO"
+  }
+}
