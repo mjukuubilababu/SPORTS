@@ -1,0 +1,21 @@
+{
+  "capability": "gate3-gate4-real-robustness",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_CI_PENDING",
+  "source_branch": "feature/real-gate3-gate4-robustness-v0.1",
+  "adapter": "packages/gate4/canonical_gate3_adapter.py",
+  "runner": "packages/gate4/run_canonical_robustness.py",
+  "test": "scripts/test_gate3_gate4_real_robustness.py",
+  "contract": "contracts/gate3-gate4-real-robustness-v0.1.json",
+  "docs": "docs/gate3-gate4-real-robustness-v0.1.md",
+  "workflow": ".github/workflows/real-historical-research.yml",
+  "incumbent": "market",
+  "current_challenger": "poisson",
+  "minimum_promotion_n": 100,
+  "negative_binomial": "MISSING_INDEPENDENT_REAL_PREDICTIONS",
+  "ensemble": "MISSING_INDEPENDENT_REAL_PREDICTIONS",
+  "expected_current_state": "BLOCK_PROMOTION",
+  "governance": "DESCRIPTIVE_LEADER_NOT_CHAMPION; MARKET_INCUMBENT_UNTIL_FULL_GATES_PASS; NO_CHALLENGER_FABRICATION; NO_REGIME_FABRICATION; NO_RETUNE_ON_EVALUATION_SAMPLE; GATE4_MIN_N_UNCHANGED",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
