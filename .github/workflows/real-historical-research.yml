@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feature/real-2026-research-corpus-v0.1
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
   workflow_dispatch:
 
 permissions:
