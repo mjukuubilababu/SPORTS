@@ -1,0 +1,85 @@
+{
+  "contract": "REAL_FOOTBALL_FEATURE_INGESTION_V0_1",
+  "purpose": "Convert real football observations into governed normalized team-match intelligence inputs before model probability and market mapping.",
+  "input_layers": [
+    "HISTORICAL_TEAM_STATISTICS",
+    "HOME_AWAY_SPLITS",
+    "TEMPORAL_SCORING_AND_CONCEDING",
+    "HEAD_TO_HEAD",
+    "VERIFIED_PREMATCH_CONTEXT",
+    "OPTIONAL_COMPLETE_TRANSFER_AUDIT",
+    "OPTIONAL_CONFIRMED_PLAYER_AND_LINEUP_EVIDENCE"
+  ],
+  "normalization": {
+    "statistical_scale": "0_TO_1",
+    "benchmark_scope": "ALL_TEAMS_IN_SOURCE_COMPETITION_NOT_TARGET_FIXTURES_ONLY",
+    "current_reference": "EPL_2025_26_ALL_20_TEAMS",
+    "raw_facts_immutable": true,
+    "normalized_features_reproducible_from_raw_facts": true
+  },
+  "active_v0_1_domains_from_current_real_data": [
+    "TEAM_COHESION",
+    "ATTACK_VS_DEFENCE",
+    "TEMPORAL_SCORING_DEFENDING",
+    "LEAGUE_AND_CLUB_STRENGTH",
+    "SHOT_AND_CHANCE_QUALITY",
+    "POSITION_HOME_AWAY_ENVIRONMENT",
+    "HEAD_TO_HEAD",
+    "MATCH_STATISTICS_PATTERNS"
+  ],
+  "pending_until_stronger_evidence": {
+    "PLAYER_MATCHUP": "CONFIRMED_VERIFIED_STARTING_XI_PLUS_PLAYER_MATCHUP_STATS_REQUIRED",
+    "PLAYER_QUALITY_AND_COHESION": "VERIFIED_PLAYER_LEVEL_QUALITY_LAYER_REQUIRED",
+    "TRANSFER_IMPACT": "COMPLETE_VERIFIED_IN_OUT_ROLE_MINUTES_REPLACEMENT_AUDIT_REQUIRED"
+  },
+  "sample_policy": {
+    "default_statistical_minimum": 5,
+    "verified_context_fact_override_allowed": true,
+    "context_fact_minimum": 1,
+    "override_must_be_explicit_per_signal": true,
+    "source_timestamp_confidence_and_verification_still_required": true
+  },
+  "attack_defence_policy": {
+    "attack_inputs": ["xG", "goals", "shots", "shots_on_target"],
+    "defensive_vulnerability_inputs": ["xGA", "goals_against"],
+    "direction": "HOME_ATTACK_VS_AWAY_DEFENCE_AND_AWAY_ATTACK_VS_HOME_DEFENCE"
+  },
+  "shot_quality_policy": {
+    "inputs": ["xG_per_shot", "shots_on_target_rate", "opponent_defensive_vulnerability"],
+    "raw_shot_count_alone_is_insufficient": true,
+    "correlation_group": "CHANCE_CREATION_AND_PREVENTION"
+  },
+  "temporal_policy": {
+    "periods": ["0-15", "16-30", "31-45+", "46-60", "61-75", "76-90+"],
+    "current_inputs": ["first_15_goals", "last_10_goals", "second_half_goals", "matching_concession_windows", "lead_retention"],
+    "direct_lead_retention_preferred": true,
+    "late_concession_proxy_must_be_labeled": true
+  },
+  "home_away_environment_policy": {
+    "league_position_strength": "PRIOR_SEASON_POINTS_NORMALIZED_WITHIN_LEAGUE",
+    "home_away_strength": "VENUE_GOAL_DIFFERENCE_PER_MATCH_TRANSFORM",
+    "subjective_psychology": "NEUTRAL_UNLESS_OBJECTIVE_MEASURE_EXISTS"
+  },
+  "h2h_policy": {
+    "recent_sample": 5,
+    "raw_strength": "WINS_PLUS_HALF_DRAWS_OVER_MATCHES",
+    "relevance_weighting_required": true,
+    "relevance_factors": ["RECENCY", "MANAGER_CONTINUITY", "SQUAD_CONTINUITY", "TACTICAL_CONTINUITY"],
+    "h2h_cannot_override_current_evidence": true
+  },
+  "correlation_policy": {
+    "same_evidence_family_counts_once_in_composite": true,
+    "explanatory_domains_may_remain_visible": true,
+    "goal": "PREVENT_FALSE_CONFIDENCE_FROM_XG_SHOTS_SOT_AND_RELATED_METRICS"
+  },
+  "model_effect_policy": {
+    "raw_or_normalized_ingestion_may_rewrite_lambda": false,
+    "independent_out_of_sample_calibration_required": true,
+    "bookmaker_odds_as_football_features": "FORBIDDEN",
+    "market_mapping_occurs_after_team_analysis": true
+  },
+  "current_dataset": "packages/intelligence-engine/data/real-football-features-epl-2025-26-to-2026-08-23.json",
+  "runner": "scripts/run_real_football_feature_ingestion.mjs",
+  "capital_effect": "NONE",
+  "realMoney": "NO"
+}
