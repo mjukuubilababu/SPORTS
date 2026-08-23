@@ -1,0 +1,87 @@
+name: Blind Future Test B
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/gate4/blind_test_set.py'
+      - 'packages/gate4/data/mls-2026-future-test-b-state-v0.1.json'
+      - 'scripts/run_blind_future_test_b.py'
+      - 'scripts/test_blind_future_test_b.py'
+      - 'scripts/verify_blind_future_test_b_state.py'
+      - 'scripts/verify_unified.py'
+      - 'contracts/blind-future-test-b-v0.1.json'
+      - 'docs/blind-future-test-b-v0.1.md'
+      - 'manifests/blind-future-test-b-v0.1.json'
+      - '.github/workflows/blind-future-test-b.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  blind-future-test-b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Test B governance tests
+        run: |
+          python scripts/test_evaluation_freeze_challenger_protocol.py
+          python scripts/test_negbin_challenger.py
+          python scripts/test_blind_future_test_b.py
+          python scripts/verify_blind_future_test_b_state.py
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Assert blind state and unified assurance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          state=json.loads(Path('packages/gate4/data/mls-2026-future-test-b-state-v0.1.json').read_text())
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+
+          assert state['state'] == 'BLIND_ACCUMULATING'
+          assert state['test_set']['target_n'] == 100
+          assert state['test_set']['promotion_eligible_n'] == 0
+          assert state['test_set']['remaining_to_target'] == 100
+          assert state['test_set']['interim_metrics_exposed'] is False
+          assert state['test_set']['evaluation_performed'] is False
+          assert state['test_set']['performance_claim'] == 'NONE_BLIND_ACCUMULATION'
+          assert report['core_integrated_assurance'] == 'PROMOTE'
+          assert report['tests_total'] == report['tests_passed']
+
+          print(json.dumps({
+              'test_b_state': state['state'],
+              'target_n': state['test_set']['target_n'],
+              'promotion_eligible_n': state['test_set']['promotion_eligible_n'],
+              'remaining_to_target': state['test_set']['remaining_to_target'],
+              'interim_metrics_exposed': state['test_set']['interim_metrics_exposed'],
+              'evaluation_performed': state['test_set']['evaluation_performed'],
+              'core_integrated_assurance': report['core_integrated_assurance'],
+              'tests_total': report['tests_total'],
+              'tests_passed': report['tests_passed'],
+              'capital_assurance': report['capital_assurance'],
+          }, indent=2))
+          PY
+
+      - name: Upload verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: blind-future-test-b-verification-v0.1
+          path: |
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+            artifacts/SHA256_INVENTORY.json
+          if-no-files-found: error
