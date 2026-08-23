@@ -1,7 +1,9 @@
 {
   "capability": "gate2-gate3-settled-corpus-adapter",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "status": "MERGED_CANONICAL_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "merged_via_pr": 17,
+  "merge_commit": "4b3ca82aa367a25f9bdf869cbf2b70274c015b7f",
   "source_branch": "feature/gate2-gate3-settled-corpus-adapter-v0.1",
   "gate2_change": "packages/gate2/canonical_backfill.py",
   "adapter": "packages/gate3/canonical_settlement_adapter.py",
@@ -10,6 +12,7 @@
   "contract": "contracts/gate2-gate3-settled-corpus-adapter-v0.1.json",
   "docs": "docs/gate2-gate3-settled-corpus-adapter-v0.1.md",
   "root_verifier_updated": true,
+  "runtime": "NOT_CLAIMED_NO_GITHUB_ACTIONS_RUN_AND_LOCAL_CONTAINER_CANNOT_RESOLVE_GITHUB_HOST",
   "research_scope": "MODEL_MARKET_RESULT_READY_NOT_PROMOTION_ELIGIBLE",
   "strict_scope": "EXISTING_GATE1_VALIDATION_N_PLUS_GATE2_FINAL_MODEL_PASS",
   "gate3_default_evaluate_changed": false,
