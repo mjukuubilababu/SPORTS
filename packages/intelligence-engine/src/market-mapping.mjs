@@ -13,19 +13,21 @@ export const BETPAWA_MARKET_CAPABILITIES = Object.freeze({
   'TOTAL_GOALS_EXACT_FULL_TIME': 'SUPPORTED_SCORE_DISTRIBUTION',
   'MULTIGOALS_FULL_TIME': 'SUPPORTED_SCORE_DISTRIBUTION',
   'DRAW_NO_BET_FULL_TIME': 'SUPPORTED_CONDITIONAL_RESULT',
-  '1X2_FIRST_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'OVER_UNDER_FIRST_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'DOUBLE_CHANCE_FIRST_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'DOUBLE_CHANCE_SECOND_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'BTTS_FIRST_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'BTTS_SECOND_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'CORRECT_SCORE_FIRST_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'HALF_TIME_FULL_TIME': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'HALF_WITH_MORE_GOALS': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'HOME_WIN_BOTH_HALVES': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'AWAY_WIN_BOTH_HALVES': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'HOME_WIN_EITHER_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
-  'AWAY_WIN_EITHER_HALF': 'REQUIRES_HALF_SPECIFIC_MODEL',
+  '1X2_FIRST_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  '1X2_SECOND_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'OVER_UNDER_FIRST_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'OVER_UNDER_SECOND_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'DOUBLE_CHANCE_FIRST_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'DOUBLE_CHANCE_SECOND_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'BTTS_FIRST_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'BTTS_SECOND_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'CORRECT_SCORE_FIRST_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'HALF_TIME_FULL_TIME': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'HALF_WITH_MORE_GOALS': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'HOME_WIN_BOTH_HALVES': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'AWAY_WIN_BOTH_HALVES': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'HOME_WIN_EITHER_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
+  'AWAY_WIN_EITHER_HALF': 'SUPPORTED_HALF_SPECIFIC_MODEL',
   'GOALSCORER': 'REQUIRES_PLAYER_EVENT_MODEL',
   'CARDS': 'REQUIRES_CARD_EVENT_MODEL',
   'CORNERS': 'REQUIRES_CORNER_EVENT_MODEL'
@@ -83,7 +85,54 @@ function selectionProbability(reasoning, marketFamily, selection, line = null) {
   }
 }
 
-export function mapReasoningToMarketSelection(reasoning, marketSelection) {
+function halfSelectionProbability(halfReasoning, marketFamily, selection, line = null) {
+  if (!halfReasoning?.model?.verified) return null;
+  const first = halfReasoning.firstHalf.matchReality;
+  const second = halfReasoning.secondHalf.matchReality;
+  const cross = halfReasoning.crossHalf;
+  switch (marketFamily) {
+    case '1X2_FIRST_HALF':
+      return { HOME: first.homeWin, DRAW: first.draw, AWAY: first.awayWin }[selection] ?? null;
+    case '1X2_SECOND_HALF':
+      return { HOME: second.homeWin, DRAW: second.draw, AWAY: second.awayWin }[selection] ?? null;
+    case 'OVER_UNDER_FIRST_HALF': {
+      if (!Number.isFinite(line)) return null;
+      const row = first.totals[lineKey(line)];
+      return row ? ({ OVER: row.over, UNDER: row.under }[selection] ?? null) : null;
+    }
+    case 'OVER_UNDER_SECOND_HALF': {
+      if (!Number.isFinite(line)) return null;
+      const row = second.totals[lineKey(line)];
+      return row ? ({ OVER: row.over, UNDER: row.under }[selection] ?? null) : null;
+    }
+    case 'DOUBLE_CHANCE_FIRST_HALF':
+      return { '1X': first.homeNotLose, 'X2': first.awayNotLose, '12': first.decisiveResult }[selection] ?? null;
+    case 'DOUBLE_CHANCE_SECOND_HALF':
+      return { '1X': second.homeNotLose, 'X2': second.awayNotLose, '12': second.decisiveResult }[selection] ?? null;
+    case 'BTTS_FIRST_HALF':
+      return { YES: first.bttsYes, NO: first.bttsNo }[selection] ?? null;
+    case 'BTTS_SECOND_HALF':
+      return { YES: second.bttsYes, NO: second.bttsNo }[selection] ?? null;
+    case 'CORRECT_SCORE_FIRST_HALF':
+      return halfReasoning.firstHalf.matchReality.topCorrectScores.find((x) => x.score === selection)?.probability ?? null;
+    case 'HALF_TIME_FULL_TIME':
+      return cross.halfTimeFullTime[selection] ?? null;
+    case 'HALF_WITH_MORE_GOALS':
+      return cross.halfWithMoreGoals[selection] ?? null;
+    case 'HOME_WIN_BOTH_HALVES':
+      return { YES: cross.homeWinBothHalves, NO: cross.homeFailToWinBothHalves }[selection] ?? null;
+    case 'AWAY_WIN_BOTH_HALVES':
+      return { YES: cross.awayWinBothHalves, NO: cross.awayFailToWinBothHalves }[selection] ?? null;
+    case 'HOME_WIN_EITHER_HALF':
+      return { YES: cross.homeWinEitherHalf, NO: cross.homeFailToWinEitherHalf }[selection] ?? null;
+    case 'AWAY_WIN_EITHER_HALF':
+      return { YES: cross.awayWinEitherHalf, NO: cross.awayFailToWinEitherHalf }[selection] ?? null;
+    default:
+      return null;
+  }
+}
+
+export function mapReasoningToMarketSelection(reasoning, marketSelection, halfReasoning = null) {
   const capability = BETPAWA_MARKET_CAPABILITIES[marketSelection.marketFamily] ?? 'UNRECOGNIZED_MARKET';
   if (!capability.startsWith('SUPPORTED')) {
     return Object.freeze({
@@ -94,7 +143,21 @@ export function mapReasoningToMarketSelection(reasoning, marketSelection) {
       counterProbability: null
     });
   }
-  const modelProbability = selectionProbability(reasoning, marketSelection.marketFamily, marketSelection.selection, marketSelection.line);
+
+  const halfSpecific = capability === 'SUPPORTED_HALF_SPECIFIC_MODEL';
+  if (halfSpecific && !halfReasoning?.model?.verified) {
+    return Object.freeze({
+      ...marketSelection,
+      capability,
+      status: 'HALF_MODEL_NOT_VERIFIED',
+      modelProbability: null,
+      counterProbability: null
+    });
+  }
+
+  const modelProbability = halfSpecific
+    ? halfSelectionProbability(halfReasoning, marketSelection.marketFamily, marketSelection.selection, marketSelection.line)
+    : selectionProbability(reasoning, marketSelection.marketFamily, marketSelection.selection, marketSelection.line);
   if (!Number.isFinite(modelProbability)) {
     return Object.freeze({ ...marketSelection, capability, status: 'UNMAPPED_SELECTION', modelProbability: null, counterProbability: null });
   }
@@ -104,12 +167,13 @@ export function mapReasoningToMarketSelection(reasoning, marketSelection) {
     status: 'MODELLED',
     modelProbability,
     counterProbability: 1 - modelProbability,
-    probabilityMargin: modelProbability - (1 - modelProbability)
+    probabilityMargin: modelProbability - (1 - modelProbability),
+    modelLayer: halfSpecific ? 'HALF_SPECIFIC' : 'FULL_TIME_SCORE_DISTRIBUTION'
   });
 }
 
-export function rankAvailableMarketSelections(reasoning, selections, { minimumProbability = 0.5 } = {}) {
-  const mapped = selections.map((selection) => mapReasoningToMarketSelection(reasoning, selection));
+export function rankAvailableMarketSelections(reasoning, selections, { minimumProbability = 0.5, halfReasoning = null } = {}) {
+  const mapped = selections.map((selection) => mapReasoningToMarketSelection(reasoning, selection, halfReasoning));
   const modelled = mapped
     .filter((row) => row.status === 'MODELLED' && row.modelProbability >= minimumProbability)
     .sort((a, b) => b.modelProbability - a.modelProbability)
@@ -121,14 +185,15 @@ export function rankAvailableMarketSelections(reasoning, selections, { minimumPr
     governance: Object.freeze({
       marketCannotCreateProbabilityWithoutModel: true,
       unsupportedMarketFamiliesRemainBlocked: true,
+      halfMarketsRequireVerifiedHalfModel: true,
       probabilityRankingIsNotValueRanking: true
     })
   });
 }
 
-export function evaluatePricedMarketSelections(reasoning, pricedSelections, { minEdge = 0.05 } = {}) {
+export function evaluatePricedMarketSelections(reasoning, pricedSelections, { minEdge = 0.05, halfReasoning = null } = {}) {
   const rows = pricedSelections.map((selection) => {
-    const mapped = mapReasoningToMarketSelection(reasoning, selection);
+    const mapped = mapReasoningToMarketSelection(reasoning, selection, halfReasoning);
     if (mapped.status !== 'MODELLED') return mapped;
     if (!(selection.odds > 1)) return Object.freeze({ ...mapped, status: 'INVALID_ODDS' });
     const marketFairProbability = Number.isFinite(selection.marketFairProbability) ? selection.marketFairProbability : null;
@@ -143,6 +208,6 @@ export function evaluatePricedMarketSelections(reasoning, pricedSelections, { mi
     rows: Object.freeze(rows),
     rankedByProbability: Object.freeze(rows.filter((x) => x.status === 'MODELLED').sort((a, b) => b.modelProbability - a.modelProbability)),
     rankedValueCandidates: Object.freeze(rows.filter((x) => x.decisionState === 'VALUE_CANDIDATE').sort((a, b) => (b.edge - a.edge) || (b.ev - a.ev))),
-    governance: Object.freeze({ highestProbabilityIsNotAutomaticallyBestBet: true, fairMarketProbabilityRequiredForEdge: true })
+    governance: Object.freeze({ highestProbabilityIsNotAutomaticallyBestBet: true, fairMarketProbabilityRequiredForEdge: true, halfMarketsRequireVerifiedHalfModel: true })
   });
 }
