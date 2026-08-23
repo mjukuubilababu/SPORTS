@@ -1,0 +1,26 @@
+{
+  "capability": "real-2026-historical-research-runtime",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_CI_PENDING",
+  "source_branch": "feature/real-2026-research-corpus-v0.1",
+  "contract": "contracts/real-2026-historical-research-runtime-v0.1.json",
+  "docs": "docs/real-2026-historical-research-runtime-v0.1.md",
+  "footiqo_snapshot": "packages/gate1/data/footiqo-mls-2026-public-closing-snapshot-v0.1.csv",
+  "result_market_reconciler": "packages/gate1/footiqo_fixture_reconciler.py",
+  "runtime": "scripts/run_real_2026_historical_research.py",
+  "offline_test": "scripts/test_footiqo_fixture_reconciler.py",
+  "workflow": ".github/workflows/real-historical-research.yml",
+  "reviewed_2026_market_rows": 25,
+  "history_2025": "PINNED_MLSOPENSKILL_AND_OPENFOOTBALL_CROSS_SOURCE_RESULTS",
+  "result_2026": "FIXTUREDOWNLOAD_UTC_PUBLIC_CSV_CROSSCHECK",
+  "research_scope": "REAL_MODEL_MARKET_SETTLEMENT_BENCHMARK_NOT_PROMOTION_ELIGIBLE",
+  "strict_scope": "EXISTING_P002_GATE1_AND_GATE2_STATES_UNCHANGED",
+  "expected_blockers": [
+    "STRICT_LINEUP_EVIDENCE_NOT_AVAILABLE_FOR_HISTORICAL_SAMPLE",
+    "DISTINCT_EXECUTION_ENTRY_PRICE_NOT_AVAILABLE_FOR_CLV"
+  ],
+  "runtime_metrics": "PENDING_GITHUB_ACTIONS",
+  "governance": "CROSS_SOURCE_SCORE_AGREEMENT; VENUE_LOCAL_CANONICAL_DATE; NO_SCORE_TO_ODDS_INFERENCE; RESEARCH_NOT_PROMOTION; NO_FAKE_CLV; NO_HINDSIGHT; FROZEN_P002_UNCHANGED",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
