@@ -24,6 +24,11 @@ results.append(run(
     [sys.executable,'test_canonical_historical_pipeline.py'],
     ROOT/'scripts'
 ))
+results.append(run(
+    'cross_source_result_reconciler',
+    [sys.executable,'test_cross_source_result_reconciler.py'],
+    ROOT/'scripts'
+))
 
 # Reference E2E has no external npm dependencies; npm scripts execute node stdlib code.
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
