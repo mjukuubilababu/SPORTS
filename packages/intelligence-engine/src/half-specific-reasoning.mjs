@@ -20,7 +20,7 @@ export function buildHalfSpecificReasoning({
   maxGoalsPerHalf = 8
 }) {
   if (!halfModel?.verified) throw new Error('VERIFIED_HALF_MODEL_REQUIRED');
-  if (!Number.isInteger(maxGoalsPerHalf) || maxGoalsPerHalf < 3 || maxGoalsPerHalf > 15) {
+  if (!Number.isInteger(maxGoalsPerHalf) || maxGoalsPerHalf < 4 || maxGoalsPerHalf > 15) {
     throw new Error('MAX_GOALS_PER_HALF_INVALID');
   }
 
