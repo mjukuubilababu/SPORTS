@@ -27,6 +27,7 @@ function meta(section, fallbackGroup) {
   return {
     confidence: assert01('CONFIDENCE', section.confidence),
     sampleSize: section.sampleSize,
+    minimumSampleRequired: Number.isInteger(section.minimumSampleRequired) ? section.minimumSampleRequired : null,
     observedAt: section.observedAt,
     source: section.source,
     verified: section.verified === true,
