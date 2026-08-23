@@ -1,0 +1,29 @@
+{
+  "capability": "canonical-real-historical-truth-backfill",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "source_branch": "feature/canonical-real-historical-truth-backfill-v0.1",
+  "contract": "contracts/canonical-historical-truth-store-v0.1.json",
+  "docs": "docs/canonical-real-historical-truth-backfill-v0.1.md",
+  "gate1_importer": "packages/gate1/historical_truth_importer.py",
+  "gate1_runner": "packages/gate1/import_historical_truth.py",
+  "gate1_real_seed": "packages/gate1/gate1_real_historical_seed_2026_mls.csv",
+  "gate2_bridge": "packages/gate2/canonical_backfill.py",
+  "gate2_runner": "packages/gate2/run_canonical_backfill.py",
+  "integration_test": "scripts/test_canonical_historical_pipeline.py",
+  "root_verifier_updated": true,
+  "seed_summary_expected": {
+    "rows_received": 6,
+    "canonical_matches": 6,
+    "gate2_backfill_eligible": 6,
+    "gate1_validation_n_eligible": 1,
+    "conflicting_matches_quarantined": 0,
+    "gate2_warmup_pass": 0,
+    "gate2_warmup_pending": 6
+  },
+  "real_data_scope": "MLS_2026_OPENING_ROUND_SIX_MATCH_SEED",
+  "corpus_sufficiency": "INSUFFICIENT_FOR_GATE3_GATE4_STATISTICAL_VALIDATION",
+  "governance": "RESULT_PROVENANCE_REQUIRED; MARKET_PROVENANCE_SEPARATE; VENUE_LOCAL_CANONICAL_DATE; SOURCE_REPORTED_DATE_PRESERVED; SCORE_CONFLICT_QUARANTINE; NO_TEMPLATE_INJECTION; NO_HINDSIGHT; NO_GATE3_VALIDATION_CLAIM",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
