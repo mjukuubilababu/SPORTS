@@ -5,6 +5,12 @@ function clamp(value, min = 0, max = 1) {
   return Math.max(min, Math.min(max, value));
 }
 
+function parseTime(value, name) {
+  const ms = Date.parse(value);
+  if (!Number.isFinite(ms)) throw new Error(`${name}_INVALID_TIMESTAMP`);
+  return ms;
+}
+
 function assert01(name, value) {
   if (!Number.isFinite(value) || value < 0 || value > 1) throw new Error(`${name}_MUST_BE_0_TO_1`);
   return value;
@@ -37,13 +43,14 @@ function validateLineup(side, lineup) {
   }
 }
 
-function profileFor(profiles, playerId, minimumSample) {
+function profileFor(profiles, playerId, minimumSample, latestAllowedMs) {
   const profile = profiles[playerId];
   if (!profile) throw new Error(`PLAYER_PROFILE_MISSING_${playerId}`);
   if (profile.verified !== true) throw new Error(`PLAYER_PROFILE_UNVERIFIED_${playerId}`);
   if (profile.competitionAdjusted !== true) throw new Error(`PLAYER_PROFILE_NOT_COMPETITION_ADJUSTED_${playerId}`);
   if (!Number.isInteger(profile.sampleSize) || profile.sampleSize < minimumSample) throw new Error(`PLAYER_PROFILE_SAMPLE_TOO_SMALL_${playerId}`);
   if (!profile.source || !profile.observedAt) throw new Error(`PLAYER_PROFILE_PROVENANCE_REQUIRED_${playerId}`);
+  if (parseTime(profile.observedAt, `PLAYER_PROFILE_${playerId}`) > latestAllowedMs) throw new Error(`PLAYER_PROFILE_AFTER_KICKOFF_${playerId}`);
   return profile;
 }
 
@@ -86,9 +93,9 @@ function individualQuality(row, profile) {
   return clamp(base * availabilityFitness);
 }
 
-function buildSide(side, lineup, profiles, minimumSample) {
+function buildSide(side, lineup, profiles, minimumSample, latestAllowedMs) {
   const rows = lineup.map((row) => {
-    const profile = profileFor(profiles, row.playerId, minimumSample);
+    const profile = profileFor(profiles, row.playerId, minimumSample, latestAllowedMs);
     let offensive = null;
     let midfield = null;
     let defensive = null;
@@ -165,21 +172,26 @@ export function buildConfirmedLineupPlayerIntelligence({
   eventId,
   homeTeam,
   awayTeam,
+  kickoffAt,
   lineupObservation,
   playerProfiles,
   minimumPlayerSample = 8
 }) {
   if (!eventId) throw new Error('EVENT_ID_REQUIRED');
+  if (!kickoffAt) throw new Error('EFFECTIVE_KICKOFF_REQUIRED');
+  const kickoffMs = parseTime(kickoffAt, 'EFFECTIVE_KICKOFF');
   if (!lineupObservation || lineupObservation.status !== 'CONFIRMED' || lineupObservation.verified !== true) {
     throw new Error('CONFIRMED_VERIFIED_LINEUP_REQUIRED');
   }
   if (!lineupObservation.source || !lineupObservation.observedAt) throw new Error('LINEUP_PROVENANCE_REQUIRED');
+  const lineupObservedMs = parseTime(lineupObservation.observedAt, 'LINEUP_OBSERVED_AT');
+  if (lineupObservedMs >= kickoffMs) throw new Error('LINEUP_MUST_BE_OBSERVED_BEFORE_KICKOFF');
   if (!Number.isInteger(minimumPlayerSample) || minimumPlayerSample < 1) throw new Error('MINIMUM_PLAYER_SAMPLE_INVALID');
   validateLineup('HOME', lineupObservation.home);
   validateLineup('AWAY', lineupObservation.away);
 
-  const home = buildSide('HOME', lineupObservation.home, playerProfiles, minimumPlayerSample);
-  const away = buildSide('AWAY', lineupObservation.away, playerProfiles, minimumPlayerSample);
+  const home = buildSide('HOME', lineupObservation.home, playerProfiles, minimumPlayerSample, kickoffMs);
+  const away = buildSide('AWAY', lineupObservation.away, playerProfiles, minimumPlayerSample, kickoffMs);
   const allIds = [...lineupObservation.home, ...lineupObservation.away].map((row) => row.playerId);
   const sampleSize = Math.min(...allIds.map((id) => playerProfiles[id].sampleSize));
   const profileSources = [...new Set(allIds.map((id) => playerProfiles[id].source))];
@@ -219,6 +231,7 @@ export function buildConfirmedLineupPlayerIntelligence({
     eventId,
     homeTeam,
     awayTeam,
+    kickoffAt,
     lineupObservation: Object.freeze({
       status: lineupObservation.status,
       observedAt: lineupObservation.observedAt,
@@ -234,6 +247,8 @@ export function buildConfirmedLineupPlayerIntelligence({
     governance: Object.freeze({
       confirmedLineupRequired: true,
       predictedLineupForbidden: true,
+      lineupMustPrecedeKickoff: true,
+      playerProfileObservationsMustPrecedeKickoff: true,
       playerProfilesMustBeVerified: true,
       competitionAdjustmentRequired: true,
       roleSpecificMetricsRequired: true,
