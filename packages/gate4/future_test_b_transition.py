@@ -24,6 +24,11 @@ def _hash(value: object) -> str:
     return sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _looks_sha256(value: str) -> bool:
+    value = str(value or "")
+    return len(value) == 64 and all(c in "0123456789abcdef" for c in value.lower())
+
+
 def attach_verified_closing_market(
     prematch: Dict,
     *,
@@ -35,6 +40,10 @@ def attach_verified_closing_market(
     under35_odds: float,
     source_verified: bool,
     closing_semantics_verified: bool,
+    closing_semantics_id: str,
+    source_observation_sha256: str,
+    source_class: str,
+    seconds_before_kickoff: float | None = None,
 ) -> Dict:
     if prematch.get("state") != "PREMATCH_FROZEN":
         raise ValueError("CLOSING_MARKET_REQUIRES_PREMATCH_FROZEN_STATE")
@@ -47,10 +56,12 @@ def attach_verified_closing_market(
         raise ValueError("CLOSING_MARKET_NOT_PRE_KICKOFF")
     if source_verified is not True:
         raise ValueError("CLOSING_MARKET_SOURCE_NOT_VERIFIED")
-    if closing_semantics_verified is not True:
+    if closing_semantics_verified is not True or not closing_semantics_id:
         raise ValueError("CLOSING_MARKET_SEMANTICS_NOT_VERIFIED")
-    if not provider or not source or not source_url:
+    if not provider or not source or not source_url or not source_class:
         raise ValueError("CLOSING_MARKET_PROVENANCE_REQUIRED")
+    if not _looks_sha256(source_observation_sha256):
+        raise ValueError("CLOSING_MARKET_RAW_OBSERVATION_SHA256_REQUIRED")
 
     fair = devig_u35(float(over35_odds), float(under35_odds))
     market = {
@@ -58,12 +69,16 @@ def attach_verified_closing_market(
         "provider": provider,
         "source": source,
         "source_url": source_url,
+        "source_class": source_class,
+        "source_observation_sha256": source_observation_sha256,
         "observed_at": observed.isoformat().replace("+00:00", "Z"),
         "over35_odds": float(over35_odds),
         "under35_odds": float(under35_odds),
         "fair_probability_u35": fair,
         "source_verified": True,
         "closing_semantics_verified": True,
+        "closing_semantics_id": closing_semantics_id,
+        "seconds_before_kickoff": seconds_before_kickoff,
     }
     market["snapshot_sha256"] = _hash(market)
 
@@ -157,10 +172,14 @@ def to_blind_candidate(record: Dict) -> Dict:
             "provider": market["provider"],
             "source": market["source"],
             "source_url": market["source_url"],
+            "source_class": market["source_class"],
+            "source_observation_sha256": market["source_observation_sha256"],
             "observed_at": market["observed_at"],
             "fair_probability_u35": market["fair_probability_u35"],
             "source_verified": market["source_verified"],
             "closing_semantics_verified": market["closing_semantics_verified"],
+            "closing_semantics_id": market["closing_semantics_id"],
+            "seconds_before_kickoff": market.get("seconds_before_kickoff"),
         },
         "regime": regime,
         "settlement": {

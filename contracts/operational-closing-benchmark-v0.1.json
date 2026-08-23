@@ -1,0 +1,55 @@
+{
+  "contract": "operational-closing-benchmark",
+  "version": "v0.1",
+  "policy_version": "OPERATIONAL_CLOSING_BENCHMARK_V0_1",
+  "semantics_id": "OPERATIONAL_PREKICKOFF_CLOSE_300S_V0_1",
+  "effective_at": "2026-08-23T17:00:00Z",
+  "purpose": "Define a fixed, preregistered market benchmark capture window before any Test B operational closing observation is accepted.",
+  "window": {
+    "max_seconds_before_kickoff": 300,
+    "minimum_seconds_before_kickoff_exclusive": 0,
+    "accepted_interval": "[KICKOFF-300s, KICKOFF)",
+    "post_kickoff_backfill_as_operational_close": "FORBIDDEN"
+  },
+  "source_requirements": {
+    "allowed_classes": [
+      "DIRECT_BOOKMAKER_PUBLIC",
+      "APPROVED_ODDS_AGGREGATOR_PROVIDER_PAIR"
+    ],
+    "source_verified": true,
+    "provider_required": true,
+    "source_url_required": true,
+    "raw_observation_sha256_required": true,
+    "same_provider_for_over35_and_under35": true,
+    "mixing_best_over_from_one_provider_and_best_under_from_another": "FORBIDDEN"
+  },
+  "market": {
+    "market": "TOTAL_GOALS_OVER_UNDER_3_5_FULL_TIME",
+    "over35_decimal_odds_required": true,
+    "under35_decimal_odds_required": true,
+    "fair_probability": "TWO_SIDED_DEVIG",
+    "bookmaker_odds_as_model_input": false
+  },
+  "meaning": {
+    "true_final_exchange_or_bookmaker_close_claimed": false,
+    "benchmark_label": "OPERATIONAL_PREKICKOFF_CLOSE",
+    "definition": "Last system observation accepted inside the fixed 300-second pre-kickoff window.",
+    "must_not_be_relabelled_as_provider_declared_true_close": true
+  },
+  "lineage": {
+    "prematch_prediction_must_already_be_frozen": true,
+    "market_observed_after_or_at_prediction_freeze": true,
+    "market_snapshot_sha256_commits_to_semantics_and_raw_observation_hash": true,
+    "settlement_remains_separate": true
+  },
+  "test_b": {
+    "eligible_market_semantics": "OPERATIONAL_PREKICKOFF_CLOSE_300S_V0_1",
+    "performance_evaluation_at_capture": false,
+    "interim_model_ranking": false
+  },
+  "gate4_min_n_changed": false,
+  "p002_frozen_rules_changed": false,
+  "model_parameters_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}

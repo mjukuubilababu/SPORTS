@@ -1,0 +1,90 @@
+name: Operational Closing Benchmark
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/gate4/operational_closing_benchmark.py'
+      - 'packages/gate4/future_test_b_transition.py'
+      - 'scripts/test_operational_closing_benchmark.py'
+      - 'scripts/test_future_test_b_transitions.py'
+      - 'scripts/verify_unified.py'
+      - 'contracts/operational-closing-benchmark-v0.1.json'
+      - 'docs/operational-closing-benchmark-v0.1.md'
+      - 'manifests/operational-closing-benchmark-v0.1.json'
+      - '.github/workflows/operational-closing-benchmark.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-operational-close-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Assert policy is being preregistered before effective time
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import json
+          manifest=json.loads(Path('manifests/operational-closing-benchmark-v0.1.json').read_text())
+          effective=datetime.fromisoformat(manifest['effective_at'].replace('Z','+00:00'))
+          now=datetime.now(timezone.utc)
+          assert now < effective, f"POLICY_CI_NOT_BEFORE_EFFECTIVE_AT:{now.isoformat()}>={effective.isoformat()}"
+          print(f"POLICY_PREREGISTRATION_TIME_GUARD=PASS now={now.isoformat()} effective={effective.isoformat()}")
+          PY
+
+      - name: Run policy and transition tests
+        run: |
+          python scripts/test_operational_closing_benchmark.py
+          python scripts/test_future_test_b_transitions.py
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Assert governance unchanged
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('manifests/operational-closing-benchmark-v0.1.json').read_text())
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          assert manifest['max_seconds_before_kickoff'] == 300
+          assert manifest['true_final_bookmaker_close_claimed'] is False
+          assert manifest['gate4_min_n_changed'] is False
+          assert manifest['p002_frozen_rules_changed'] is False
+          assert manifest['model_parameters_changed'] is False
+          assert report['core_integrated_assurance'] == 'PROMOTE'
+          assert report['tests_total'] == report['tests_passed']
+          assert report['capital_assurance'] == 'LOCKED'
+          print(json.dumps({
+            'policy': manifest['policy_version'],
+            'semantics_id': manifest['semantics_id'],
+            'effective_at': manifest['effective_at'],
+            'window_seconds': manifest['max_seconds_before_kickoff'],
+            'unified_tests': f"{report['tests_passed']}/{report['tests_total']}",
+            'capital_assurance': report['capital_assurance']
+          }, indent=2))
+          PY
+
+      - name: Upload policy verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: operational-closing-benchmark-v0.1
+          path: |
+            manifests/operational-closing-benchmark-v0.1.json
+            contracts/operational-closing-benchmark-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+          if-no-files-found: error
