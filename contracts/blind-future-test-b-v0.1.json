@@ -1,0 +1,70 @@
+{
+  "contract": "blind-future-test-set-b-accumulator",
+  "version": "v0.1",
+  "accumulator_version": "BLIND_FUTURE_TEST_SET_B_ACCUMULATOR_V0_1",
+  "target_n": 100,
+  "purpose": "Accumulate a genuinely future, preregistration-disjoint evaluation cohort without exposing interim model performance.",
+  "challenger": {
+    "model_version": "P002_NEGBIN_CHALLENGER_V0_1",
+    "specification_sha256": "650d6cdd6eccc31ec0756cd1bfe80b51032e079ba90c00ad950b86db85508c00",
+    "registered_at": "2026-08-23T13:40:00Z",
+    "holdout_a_reuse": "FORBIDDEN"
+  },
+  "required_candidate": {
+    "identity": ["match_id", "competition", "kickoff_at"],
+    "prediction": [
+      "snapshot_id", "snapshot_sha256", "frozen_at",
+      "poisson_model_version", "poisson_probability_u35",
+      "negbin_model_version", "negbin_specification_sha256",
+      "negbin_probability_u35", "uses_market_odds"
+    ],
+    "market": [
+      "snapshot_id", "snapshot_sha256", "provider", "source", "source_url",
+      "observed_at", "fair_probability_u35", "source_verified",
+      "closing_semantics_verified"
+    ],
+    "regime": [
+      "snapshot_id", "snapshot_sha256", "label", "source", "source_url",
+      "observed_at", "verified", "uses_outcome", "uses_market_odds"
+    ],
+    "settlement": [
+      "source", "source_url", "verified", "settled_at", "home_goals", "away_goals"
+    ]
+  },
+  "eligibility": {
+    "match_and_prediction_after_preregistration": true,
+    "prediction_market_regime_all_pre_kickoff": true,
+    "prediction_market_regime_snapshot_sha256_required": true,
+    "challenger_model_and_spec_hash_must_match_preregistration": true,
+    "bookmaker_odds_as_model_input": "FORBIDDEN",
+    "verified_closing_market_semantics_required": true,
+    "verified_regime_metadata_required": true,
+    "regime_from_outcome": "FORBIDDEN",
+    "regime_from_market_odds": "FORBIDDEN",
+    "verified_post_kickoff_settlement_required": true,
+    "holdout_a_match_overlap": "FORBIDDEN",
+    "duplicate_match_id": "REJECT"
+  },
+  "blindness": {
+    "type": "PROCEDURAL_NOT_CRYPTOGRAPHIC",
+    "analyst_facing_output": "COUNTS_AND_DATA_QUALITY_ONLY",
+    "interim_brier": "FORBIDDEN",
+    "interim_logloss": "FORBIDDEN",
+    "interim_hit_rate": "FORBIDDEN",
+    "interim_roi_profit": "FORBIDDEN",
+    "interim_edge_ev": "FORBIDDEN",
+    "interim_model_ranking": "FORBIDDEN",
+    "internal_records": "AUDITABLE_BUT_MUST_NOT_BE_USED_FOR_TUNING_OR_ANALYST_PEEKING"
+  },
+  "freeze": {
+    "cohort": "FIRST_100_CHRONOLOGICAL_PROMOTION_ELIGIBLE_MATCHES",
+    "rows_after_target": "RESERVED_FOR_NEXT_COHORT",
+    "freeze_after_all_selected_settlements": true,
+    "frozen_fields": ["exact_match_ids", "record_sha256_hashes", "challenger_specification_sha256"],
+    "evaluation": "NOT_IMPLEMENTED_IN_THIS_MODULE; SEPARATE_ONE_TIME_RELEASE_REQUIRED"
+  },
+  "existing_gate4_thresholds_changed": false,
+  "p002_frozen_rules_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}

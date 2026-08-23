@@ -49,6 +49,26 @@ results.append(run(
     [sys.executable,'test_gate3_gate4_real_robustness.py'],
     ROOT/'scripts'
 ))
+results.append(run(
+    'evaluation_freeze_challenger_protocol',
+    [sys.executable,'test_evaluation_freeze_challenger_protocol.py'],
+    ROOT/'scripts'
+))
+results.append(run(
+    'negative_binomial_challenger',
+    [sys.executable,'test_negbin_challenger.py'],
+    ROOT/'scripts'
+))
+results.append(run(
+    'blind_future_test_b',
+    [sys.executable,'test_blind_future_test_b.py'],
+    ROOT/'scripts'
+))
+results.append(run(
+    'blind_future_test_b_state',
+    [sys.executable,'verify_blind_future_test_b_state.py'],
+    ROOT/'scripts'
+))
 
 # Reference E2E has no external npm dependencies; npm scripts execute node stdlib code.
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
@@ -56,7 +76,9 @@ results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/
 # Contract/manifest structural checks.
 required=[
     ROOT/'contracts/artifact-registry.json', ROOT/'contracts/canonical-invariants.json',
-    ROOT/'contracts/p002-frozen-rules.json', ROOT/'docs/ARCHITECTURE.md'
+    ROOT/'contracts/p002-frozen-rules.json', ROOT/'docs/ARCHITECTURE.md',
+    ROOT/'contracts/blind-future-test-b-v0.1.json',
+    ROOT/'packages/gate4/data/mls-2026-future-test-b-state-v0.1.json'
 ]
 struct_ok=all(p.exists() and p.stat().st_size>0 for p in required)
 results.append({'name':'unified_structure','command':[],'cwd':'.','returncode':0 if struct_ok else 1,'passed':struct_ok,'stdout':f'required_files={len(required)}','stderr':''})
