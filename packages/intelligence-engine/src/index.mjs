@@ -30,3 +30,6 @@ export * from './half-specific-model.mjs';
 export * from './half-specific-reasoning.mjs';
 export * from './real-half-profile-processing.mjs';
 export * from './real-half-market-pricing.mjs';
+export * from './team-match-feature-signals.mjs';
+export * from './team-match-intelligence.mjs';
+export * from './calibrated-intelligence-adjustment.mjs';
