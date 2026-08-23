@@ -1,0 +1,25 @@
+{
+  "capability": "gate2-gate3-settled-corpus-adapter",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "source_branch": "feature/gate2-gate3-settled-corpus-adapter-v0.1",
+  "gate2_change": "packages/gate2/canonical_backfill.py",
+  "adapter": "packages/gate3/canonical_settlement_adapter.py",
+  "runner": "packages/gate3/run_canonical_validation.py",
+  "test": "scripts/test_gate2_gate3_settled_corpus.py",
+  "contract": "contracts/gate2-gate3-settled-corpus-adapter-v0.1.json",
+  "docs": "docs/gate2-gate3-settled-corpus-adapter-v0.1.md",
+  "root_verifier_updated": true,
+  "research_scope": "MODEL_MARKET_RESULT_READY_NOT_PROMOTION_ELIGIBLE",
+  "strict_scope": "EXISTING_GATE1_VALIDATION_N_PLUS_GATE2_FINAL_MODEL_PASS",
+  "gate3_default_evaluate_changed": false,
+  "clv_policy": "NO_DISTINCT_ENTRY_PRICE_MEANS_CLV_UNAVAILABLE_NOT_ZERO",
+  "current_empirical_blockers": [
+    "FULL_2025_HISTORICAL_CLOSING_MARKET_CORPUS_NOT_CAPTURED",
+    "HISTORICAL_STRICT_LINEUP_GATE_EVIDENCE_NOT_CAPTURED",
+    "DISTINCT_ENTRY_PRICE_FOR_CLV_NOT_CAPTURED"
+  ],
+  "governance": "MATCH_ID_SETTLEMENT_JOIN; OUTCOME_SEPARATE_FROM_FEATURE_SNAPSHOT; RESEARCH_NOT_QUALIFICATION; STRICT_PROMOTION_ONLY; NO_FAKE_CLV; NO_FROZEN_RULE_CHANGE",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
