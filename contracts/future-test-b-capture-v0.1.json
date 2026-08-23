@@ -1,0 +1,66 @@
+{
+  "contract": "future-test-b-capture",
+  "version": "v0.1",
+  "purpose": "Create immutable, genuinely pre-match Test B prediction/regime snapshots and transition them through verified closing market and verified settlement without hindsight.",
+  "states": [
+    "DISCOVERED",
+    "PREMATCH_FROZEN",
+    "CLOSING_MARKET_CAPTURED",
+    "SETTLED_ELIGIBLE"
+  ],
+  "prediction": {
+    "mean_source": "GATE2_PRE_LINEUP_LAMBDA",
+    "poisson_model_version": "P002_GATE2_POISSON_U35_V0_1",
+    "challenger_model_version": "P002_NEGBIN_CHALLENGER_V0_1",
+    "bookmaker_odds_as_model_input": false,
+    "future_fixture_result_as_model_input": false,
+    "freeze_before_kickoff": true,
+    "snapshot_id_and_sha256_required": true
+  },
+  "regime": {
+    "freeze_before_kickoff": true,
+    "verified_source_required": true,
+    "derived_from_outcome": false,
+    "derived_from_market_odds": false,
+    "snapshot_id_and_sha256_required": true
+  },
+  "closing_market": {
+    "separate_from_prediction_generation": true,
+    "observed_after_or_at_prediction_freeze": true,
+    "observed_before_kickoff": true,
+    "source_verified": true,
+    "closing_semantics_verified": true,
+    "over35_and_under35_decimal_odds_required": true,
+    "fair_probability": "DEVIG_TWO_SIDED_O35_U35",
+    "snapshot_id_and_sha256_required": true
+  },
+  "settlement": {
+    "separate_post_match_transition": true,
+    "post_kickoff": true,
+    "verified_source_and_url_required": true,
+    "nonnegative_integer_score_required": true
+  },
+  "eligibility": {
+    "prematch_frozen": false,
+    "closing_market_captured": false,
+    "settled_eligible": true,
+    "blind_accumulator_is_next_stage": true
+  },
+  "lineage": {
+    "each_transition_preserves_match_id": true,
+    "parent_record_sha256_required_after_transition": true,
+    "prior_snapshots_are_not_mutated": true
+  },
+  "initial_real_targets": {
+    "dataset": "packages/gate4/data/mls-2026-test-b-prematch-targets-2026-08-23.json",
+    "count": 2,
+    "fixtures": [
+      "New England Revolution vs New York City FC",
+      "Atlanta United vs Sporting Kansas City"
+    ]
+  },
+  "gate4_min_n_changed": false,
+  "p002_frozen_rules_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
