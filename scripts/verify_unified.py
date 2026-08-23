@@ -19,6 +19,12 @@ results=[]
 for i in range(1,7):
     results.append(run(f'gate{i}_acceptance',[sys.executable,f'test_gate{i}.py'],ROOT/f'packages/gate{i}'))
 
+results.append(run(
+    'canonical_historical_truth_backfill',
+    [sys.executable,'test_canonical_historical_pipeline.py'],
+    ROOT/'scripts'
+))
+
 # Reference E2E has no external npm dependencies; npm scripts execute node stdlib code.
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
 

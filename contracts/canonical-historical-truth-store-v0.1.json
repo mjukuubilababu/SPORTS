@@ -1,0 +1,50 @@
+{
+  "contract": "canonical-historical-truth-store",
+  "version": "v0.1",
+  "store_version": "CANONICAL_HISTORICAL_TRUTH_STORE_V0_1",
+  "data_nature": "REAL_HISTORICAL_TRUTH",
+  "canonical_match_date_policy": "VENUE_LOCAL_MATCH_DATE",
+  "required_input_fields": [
+    "match_date",
+    "season",
+    "league",
+    "home_team",
+    "away_team",
+    "home_goals",
+    "away_goals",
+    "result_source",
+    "result_source_url",
+    "result_verified"
+  ],
+  "optional_market_fields": [
+    "o25",
+    "u25",
+    "o35",
+    "u35",
+    "market_source",
+    "market_provider",
+    "market_source_url",
+    "market_source_match_date",
+    "quote_type",
+    "market_observed_at"
+  ],
+  "rules": {
+    "verified_result_required_for_gate2_backfill": true,
+    "result_source_and_url_required": true,
+    "market_is_optional_for_feature_history": true,
+    "market_validation_uses_gate1_source_registry": true,
+    "source_reported_market_date_is_not_canonical_identity": true,
+    "conflicting_final_scores_are_quarantined": true,
+    "same_score_duplicate_observations_may_be_collapsed": true,
+    "gate1_validation_n_eligible_does_not_mean_gate3_statistically_validated": true,
+    "no_hindsight": true
+  },
+  "gate2_bridge": {
+    "version": "GATE1_TO_GATE2_CANONICAL_BACKFILL_V0_1",
+    "source": "canonical historical truth store only",
+    "insufficient_history_behavior": "PENDING",
+    "template_row_injection": "FORBIDDEN"
+  },
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
