@@ -1,0 +1,34 @@
+{
+  "capability": "cross-source-mls-2025-historical-corpus",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "source_branch": "feature/cross-source-mls-2025-corpus-v0.1",
+  "reconciler": "packages/gate1/cross_source_result_reconciler.py",
+  "builder": "packages/gate1/build_cross_source_mls2025.py",
+  "truth_store": "CANONICAL_HISTORICAL_TRUTH_STORE_V0_1",
+  "gate2_bridge": "packages/gate2/canonical_backfill.py",
+  "contract": "contracts/cross-source-historical-result-reconciliation-v0.1.json",
+  "historical_truth_contract": "contracts/canonical-historical-truth-store-v0.1.json",
+  "docs": "docs/cross-source-mls-2025-historical-corpus-v0.1.md",
+  "test": "scripts/test_cross_source_result_reconciler.py",
+  "root_verifier_updated": true,
+  "sources": {
+    "MLSOPENSKILL": {
+      "git_blob_sha1": "022c9bc83a3196adc702bf84a64217571b087630",
+      "date_semantics": "UTC_DATETIME"
+    },
+    "OPENFOOTBALL": {
+      "git_blob_sha1": "2896d283601615739418575cbe6b6c9b316a3151",
+      "date_semantics": "SOURCE_LOCAL_MATCH_DATE"
+    }
+  },
+  "expected_reviewed_snapshot": {
+    "cross_source_verified_results": 164,
+    "note": "Expected from reviewed source snapshots; not claimed as executed runtime in current environment."
+  },
+  "gate2_effect": "REAL_CROSS_SOURCE_RESULT_HISTORY_CAN_WARM_CHRONOLOGICAL_FEATURE_BACKFILL",
+  "gate3_gate4_effect": "NO_VALIDATION_CLAIM_UNTIL_VERIFIED_HISTORICAL_MARKET_AND_SETTLEMENT_CORPUS_IS_JOINED",
+  "governance": "TWO_SOURCE_RESULT_AGREEMENT; EXACT_SCORE; TEAM_PAIR_MATCH; DATE_TOLERANCE_ONE_DAY; SOURCE_DATES_PRESERVED; PINNED_GIT_BLOB_HASHES; FAIL_CLOSED_ON_SOURCE_CHANGE; NO_ODDS_INFERENCE; NO_HINDSIGHT",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
