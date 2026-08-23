@@ -16,6 +16,7 @@
     "real:half:write": "node ../../scripts/run_real_half_intelligence.mjs data/real-model-market-output-reference-2026-08-23.json data/real-half-profiles-epl-2025-26.json data/real-half-reasoning-output-2026-08-23.json",
     "real:half-pricing": "node ../../scripts/run_real_half_market_pricing.mjs data/real-model-market-output-reference-2026-08-23.json data/real-half-profiles-epl-2025-26.json data/real-half-market-betpawa-indexed-2026-08-23.json",
     "real:half-pricing:write": "node ../../scripts/run_real_half_market_pricing.mjs data/real-model-market-output-reference-2026-08-23.json data/real-half-profiles-epl-2025-26.json data/real-half-market-betpawa-indexed-2026-08-23.json data/real-half-market-pricing-output-2026-08-23.json",
+    "team:match": "node ../../scripts/run_team_match_intelligence.mjs",
     "final:prematch": "node ../../scripts/run_final_prematch_intelligence.mjs"
   }
 }
