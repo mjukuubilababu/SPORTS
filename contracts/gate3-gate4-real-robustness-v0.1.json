@@ -1,0 +1,31 @@
+{
+  "contract": "gate3-gate4-real-robustness",
+  "version": "v0.1",
+  "input": "REAL_GATE3_RESEARCH_REPORT",
+  "models": {
+    "incumbent": "market",
+    "current_challenger": "poisson",
+    "negative_binomial": "UNAVAILABLE_UNTIL_INDEPENDENT_PREDICTIONS_EXIST",
+    "ensemble": "UNAVAILABLE_UNTIL_INDEPENDENT_PREDICTIONS_EXIST"
+  },
+  "minimum_promotion_n": 100,
+  "minimum_walkforward_train_n": 30,
+  "minimum_walkforward_win_rate": 0.60,
+  "promotion_requirements": [
+    "N_AT_LEAST_100",
+    "POISSON_BRIER_BETTER_THAN_MARKET",
+    "POISSON_LOGLOSS_BETTER_THAN_MARKET",
+    "WALK_FORWARD_WIN_RATE_AT_LEAST_0_60",
+    "VERIFIED_REGIME_CONSISTENCY"
+  ],
+  "rules": {
+    "descriptive_leader_is_promoted_champion": false,
+    "market_remains_incumbent_when_blocked": true,
+    "missing_challenger_probabilities_may_be_fabricated": false,
+    "regime_may_be_inferred_from_result_or_market": false,
+    "retune_on_evaluation_sample": false,
+    "gate4_min_n_changed": false
+  },
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
