@@ -1,7 +1,9 @@
 {
   "capability": "canonical-real-historical-truth-backfill",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "status": "MERGED_CANONICAL_IMPLEMENTED_TEST_AUTHORED_RUNTIME_NOT_CLAIMED",
+  "merged_via_pr": 14,
+  "merge_commit": "6f7e035482ce0121a25d29df5afce9b2656d6b5e",
   "source_branch": "feature/canonical-real-historical-truth-backfill-v0.1",
   "contract": "contracts/canonical-historical-truth-store-v0.1.json",
   "docs": "docs/canonical-real-historical-truth-backfill-v0.1.md",
@@ -12,6 +14,7 @@
   "gate2_runner": "packages/gate2/run_canonical_backfill.py",
   "integration_test": "scripts/test_canonical_historical_pipeline.py",
   "root_verifier_updated": true,
+  "runtime": "NOT_CLAIMED_NO_GITHUB_ACTIONS_RUN_AND_LOCAL_CONTAINER_CANNOT_RESOLVE_GITHUB_HOST",
   "seed_summary_expected": {
     "rows_received": 6,
     "canonical_matches": 6,
