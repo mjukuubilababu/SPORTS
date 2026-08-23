@@ -26,6 +26,7 @@ for name,script in [
     ('future_test_b_prematch_capture','test_future_test_b_capture.py'),
     ('future_test_b_transitions','test_future_test_b_transitions.py'),
     ('future_test_b_prematch_frozen','verify_future_test_b_prematch_frozen.py'),
+    ('operational_closing_benchmark','test_operational_closing_benchmark.py'),
 ]: results.append(run(name,[sys.executable,script],ROOT/'scripts'))
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
 
@@ -34,7 +35,8 @@ required=[
     ROOT/'contracts/p002-frozen-rules.json', ROOT/'docs/ARCHITECTURE.md',
     ROOT/'contracts/blind-future-test-b-v0.1.json', ROOT/'packages/gate4/data/mls-2026-future-test-b-state-v0.1.json',
     ROOT/'contracts/future-test-b-capture-v0.1.json', ROOT/'packages/gate4/data/mls-2026-test-b-prematch-targets-2026-08-23.json',
-    ROOT/'packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json'
+    ROOT/'packages/gate4/data/mls-2026-test-b-prematch-frozen-2026-08-23.json',
+    ROOT/'contracts/operational-closing-benchmark-v0.1.json', ROOT/'manifests/operational-closing-benchmark-v0.1.json'
 ]
 struct_ok=all(p.exists() and p.stat().st_size>0 for p in required)
 results.append({'name':'unified_structure','command':[],'cwd':'.','returncode':0 if struct_ok else 1,'passed':struct_ok,'stdout':f'required_files={len(required)}','stderr':''})
