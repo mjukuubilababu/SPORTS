@@ -1,0 +1,58 @@
+{
+  "contract": "PLAYER_MATCHUP_INTELLIGENCE_V0_1",
+  "purpose": "Populate player-vs-opponent and player-quality/cohesion domains only after confirmed pre-kickoff lineups and verified player evidence exist.",
+  "lineup_requirements": {
+    "status": "CONFIRMED",
+    "verified": true,
+    "starters_per_team": 11,
+    "unique_player_ids": true,
+    "exactly_one_goalkeeper_per_team": true,
+    "lineup_observed_before_effective_kickoff": true,
+    "predicted_lineup_allowed": false
+  },
+  "player_profile_requirements": {
+    "normalized_scale": "0_TO_1",
+    "verified": true,
+    "competition_adjusted": true,
+    "default_minimum_sample": 8,
+    "source_required": true,
+    "observed_at_required": true,
+    "profile_observed_after_kickoff": "FORBIDDEN",
+    "team_continuity_required": true,
+    "reputation_or_name_as_metric": "FORBIDDEN"
+  },
+  "role_specific_metrics": {
+    "ATTACK": ["finishing", "shotQuality", "chanceCreation", "ballProgression", "dribbling"],
+    "MIDFIELD": ["chanceCreation", "ballProgression", "pressResistance", "ballSecurity", "defensiveDuels"],
+    "DEFENCE": ["defensiveDuels", "aerialDefending", "interceptions", "recovery", "ballSecurity"],
+    "GOALKEEPER": ["shotStopping", "goalkeeperDistribution", "highClaims"]
+  },
+  "zones": ["LEFT", "CENTRAL", "RIGHT", "GOALKEEPER"],
+  "tactical_matchup_lanes": [
+    "HOME_LEFT_ATTACK_V_AWAY_RIGHT_DEFENCE",
+    "HOME_RIGHT_ATTACK_V_AWAY_LEFT_DEFENCE",
+    "HOME_CENTRAL_ATTACK_V_AWAY_CENTRAL_DEFENCE_AND_GOALKEEPER",
+    "AWAY_LEFT_ATTACK_V_HOME_RIGHT_DEFENCE",
+    "AWAY_RIGHT_ATTACK_V_HOME_LEFT_DEFENCE",
+    "AWAY_CENTRAL_ATTACK_V_HOME_CENTRAL_DEFENCE_AND_GOALKEEPER",
+    "MIDFIELD_CONTROL"
+  ],
+  "outputs": {
+    "PLAYER_MATCHUP": "Seven normalized tactical-lane comparisons with provenance.",
+    "PLAYER_QUALITY_AND_COHESION": "Confirmed-XI role-specific individual-quality mean plus prior-team continuity mean.",
+    "real_football_player_evidence_adapter": true
+  },
+  "competition_policy": {
+    "cross_league_player_stats_must_be_adjusted_upstream": true,
+    "raw_stats_from_different_league_strengths_directly_comparable": false
+  },
+  "governance": {
+    "bookmaker_odds_used": false,
+    "no_hindsight": true,
+    "confirmed_XI_alone_does_not_change_lambda": true,
+    "uncalibrated_player_matchups_cannot_rewrite_lambda": true,
+    "market_mapping_after_team_and_player_analysis": true,
+    "capital_effect": "NONE",
+    "realMoney": "NO"
+  }
+}
