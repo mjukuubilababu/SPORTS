@@ -1,0 +1,52 @@
+{
+  "capability": "canonical-reality-reconciliation",
+  "version": "v0.1",
+  "scope": "GOVERNANCE_METADATA_ONLY",
+  "base_canonical_branch": "import/decision-intelligence-v0.5-qualified-set",
+  "base_canonical_head": "33eee99d40303fb21832e01bd93f777210a7c44b",
+  "repo_state_through_pr": 32,
+  "authoritative_status_manifest": "manifests/canonical-current-status-v0.1.json",
+  "reconciled_files": [
+    "manifests/canonical-current-status-v0.1.json",
+    "manifests/global-multileague-real-data-v0.1.json",
+    "manifests/current-multileague-fixtures-results-v0.1.json"
+  ],
+  "legacy_metadata": {
+    "file": "SYSTEM_MANIFEST.json",
+    "state": "STALE_NON_AUTHORITATIVE",
+    "reason": "Preserved because it contains historical capability detail, but its top-level PostgreSQL blocker and capability inventory predate PRs 29-32. It must not override the reconciled canonical current-status manifest.",
+    "destructive_rewrite_performed": false
+  },
+  "facts_reconciled": {
+    "postgres_runtime": "VERIFIED_8_OF_8_PASS_PR_29",
+    "prediction_http_api": "MERGED_CANONICAL_CI_VERIFIED_PR_30",
+    "global_multileague_historical_data": "MERGED_CANONICAL_CI_VERIFIED_PR_31",
+    "current_multileague_snapshot": "MERGED_CANONICAL_CI_VERIFIED_PR_32",
+    "live_in_play_real_feed": "NOT_IMPLEMENTED",
+    "blind_test_b": "1_OF_100_BLIND_ACCUMULATING",
+    "gate4_promotion": "BLOCK_PROMOTION",
+    "capital": "LOCKED"
+  },
+  "non_changes": {
+    "model_parameters": true,
+    "p002_frozen_rules": true,
+    "gate4_thresholds": true,
+    "test_b_records_and_counts": true,
+    "capital_state": true,
+    "prediction_history": true
+  },
+  "next_engineering_priorities": [
+    "COMPLETE_CURRENT_MULTI_LEAGUE_REAL_DATA_COVERAGE",
+    "DOCUMENTED_REALTIME_LIVE_IN_PLAY_PROVIDER_AND_INGESTION",
+    "FRONTEND_UI",
+    "CANONICAL_TO_MAIN_RELEASE_SYNC"
+  ],
+  "next_evidence_priorities": [
+    "BLIND_TEST_B_99_MORE_ELIGIBLE_MATCHES",
+    "REAL_VERIFIED_PLAYER_PROVIDER_DATASETS",
+    "REAL_COMPLETE_TRANSFER_AUDITS",
+    "GATE3_GATE4_FORWARD_EMPIRICAL_PROOF",
+    "GATE5_FORWARD_SETTLED_CORPUS"
+  ],
+  "real_money": "NO"
+}
