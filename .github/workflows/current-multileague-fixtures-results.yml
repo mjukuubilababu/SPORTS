@@ -6,7 +6,9 @@ on:
       - import/decision-intelligence-v0.5-qualified-set
     paths:
       - 'packages/gate1/current_multileague_fixtures_results.py'
+      - 'packages/gate1/espn_current_fixture_provider.py'
       - 'scripts/test_current_multileague_fixtures_results.py'
+      - 'scripts/test_espn_current_fixture_provider.py'
       - 'scripts/run_current_multileague_discovery.py'
       - 'scripts/verify_unified.py'
       - 'contracts/current-multileague-fixtures-results-v0.1.json'
@@ -29,8 +31,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run snapshot tests
+      - name: Run primary snapshot tests
         run: python scripts/test_current_multileague_fixtures_results.py
+      - name: Run secondary discovery adapter tests
+        run: python scripts/test_espn_current_fixture_provider.py
       - name: Discover current 2026/27 sources
         run: python scripts/run_current_multileague_discovery.py artifacts/current-multileague-discovery-v0.1.json
       - name: Assert discovery governance
@@ -42,14 +46,33 @@ jobs:
           assert set(report['leagues']) == {'EPL','LA_LIGA','SERIE_A','BUNDESLIGA','LIGUE_1'}
           assert report['governance']['live_in_play_claimed'] is False
           assert report['governance']['bookmaker_data_used'] is False
+          assert report['governance']['provider_prediction_used'] is False
+          assert report['governance']['secondary_source_discovery_only'] is True
+          assert report['governance']['secondary_source_not_strict_gate1_eligible'] is True
+          assert report['governance']['complete_strict_truth_coverage_claimed'] is False
           for league,row in report['leagues'].items():
-              assert row['availability'] in {'AVAILABLE','UNAVAILABLE_OR_UNPARSABLE'}
+              assert row['availability'] in {'AVAILABLE_PRIMARY','AVAILABLE_SECONDARY_DISCOVERY','SECONDARY_AVAILABLE_EMPTY_WINDOW','UNAVAILABLE_OR_UNPARSABLE'}
               assert row['live_in_play_supported'] is False
               assert row['live_in_play_n'] == 0
-              if row['availability']=='AVAILABLE':
+              assert row['bookmaker_data_used'] is False
+              assert row['provider_prediction_used'] is False
+              if row['availability']=='AVAILABLE_PRIMARY':
                   assert row['rows_n'] > 0
                   assert len(row['raw_sha256']) == 64
-          print(json.dumps({'available_n':report['available_n'],'availability':{k:v['availability'] for k,v in report['leagues'].items()}},indent=2))
+                  assert row['strict_gate1_eligible'] is True
+              if row['availability']=='AVAILABLE_SECONDARY_DISCOVERY':
+                  assert row['rows_n'] > 0
+                  assert row['discovery_only'] is True
+                  assert row['strict_gate1_eligible'] is False
+                  assert row['provider']=='ESPN_SITE_SCOREBOARD'
+                  assert all(len(h)==64 for h in row['row_hash_inventory'])
+          print(json.dumps({
+            'available_n':report['available_n'],
+            'primary_available_n':report['primary_available_n'],
+            'secondary_discovery_available_n':report['secondary_discovery_available_n'],
+            'strict_gate1_eligible_n':report['strict_gate1_eligible_n'],
+            'availability':{k:v['availability'] for k,v in report['leagues'].items()}
+          },indent=2))
           PY
       - name: Run unified verifier
         run: python scripts/verify_unified.py
