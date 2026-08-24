@@ -1,13 +1,17 @@
 {
   "capability": "model-probability-orchestrator",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_TESTS_AUTHORED_CI_PENDING",
+  "status": "MERGED_CANONICAL_CI_VERIFIED_ENGINE_READY",
+  "merged_via_pr": 28,
+  "merge_commit": "eaade0b9d454dad722665cbd67935563e7214232",
   "source_branch": "feature/unified-multimodel-probability-orchestrator-v0.1",
+  "verified_head_sha": "a47a9de4fb907c1da2ce48c6df9b904fbc43296f",
   "core": "packages/intelligence-engine/src/model-probability-orchestrator.mjs",
   "test": "packages/intelligence-engine/tests/model-probability-orchestrator.test.mjs",
   "runner": "scripts/run_model_probability_orchestrator.mjs",
   "contract": "contracts/model-probability-orchestrator-v0.1.json",
   "docs": "docs/model-probability-orchestrator-v0.1.md",
+  "workflow": ".github/workflows/model-probability-orchestrator.yml",
   "command": "npm run model:orchestrate -- <input.json> [output.json]",
   "brain": "packages/intelligence-engine/src/probabilistic-brain.mjs",
   "reliability": "packages/intelligence-engine/src/reliability.mjs",
@@ -15,6 +19,26 @@
   "market_probability_circularity": "FORBIDDEN",
   "automatic_retuning": false,
   "automatic_promotion": false,
+  "ci": {
+    "workflow_run_id": 32766833648,
+    "workflow_job_id": 97558085136,
+    "conclusion": "SUCCESS",
+    "orchestrator_tests": "PASS",
+    "probabilistic_brain_regression": "PASS",
+    "unified_core_integrated_assurance": "PROMOTE",
+    "capital_assurance": "LOCKED",
+    "artifact_id": 9534725887,
+    "artifact_digest": "sha256:6e6c32f57647329cbd1ab1b1695878a48c68c8fa477039033ca9685a8ec66b92"
+  },
+  "regression_ci": {
+    "blind_future_test_b": "SUCCESS",
+    "future_test_b_capture": "SUCCESS",
+    "operational_closing": "SUCCESS",
+    "real_historical_research": "SUCCESS",
+    "transfer_impact": "SUCCESS",
+    "real_player_profile_ingestion": "SUCCESS"
+  },
+  "performance_claim": "NONE_ENGINEERING_CAPABILITY_ONLY",
   "capital_effect": "NONE",
   "real_money": "NO"
 }
