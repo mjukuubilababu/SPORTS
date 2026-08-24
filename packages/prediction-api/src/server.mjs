@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { orchestrateModelProbabilities } from '../../intelligence-engine/src/model-probability-orchestrator.mjs';
 
 const API_VERSION='PREDICTION_HTTP_API_V0_1';
@@ -50,7 +51,7 @@ function publicPrediction(result){
 
 export function createPredictionApiServer(){
   return http.createServer(async(req,res)=>{
-    const requestId=req.headers['x-request-id'] || crypto.randomUUID();
+    const requestId=req.headers['x-request-id'] || randomUUID();
     res.setHeader('x-request-id',requestId);
     try{
       if(req.method==='GET' && req.url==='/health'){
