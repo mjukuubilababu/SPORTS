@@ -9,10 +9,12 @@ on:
       - 'packages/gate1/espn_current_fixture_provider.py'
       - 'packages/gate1/openligadb_bundesliga_verifier.py'
       - 'packages/gate1/premierleague_sdp_epl_verifier.py'
+      - 'packages/gate1/premierleague_sdp_timezone_normalizer.py'
       - 'scripts/test_current_multileague_fixtures_results.py'
       - 'scripts/test_espn_current_fixture_provider.py'
       - 'scripts/test_openligadb_bundesliga_verifier.py'
       - 'scripts/test_premierleague_sdp_epl_verifier.py'
+      - 'scripts/test_premierleague_sdp_timezone_normalizer.py'
       - 'scripts/run_current_multileague_discovery.py'
       - 'scripts/verify_unified.py'
       - 'contracts/current-multileague-fixtures-results-v0.1.json'
@@ -43,6 +45,8 @@ jobs:
         run: python scripts/test_openligadb_bundesliga_verifier.py
       - name: Run EPL official-site cross-source verifier tests
         run: python scripts/test_premierleague_sdp_epl_verifier.py
+      - name: Run EPL provider-timezone normalizer tests
+        run: python scripts/test_premierleague_sdp_timezone_normalizer.py
       - name: Discover current 2026/27 sources
         run: python scripts/run_current_multileague_discovery.py artifacts/current-multileague-discovery-v0.1.json
       - name: Assert discovery governance
@@ -62,6 +66,8 @@ jobs:
           assert gov['epl_cross_source_provider']=='PREMIERLEAGUE_SDP'
           assert gov['epl_cross_source_source_class']=='OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA'
           assert gov['epl_official_backend_alone_auto_promotes'] is False
+          assert gov['epl_provider_kickoff_timezone_required_for_naive_timestamp'] is True
+          assert gov['epl_naive_kickoff_assumed_utc'] is False
           assert gov['epl_fuzzy_identity_matching'] is False
           assert gov['bundesliga_cross_source_provider']=='OPENLIGADB'
           assert gov['bundesliga_fuzzy_identity_matching'] is False
@@ -102,6 +108,8 @@ jobs:
                       assert verification['provider']=='PREMIERLEAGUE_SDP'
                       assert verification['sdp_rows_n']==row['rows_n']
                       assert verification['official_site_backend_alone_auto_promotes'] is False
+                      assert verification['provider_kickoff_timezone_required_for_naive_timestamp'] is True
+                      assert verification['naive_kickoff_assumed_utc'] is False
                   else:
                       assert row['provider']=='ESPN_X_OPENLIGADB'
                       assert verification['provider']=='OPENLIGADB'
@@ -113,6 +121,8 @@ jobs:
               assert verification['provider']=='PREMIERLEAGUE_SDP'
               assert verification['fuzzy_matching'] is False
               assert verification['official_site_backend_alone_auto_promotes'] is False
+              assert verification['provider_kickoff_timezone_required_for_naive_timestamp'] is True
+              assert verification['naive_kickoff_assumed_utc'] is False
               if epl['strict_gate1_eligible']:
                   assert verification['full_window_reconciled'] is True
                   assert verification['reconciled_n']==epl['rows_n']==verification['sdp_rows_n']
