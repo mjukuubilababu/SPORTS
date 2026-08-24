@@ -1,0 +1,37 @@
+{
+  "contract": "prediction-live-http-api",
+  "version": "v0.1",
+  "endpoint": "POST /v1/predict/live",
+  "delegates_to": "predictLive1X2",
+  "required_request": {
+    "preMatchSnapshot": "IMMUTABLE_PRE_MATCH_SNAPSHOT",
+    "live": ["eventId", "minute", "homeScore", "awayScore", "observedAt", "evidence"]
+  },
+  "identity": {
+    "live_event_id_required": true,
+    "live_event_id_must_equal_prematch_event_id": true
+  },
+  "evidence": {
+    "non_empty_array_required": true,
+    "at_least_one_verified_item_required": true,
+    "provider_prediction_required": false
+  },
+  "rate_multiplier_policy": {
+    "http_v0_1_allows_arbitrary_override": false,
+    "home_multiplier": 1.0,
+    "away_multiplier": 1.0,
+    "future_non_unit_multiplier_requires_separate_verified_impact_pipeline": true
+  },
+  "response": [
+    "eventId", "minute", "score", "probabilities", "predictedOutcome", "confidence",
+    "mostLikelyFinalScore", "remainingFraction", "remainingLambdas", "audit", "capitalState", "realMoney"
+  ],
+  "governance": {
+    "prematch_snapshot_mutation": false,
+    "provider_prediction_used": false,
+    "bookmaker_odds_used_as_live_model_input": false,
+    "no_hindsight": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
