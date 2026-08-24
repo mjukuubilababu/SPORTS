@@ -13,6 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'packages'/'gate1'))
 from current_multileague_fixtures_results import SOURCES,parse_current_snapshot
 from espn_current_fixture_provider import parse_scoreboard,source_by_competition as espn_source_by_competition,source_url as espn_source_url
+from openligadb_bundesliga_verifier import SOURCE_URL as OPENLIGADB_BUNDESLIGA_URL, parse_openligadb, reconcile_espn_openligadb
 
 LOOKBACK_DAYS=7
 LOOKAHEAD_DAYS=14
@@ -74,7 +75,7 @@ def discover_secondary(competition_id, observed, observed_dt):
         availability='SECONDARY_AVAILABLE_EMPTY_WINDOW'
     else:
         availability='UNAVAILABLE_OR_UNPARSABLE'
-    return {
+    summary={
         'availability':availability,
         'provider':'ESPN_SITE_SCOREBOARD',
         'source_class':source.source_class,
@@ -83,9 +84,57 @@ def discover_secondary(competition_id, observed, observed_dt):
         'requests_n':len(dates),'request_success_n':success_n,'request_failure_n':len(request_errors),'request_errors':request_errors[:5],
         'rows_n':len(rows),'scheduled_n':sum(r.state=='SCHEDULED' for r in rows),'settled_n':sum(r.state=='SETTLED' for r in rows),
         'live_in_play_n':0,'live_events_skipped_n':live_skipped,'live_in_play_supported':False,
-        'discovery_only':True,'strict_gate1_eligible':False,'bookmaker_data_used':False,'provider_prediction_used':False,
+        'discovery_only':True,'strict_gate1_eligible':False,'strict_gate1_rows_n':0,
+        'bookmaker_data_used':False,'provider_prediction_used':False,
         'row_hash_inventory':[r.source_event_sha256 for r in rows],
     }
+    return summary, rows
+
+
+def verify_bundesliga_secondary(summary, espn_rows, observed):
+    verification={
+        'provider':'OPENLIGADB',
+        'source_class':'PUBLIC_COMMUNITY_DATABASE_ODBL',
+        'source_url':OPENLIGADB_BUNDESLIGA_URL,
+        'status':'PENDING',
+        'cross_source_agreement_required':True,
+        'fuzzy_matching':False,
+        'openligadb_alone_is_not_sufficient':True,
+        'strict_gate1_rows_n':0,
+        'full_window_reconciled':False,
+    }
+    try:
+        payload=fetch_json(OPENLIGADB_BUNDESLIGA_URL)
+        open_rows=parse_openligadb(payload,observed_at=observed,source_url=OPENLIGADB_BUNDESLIGA_URL)
+        reconciliation=reconcile_espn_openligadb(espn_rows,open_rows)
+        full_window=bool(espn_rows) and reconciliation['reconciled_n']==len(espn_rows) and reconciliation['unmatched_espn_n']==0
+        verification.update({
+            'status':'VERIFIED' if full_window else 'PARTIAL_OR_MISMATCHED',
+            'openligadb_rows_n':len(open_rows),
+            'espn_rows_n':len(espn_rows),
+            'reconciled_n':reconciliation['reconciled_n'],
+            'unmatched_espn_n':reconciliation['unmatched_espn_n'],
+            'strict_gate1_rows_n':reconciliation['strict_gate1_eligible_n'],
+            'full_window_reconciled':full_window,
+            'identity_rule':reconciliation['identity_rule'],
+            'settled_rule':reconciliation['settled_rule'],
+            'unmatched':reconciliation['unmatched'][:10],
+            'openligadb_hash_inventory':[r.source_event_sha256 for r in open_rows],
+        })
+        summary['cross_source_verification']=verification
+        summary['strict_gate1_rows_n']=reconciliation['strict_gate1_eligible_n']
+        if full_window:
+            summary['availability']='AVAILABLE_CROSS_SOURCE_VERIFIED'
+            summary['provider']='ESPN_X_OPENLIGADB'
+            summary['source_class']='CROSS_SOURCE_VERIFIED_PUBLIC_CURRENT_FIXTURES'
+            summary['discovery_only']=False
+            summary['strict_gate1_eligible']=True
+        return summary
+    except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError,ValueError,json.JSONDecodeError) as exc:
+        verification['status']='UNAVAILABLE_OR_VERIFICATION_FAILED'
+        verification['reason']=type(exc).__name__+':'+str(exc)
+        summary['cross_source_verification']=verification
+        return summary
 
 
 def main(argv):
@@ -104,38 +153,46 @@ def main(argv):
                 'source_url':source.source_url,'raw_sha256':hashlib.sha256(raw).hexdigest(),
                 'rows_n':len(rows),'scheduled_n':sum(r.state=='SCHEDULED' for r in rows),'settled_n':sum(r.state=='SETTLED' for r in rows),
                 'live_in_play_n':0,'live_events_skipped_n':0,'live_in_play_supported':False,
-                'discovery_only':False,'strict_gate1_eligible':True,'bookmaker_data_used':False,'provider_prediction_used':False,
+                'discovery_only':False,'strict_gate1_eligible':True,'strict_gate1_rows_n':len(rows),
+                'bookmaker_data_used':False,'provider_prediction_used':False,
             }
             continue
         except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError,ValueError) as exc:
             primary_failure=type(exc).__name__+':'+str(exc)
 
         try:
-            fallback=discover_secondary(source.competition_id,observed,observed_dt)
+            fallback, secondary_rows=discover_secondary(source.competition_id,observed,observed_dt)
             fallback['primary_source_url']=source.source_url
             fallback['primary_failure']=primary_failure
+            if source.competition_id=='BUNDESLIGA' and fallback['rows_n']>0:
+                fallback=verify_bundesliga_secondary(fallback,secondary_rows,observed)
             leagues[source.competition_id]=fallback
         except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError,ValueError) as exc:
             leagues[source.competition_id]={
                 'availability':'UNAVAILABLE_OR_UNPARSABLE','provider':'NONE','primary_source_url':source.source_url,'primary_failure':primary_failure,
                 'secondary_failure':type(exc).__name__+':'+str(exc),'rows_n':0,'scheduled_n':0,'settled_n':0,
                 'live_in_play_n':0,'live_events_skipped_n':0,'live_in_play_supported':False,
-                'discovery_only':True,'strict_gate1_eligible':False,'bookmaker_data_used':False,'provider_prediction_used':False,
+                'discovery_only':True,'strict_gate1_eligible':False,'strict_gate1_rows_n':0,
+                'bookmaker_data_used':False,'provider_prediction_used':False,
             }
 
-    rows_available=lambda row: row['rows_n']>0 and row['availability'] in {'AVAILABLE_PRIMARY','AVAILABLE_SECONDARY_DISCOVERY'}
+    rows_available=lambda row: row['rows_n']>0 and row['availability'] in {'AVAILABLE_PRIMARY','AVAILABLE_SECONDARY_DISCOVERY','AVAILABLE_CROSS_SOURCE_VERIFIED'}
     report={
-        'report_version':'CURRENT_MULTILEAGUE_SOURCE_DISCOVERY_V0_2','observed_at':observed,'season':'2026/27','leagues':leagues,
+        'report_version':'CURRENT_MULTILEAGUE_SOURCE_DISCOVERY_V0_3','observed_at':observed,'season':'2026/27','leagues':leagues,
         'available_n':sum(rows_available(v) for v in leagues.values()),
         'primary_available_n':sum(v['availability']=='AVAILABLE_PRIMARY' for v in leagues.values()),
         'secondary_discovery_available_n':sum(v['availability']=='AVAILABLE_SECONDARY_DISCOVERY' for v in leagues.values()),
+        'cross_source_verified_available_n':sum(v['availability']=='AVAILABLE_CROSS_SOURCE_VERIFIED' for v in leagues.values()),
         'strict_gate1_eligible_n':sum(v.get('strict_gate1_eligible') and rows_available(v) for v in leagues.values()),
+        'strict_gate1_rows_n':sum(v.get('strict_gate1_rows_n',0) for v in leagues.values()),
         'governance':{
             'availability_discovery_not_coverage_guarantee':True,
             'secondary_source_is_public_unofficial':True,
-            'secondary_source_discovery_only':True,
-            'secondary_source_not_strict_gate1_eligible':True,
+            'secondary_source_discovery_only_unless_independently_reconciled':True,
             'secondary_live_events_skipped_to_dedicated_live_pipeline':True,
+            'bundesliga_cross_source_provider':'OPENLIGADB',
+            'bundesliga_fuzzy_identity_matching':False,
+            'cross_source_agreement_required_for_secondary_strict_gate1':True,
             'complete_strict_truth_coverage_claimed':False,
             'live_in_play_claimed':False,
             'bookmaker_data_used':False,
@@ -144,7 +201,15 @@ def main(argv):
         }
     }
     out.write_text(json.dumps(report,indent=2),encoding='utf-8')
-    print(json.dumps({'available_n':report['available_n'],'primary_available_n':report['primary_available_n'],'secondary_discovery_available_n':report['secondary_discovery_available_n'],'leagues':leagues},indent=2))
+    print(json.dumps({
+        'available_n':report['available_n'],
+        'primary_available_n':report['primary_available_n'],
+        'secondary_discovery_available_n':report['secondary_discovery_available_n'],
+        'cross_source_verified_available_n':report['cross_source_verified_available_n'],
+        'strict_gate1_eligible_n':report['strict_gate1_eligible_n'],
+        'strict_gate1_rows_n':report['strict_gate1_rows_n'],
+        'leagues':leagues
+    },indent=2))
     return 0
 
 if __name__=='__main__': raise SystemExit(main(sys.argv))
