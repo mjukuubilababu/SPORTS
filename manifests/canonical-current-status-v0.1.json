@@ -1,0 +1,55 @@
+{
+  "system": "Decision Intelligence & Evidence-Gated Prediction System",
+  "status_version": "v0.1",
+  "canonical_branch": "import/decision-intelligence-v0.5-qualified-set",
+  "generated_from_repo_state_after_pr": 29,
+  "engineering_assurance": "PROMOTE",
+  "capital_state": "LOCKED",
+  "blind_test_b": {"eligible_n": 1, "target_n": 100, "state": "BLIND_ACCUMULATING"},
+  "completed_engineering_capabilities": [
+    "GATE1_TO_GATE6",
+    "REFERENCE_E2E",
+    "REAL_HISTORICAL_PIPELINE",
+    "POISSON_BASELINE",
+    "NEGATIVE_BINOMIAL_PREREGISTERED_CHALLENGER",
+    "1X2_AND_LIVE_OUTCOME",
+    "MULTI_BOOKMAKER_INTELLIGENCE",
+    "BIDIRECTIONAL_MARKET_REASONING",
+    "HALF_SPECIFIC_INTELLIGENCE",
+    "TEAM_MATCH_INTELLIGENCE",
+    "PLAYER_MATCHUP_ENGINE",
+    "REAL_PLAYER_PROFILE_INGESTION_V0_1",
+    "TRANSFER_IMPACT_INTELLIGENCE_V0_1",
+    "MODEL_PROBABILITY_ORCHESTRATOR_V0_1",
+    "FUTURE_TEST_B_CAPTURE_AND_SETTLEMENT",
+    "OPERATIONAL_CLOSING_BENCHMARK",
+    "POSTGRES_RUNTIME_VERIFICATION_V0_1"
+  ],
+  "remaining_engineering_gaps": [
+    "PREDICTION_HTTP_API",
+    "FRONTEND_UI",
+    "FULL_MULTI_LEAGUE_REAL_DATA_COVERAGE",
+    "CANONICAL_TO_MAIN_RELEASE_SYNC"
+  ],
+  "remaining_evidence_gaps": [
+    "BLIND_TEST_B_99_MORE_ELIGIBLE_MATCHES",
+    "REAL_VERIFIED_PLAYER_PROVIDER_DATASETS",
+    "REAL_COMPLETE_TRANSFER_AUDITS",
+    "GATE3_GATE4_FORWARD_EMPIRICAL_PROOF",
+    "GATE5_FORWARD_SETTLED_CORPUS"
+  ],
+  "postgres_runtime": {
+    "status": "VERIFIED",
+    "pr": 29,
+    "merge_commit": "61f5c642b20e4df999803e4a752612c8bcd6c702",
+    "runtime_checks": "8/8 PASS",
+    "manifest": "manifests/postgres-runtime-verification-v0.1.json"
+  },
+  "governance": {
+    "real_money": "NO",
+    "no_hindsight": true,
+    "market_to_model_circularity_forbidden": true,
+    "automatic_retuning": false,
+    "automatic_capital_unlock": false
+  }
+}
