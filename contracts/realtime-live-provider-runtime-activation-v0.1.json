@@ -2,7 +2,11 @@
   "contract": "realtime-live-provider-runtime-activation",
   "version": "v0.1",
   "workflow": ".github/workflows/realtime-live-provider-runtime.yml",
-  "trigger": "workflow_dispatch",
+  "triggers": [
+    "workflow_dispatch",
+    "CANONICAL_PUSH_TO_runtime-triggers/api-football/**"
+  ],
+  "pull_request_secret_execution_forbidden": true,
   "canonical_ref_required": "import/decision-intelligence-v0.5-qualified-set",
   "credential": {
     "name": "APISPORTS_KEY",
@@ -28,5 +32,5 @@
     "automatic_capital_unlock": false,
     "real_money": "NO"
   },
-  "current_execution_state": "PENDING_CONFIGURED_APISPORTS_KEY_AND_MANUAL_CANONICAL_RUN"
+  "current_execution_state": "PENDING_CONTROLLED_CANONICAL_TRIGGER_WITH_CONFIGURED_APISPORTS_KEY"
 }
