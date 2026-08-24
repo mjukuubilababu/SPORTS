@@ -4,7 +4,7 @@ import { probabilisticBrain } from './probabilistic-brain.mjs';
 const VERSION='MODEL_PROBABILITY_ORCHESTRATOR_V0_1';
 function parseTime(v,label){const ms=Date.parse(v);if(!Number.isFinite(ms))throw new Error(`${label}_INVALID_TIMESTAMP`);return ms;}
 function assert01(label,v){if(!Number.isFinite(v)||v<0||v>1)throw new Error(`${label}_MUST_BE_0_TO_1`);return v;}
-function assertPositive(label,v){if(!Number.isFinite(v)||v<=0)throw new Error(`${label}_MUST_BE_POSITIVE`);return v;}
+function assertDecimalOdds(label,v){if(!Number.isFinite(v)||v<=1)throw new Error(`${label}_MUST_BE_DECIMAL_ODDS_GT_1`);return v;}
 function modelKey(m){return `${m.eventId}::${m.market}::${m.selection}`;}
 function validateModel(m,{eventId,market,selection,kickoffMs}){
   if(!m?.modelVersion||!m.eventId||!m.market||!m.selection)throw new Error('MODEL_IDENTITY_REQUIRED');
@@ -37,7 +37,7 @@ function collapseFamily(rows){
 export function orchestrateModelProbabilities({eventId,market,selection,kickoffAt,models,offeredOdds,confidence}){
   if(!eventId||!market||!selection||!kickoffAt)throw new Error('ORCHESTRATOR_TARGET_REQUIRED');
   if(!Array.isArray(models)||!models.length)throw new Error('ORCHESTRATOR_MODELS_REQUIRED');
-  assertPositive('OFFERED_ODDS',offeredOdds);
+  assertDecimalOdds('OFFERED_ODDS',offeredOdds);
   const kickoffMs=parseTime(kickoffAt,'ORCHESTRATOR_KICKOFF');
   const versions=new Set();const snapshots=new Set();
   const valid=models.map(m=>{
