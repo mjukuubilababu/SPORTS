@@ -2,8 +2,8 @@
   "system": "Decision Intelligence & Evidence-Gated Prediction System",
   "status_version": "v0.1",
   "canonical_branch": "import/decision-intelligence-v0.5-qualified-set",
-  "canonical_head_after_pr_38": "bd71eb01f27cb386c15afbd90940a4a03428400f",
-  "generated_from_repo_state_after_pr": 38,
+  "canonical_head_after_pr_40": "89209d0275e6345ec3dcc585f124055be93fce63",
+  "generated_from_repo_state_after_pr": 40,
   "engineering_assurance": "PROMOTE",
   "full_platform_assurance": "PROMOTE",
   "capital_state": "LOCKED",
@@ -36,16 +36,18 @@
     "CURRENT_MULTI_LEAGUE_FIXTURES_RESULTS_SNAPSHOT_V0_1",
     "REALTIME_LIVE_FOOTBALL_PROVIDER_BOUNDARY_V0_1",
     "PREDICTION_LIVE_HTTP_API_V0_1",
-    "LIVE_PROVIDER_ORCHESTRATION_RUNTIME_V0_1"
+    "LIVE_PROVIDER_ORCHESTRATION_RUNTIME_V0_1",
+    "REALTIME_LIVE_PROVIDER_RUNTIME_ACTIVATION_V0_1"
   ],
   "remaining_engineering_gaps": [
     "FRONTEND_UI",
     "COMPLETE_CURRENT_MULTI_LEAGUE_REAL_DATA_COVERAGE",
-    "CONFIGURE_APISPORTS_KEY_AND_VERIFY_REAL_LIVE_PROVIDER_RUNTIME",
     "CANONICAL_TO_MAIN_RELEASE_SYNC"
   ],
   "remaining_evidence_gaps": [
     "BLIND_TEST_B_99_MORE_ELIGIBLE_MATCHES",
+    "REAL_AUTHENTICATED_APISPORTS_RUNTIME_ATTESTATION",
+    "REAL_LIVE_MATCH_CAPTURE_EVIDENCE",
     "REAL_VERIFIED_PLAYER_PROVIDER_DATASETS",
     "REAL_COMPLETE_TRANSFER_AUDITS",
     "GATE3_GATE4_FORWARD_EMPIRICAL_PROOF",
@@ -65,8 +67,11 @@
     "live_in_play_provider_boundary": "MERGED_CANONICAL_CI_VERIFIED",
     "live_prediction_http_api": "MERGED_CANONICAL_CI_VERIFIED",
     "live_provider_orchestration_runtime": "MERGED_CANONICAL_CI_VERIFIED",
+    "live_provider_runtime_activation_workflow": "MERGED_CANONICAL_CI_VERIFIED",
     "live_software_chain": "COMPLETE_PROVIDER_ARTIFACT_TO_EXACT_IDENTITY_TO_FROZEN_PREMATCH_TO_LIVE_1X2",
-    "live_in_play_real_runtime": "PENDING_CONFIGURED_APISPORTS_KEY",
+    "live_in_play_real_runtime": "PENDING_MANUAL_AUTHENTICATED_CANONICAL_RUN",
+    "real_live_match_capture": "NOT_YET_EVIDENCED",
+    "credential_presence": "NOT_VERIFIED_BY_AVAILABLE_REPOSITORY_CONNECTOR",
     "current_snapshot_is_live_feed": false,
     "provider_prediction_used": false,
     "bookmaker_data_used_as_live_model_input": false
@@ -80,16 +85,6 @@
   },
   "latest_canonical_merges": [
     {
-      "pr": 35,
-      "capability": "LIVE_PROVIDER_CANONICAL_STATUS_SYNC",
-      "merge_commit": "adb4d276c271e1c41b82814dc1e542ac16228444"
-    },
-    {
-      "pr": 36,
-      "capability": "PREDICTION_LIVE_HTTP_API_V0_1",
-      "merge_commit": "c9217736464aa51c3557ffe3afe1023ae065a6d3"
-    },
-    {
       "pr": 37,
       "capability": "LIVE_API_CANONICAL_STATUS_SYNC",
       "merge_commit": "b9fd54af4c07ccc3b1144766dbdaae4b33f0f813"
@@ -98,6 +93,16 @@
       "pr": 38,
       "capability": "LIVE_PROVIDER_ORCHESTRATION_RUNTIME_V0_1",
       "merge_commit": "bd71eb01f27cb386c15afbd90940a4a03428400f"
+    },
+    {
+      "pr": 39,
+      "capability": "LIVE_ORCHESTRATION_CANONICAL_STATUS_SYNC",
+      "merge_commit": "c88f7fc99e325b37d1a1408cbb8e23d90d99c11c"
+    },
+    {
+      "pr": 40,
+      "capability": "REALTIME_LIVE_PROVIDER_RUNTIME_ACTIVATION_V0_1",
+      "merge_commit": "89209d0275e6345ec3dcc585f124055be93fce63"
     }
   ],
   "manifest_authority": {
@@ -115,6 +120,8 @@
     "silent_live_rate_multiplier_derivation": false,
     "arbitrary_live_http_rate_multiplier_override": false,
     "fuzzy_live_fixture_identity_matching": false,
+    "api_secret_persistence_allowed": false,
+    "real_runtime_zero_live_response_is_live_capture": false,
     "p002_frozen_rules_changed_by_status_update": false,
     "gate4_thresholds_changed_by_status_update": false,
     "test_b_state_changed_by_status_update": false,
