@@ -1,0 +1,83 @@
+name: Transfer Impact Intelligence
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/intelligence-engine/src/transfer-impact-intelligence.mjs'
+      - 'packages/intelligence-engine/src/index.mjs'
+      - 'packages/intelligence-engine/tests/transfer-impact-intelligence.test.mjs'
+      - 'packages/intelligence-engine/package.json'
+      - 'scripts/run_transfer_impact_intelligence.mjs'
+      - 'scripts/verify_unified.py'
+      - 'contracts/transfer-impact-intelligence-v0.1.json'
+      - 'docs/transfer-impact-intelligence-v0.1.md'
+      - 'manifests/transfer-impact-intelligence-v0.1.json'
+      - '.github/workflows/transfer-impact-intelligence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-transfer-impact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run transfer impact tests
+        working-directory: packages/intelligence-engine
+        run: node --test tests/transfer-impact-intelligence.test.mjs
+
+      - name: Run full intelligence engine tests
+        working-directory: packages/intelligence-engine
+        run: npm run verify
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Assert governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('manifests/transfer-impact-intelligence-v0.1.json').read_text())
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          assert manifest['transfer_fees_used'] is False
+          assert manifest['reputation_scores_used'] is False
+          assert manifest['bookmaker_odds_used'] is False
+          assert manifest['uncalibrated_lambda_rewrite'] is False
+          assert report['core_integrated_assurance'] == 'PROMOTE'
+          assert report['tests_total'] == report['tests_passed']
+          assert report['capital_assurance'] == 'LOCKED'
+          print(json.dumps({
+            'capability': manifest['capability'],
+            'domain': manifest['domain'],
+            'unified_tests': f"{report['tests_passed']}/{report['tests_total']}",
+            'capital_assurance': report['capital_assurance']
+          }, indent=2))
+          PY
+
+      - name: Upload verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: transfer-impact-intelligence-v0.1
+          path: |
+            manifests/transfer-impact-intelligence-v0.1.json
+            contracts/transfer-impact-intelligence-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+          if-no-files-found: error
