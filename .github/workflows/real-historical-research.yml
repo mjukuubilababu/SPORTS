@@ -32,12 +32,16 @@ jobs:
           python scripts/test_gate3_gate4_real_robustness.py
           python scripts/test_evaluation_freeze_challenger_protocol.py
           python scripts/test_m011r_bayesian_calibrator.py
+          python scripts/test_m013_negative_binomial.py
 
       - name: Run real historical research runtime
         run: python scripts/run_real_2026_historical_research.py --bootstrap-reps 2000
 
       - name: Run M011R real walk-forward challenger
         run: python scripts/run_m011r_walkforward.py
+
+      - name: Run M013 negative-binomial walk-forward diagnostic
+        run: python scripts/run_m013_walkforward.py
 
       - name: Run Gate4 real robustness adapter
         run: |
@@ -53,7 +57,9 @@ jobs:
           g3=json.loads(Path('artifacts/real-2026-historical-research-report.json').read_text())
           g4=json.loads(Path('artifacts/real-gate4-robustness-report.json').read_text())
           m011r=json.loads(Path('artifacts/m011r-walkforward-report-v0.1.json').read_text())
-          evidence=json.loads(Path('artifacts/m011r/TEST_EVIDENCE.json').read_text())
+          e011r=json.loads(Path('artifacts/m011r/TEST_EVIDENCE.json').read_text())
+          m013=json.loads(Path('artifacts/m013-walkforward-report-v0.1.json').read_text())
+          e013=json.loads(Path('artifacts/m013/TEST_EVIDENCE.json').read_text())
           print('GATE3')
           print(json.dumps(g3['headline'], indent=2))
           print('M011R')
@@ -63,7 +69,17 @@ jobs:
               'decision_weight':m011r['decision_weight'],
               'summary':m011r['walk_forward']['summary'],
               'metrics':m011r['walk_forward']['metrics'],
-              'test_pass':evidence['overall']['TEST_PASS'],
+              'test_pass':e011r['overall']['TEST_PASS'],
+          }, indent=2))
+          print('M013')
+          print(json.dumps({
+              'gate_results':m013['gate_results'],
+              'model_state':m013['model_state'],
+              'decision_weight':m013['decision_weight'],
+              'evaluation_classification':m013['walk_forward']['evaluation_classification'],
+              'summary':m013['walk_forward']['summary'],
+              'metrics':m013['walk_forward']['metrics'],
+              'test_pass':e013['overall']['TEST_PASS'],
           }, indent=2))
           print('GATE4')
           print(json.dumps({
@@ -85,5 +101,7 @@ jobs:
             artifacts/real-2026-historical-research-report.json
             artifacts/m011r-walkforward-report-v0.1.json
             artifacts/m011r/TEST_EVIDENCE.json
+            artifacts/m013-walkforward-report-v0.1.json
+            artifacts/m013/TEST_EVIDENCE.json
             artifacts/real-gate4-robustness-report.json
           if-no-files-found: error
