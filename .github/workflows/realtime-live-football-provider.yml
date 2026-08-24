@@ -1,0 +1,57 @@
+name: Real-Time Live Football Provider
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/gate1/api_football_live_provider.py'
+      - 'scripts/test_api_football_live_provider.py'
+      - 'scripts/run_api_football_live_ingestion.py'
+      - 'contracts/realtime-live-football-provider-v0.1.json'
+      - 'docs/realtime-live-football-provider-v0.1.md'
+      - 'manifests/realtime-live-football-provider-v0.1.json'
+      - '.github/workflows/realtime-live-football-provider.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live-provider-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run live provider unit tests
+        run: python scripts/test_api_football_live_provider.py
+
+      - name: Run current snapshot regression
+        run: python scripts/test_current_multileague_fixtures_results.py
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Assert governance remains locked
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          manifest=json.loads(Path('manifests/realtime-live-football-provider-v0.1.json').read_text())
+          assert report['core_integrated_assurance']=='PROMOTE'
+          assert report['tests_total']==report['tests_passed']
+          assert report['capital_assurance']=='LOCKED'
+          assert manifest['provider_prediction_used'] is False
+          assert manifest['bookmaker_data_used_as_model_input'] is False
+          assert manifest['silent_rate_multiplier_derivation'] is False
+          assert manifest['real_provider_runtime']=='PENDING_CONFIGURED_KEY'
+          print(json.dumps({'unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_runtime':manifest['real_provider_runtime']},indent=2))
+          PY
