@@ -59,6 +59,12 @@ test('provider team or kickoff mismatch is rejected fail closed',()=>{
   assert.equal(kickoff.rejected[0].reason,'PROVIDER_KICKOFF_MISMATCH');
 });
 
+test('live observation cannot exist before kickoff',()=>{
+  const result=orchestrateLiveProviderPredictions({providerArtifact:artifact([liveRow({observed_at:'2026-08-24T18:59:59Z'})]),prematchLinks:[link()]});
+  assert.equal(result.counts.rejected,1);assert.equal(result.counts.predicted,0);
+  assert.equal(result.rejected[0].reason,'LIVE_OBSERVATION_BEFORE_KICKOFF');
+});
+
 test('non-live states are skipped and never reforecast',()=>{
   const result=orchestrateLiveProviderPredictions({providerArtifact:artifact([liveRow({state:'SETTLED',status_short:'FT',elapsed_minute:90,home_goals:2,away_goals:1})]),prematchLinks:[link()]});
   assert.equal(result.counts.skipped,1);assert.equal(result.counts.predicted,0);assert.equal(result.skipped[0].reason,'NOT_LIVE_IN_PLAY');
