@@ -6,12 +6,13 @@ import io
 import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional
 
 from global_competition_registry import Competition, competition_for_code
 
 
 ADAPTER_VERSION = "FOOTBALL_DATA_MULTILEAGUE_ADAPTER_V0_1"
+QUALIFICATION_SCOPE = "RESEARCH_BACKFILL_ONLY"
 
 
 def _clean(value: object) -> str:
@@ -91,8 +92,10 @@ class GlobalHistoricalMatch:
     source_class: str
     source_division_code: str
     source_row_sha256: str
-    verified: bool
+    source_row_verified: bool
     market_semantics: str
+    qualification_scope: str
+    strict_gate1_eligible: bool
     bookmaker_odds_used_as_model_input: bool
 
 
@@ -167,8 +170,10 @@ def parse_football_data_csv(text: str, *, competition: Competition, source_url: 
             source_class=competition.source_class,
             source_division_code=division,
             source_row_sha256=source_hash,
-            verified=True,
+            source_row_verified=True,
             market_semantics=market_semantics,
+            qualification_scope=QUALIFICATION_SCOPE,
+            strict_gate1_eligible=False,
             bookmaker_odds_used_as_model_input=False,
         ))
     if not out:
