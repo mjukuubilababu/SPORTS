@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlparse
 EXPECTED_CAPABILITY = "API_FOOTBALL_LIVE_PROVIDER_V0_1"
 ALLOWED_COMPETITIONS = {"EPL", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"}
 FORBIDDEN_SECRET_KEYS = {"apisports_key", "api_key", "token", "secret", "authorization", "x-apisports-key"}
+LIVE_MODEL_POLICY = "UNCHANGED_UNLESS_SEPARATE_VERIFIED_EVENT_IMPACT_MODEL_SUPPLIES_MULTIPLIERS"
 
 
 def _timestamp(value: object, name: str) -> None:
@@ -42,6 +43,71 @@ def _source_url_safe(url: object) -> None:
         raise ValueError("PROVIDER_SOURCE_URL_CONTAINS_SECRET")
 
 
+def _positive_int(value: object, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(f"{name}_INVALID")
+    return value
+
+
+def _non_negative_int(value: object, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{name}_INVALID")
+    return value
+
+
+def _verify_live_model_inputs(live_rows: list[dict], live_inputs: list[dict]) -> None:
+    by_event_id: dict[str, dict] = {}
+    for row in live_rows:
+        event_id = row.get("fixture_id")
+        if not isinstance(event_id, str) or not event_id:
+            raise ValueError("RUNTIME_LIVE_FIXTURE_ID_REQUIRED")
+        if event_id in by_event_id:
+            raise ValueError("RUNTIME_LIVE_FIXTURE_ID_DUPLICATE")
+        by_event_id[event_id] = row
+
+    seen_inputs: set[str] = set()
+    for item in live_inputs:
+        if not isinstance(item, dict):
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_OBJECT_REQUIRED")
+        event_id = item.get("eventId")
+        if event_id not in by_event_id:
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_EVENT_MISMATCH")
+        if event_id in seen_inputs:
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_DUPLICATE")
+        seen_inputs.add(event_id)
+        row = by_event_id[event_id]
+
+        if item.get("minute") != row.get("elapsed_minute"):
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_MINUTE_MISMATCH")
+        if item.get("homeScore") != row.get("home_goals"):
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_HOME_SCORE_MISMATCH")
+        if item.get("awayScore") != row.get("away_goals"):
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_AWAY_SCORE_MISMATCH")
+        if item.get("observedAt") != row.get("observed_at"):
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_OBSERVED_AT_MISMATCH")
+        if item.get("rateMultiplierPolicy") != LIVE_MODEL_POLICY:
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_RATE_POLICY_INVALID")
+
+        evidence = item.get("evidence")
+        if not isinstance(evidence, list) or not evidence:
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_EVIDENCE_REQUIRED")
+        matches = [
+            entry for entry in evidence
+            if isinstance(entry, dict)
+            and entry.get("type") == "LIVE_SCORE_TIME_PROVIDER_SNAPSHOT"
+            and entry.get("provider") == "API_FOOTBALL"
+            and entry.get("providerFixtureId") == row.get("provider_fixture_id")
+            and entry.get("status") == row.get("status_short")
+            and entry.get("sourceFixtureSha256") == row.get("source_fixture_sha256")
+            and entry.get("verified") is True
+        ]
+        if len(matches) != 1:
+            raise ValueError("RUNTIME_LIVE_MODEL_INPUT_PROVENANCE_MISMATCH")
+
+    if seen_inputs != set(by_event_id):
+        raise ValueError("RUNTIME_LIVE_MODEL_INPUT_COVERAGE_MISMATCH")
+
+
 def verify(payload: dict) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("RUNTIME_ARTIFACT_OBJECT_REQUIRED")
@@ -64,7 +130,7 @@ def verify(payload: dict) -> dict:
         raise ValueError("RUNTIME_ARRAYS_REQUIRED")
     if payload.get("rows_n") != len(snapshots):
         raise ValueError("RUNTIME_ROWS_COUNT_MISMATCH")
-    live_rows = [row for row in snapshots if row.get("state") == "LIVE_IN_PLAY"]
+    live_rows = [row for row in snapshots if isinstance(row, dict) and row.get("state") == "LIVE_IN_PLAY"]
     if payload.get("live_in_play_n") != len(live_rows):
         raise ValueError("RUNTIME_LIVE_COUNT_MISMATCH")
     if len(live_inputs) != len(live_rows):
@@ -72,14 +138,22 @@ def verify(payload: dict) -> dict:
 
     fixture_ids = set()
     for row in snapshots:
+        if not isinstance(row, dict):
+            raise ValueError("RUNTIME_SNAPSHOT_OBJECT_REQUIRED")
         if row.get("provider") != "API_FOOTBALL":
             raise ValueError("RUNTIME_PROVIDER_MISMATCH")
-        fixture_id = row.get("provider_fixture_id")
-        if not isinstance(fixture_id, int) or fixture_id <= 0:
-            raise ValueError("RUNTIME_PROVIDER_FIXTURE_ID_INVALID")
+        fixture_id = _positive_int(row.get("provider_fixture_id"), "RUNTIME_PROVIDER_FIXTURE_ID")
         if fixture_id in fixture_ids:
             raise ValueError("RUNTIME_PROVIDER_FIXTURE_DUPLICATE")
         fixture_ids.add(fixture_id)
+
+        competition_id = row.get("competition_id")
+        if competition_id not in competitions or competition_id not in ALLOWED_COMPETITIONS:
+            raise ValueError("RUNTIME_ROW_COMPETITION_MISMATCH")
+        expected_fixture_id = f"{competition_id}-API_FOOTBALL-{fixture_id}"
+        if row.get("fixture_id") != expected_fixture_id:
+            raise ValueError("RUNTIME_CANONICAL_FIXTURE_ID_MISMATCH")
+
         if row.get("bookmaker_data_used") is not False:
             raise ValueError("RUNTIME_BOOKMAKER_DATA_FORBIDDEN")
         if row.get("provider_prediction_used") is not False:
@@ -88,7 +162,18 @@ def verify(payload: dict) -> dict:
         if len(digest) != 64 or any(ch not in "0123456789abcdefABCDEF" for ch in digest):
             raise ValueError("RUNTIME_SOURCE_FIXTURE_SHA256_INVALID")
         _timestamp(row.get("observed_at"), "RUNTIME_ROW_OBSERVED_AT")
+        if row.get("observed_at") != payload.get("observed_at"):
+            raise ValueError("RUNTIME_ROW_OBSERVED_AT_MISMATCH")
         _source_url_safe(row.get("source_url"))
+
+        if row.get("state") == "LIVE_IN_PLAY":
+            minute = _non_negative_int(row.get("elapsed_minute"), "RUNTIME_LIVE_ELAPSED_MINUTE")
+            if minute > 130:
+                raise ValueError("RUNTIME_LIVE_ELAPSED_MINUTE_OUT_OF_RANGE")
+            _non_negative_int(row.get("home_goals"), "RUNTIME_LIVE_HOME_GOALS")
+            _non_negative_int(row.get("away_goals"), "RUNTIME_LIVE_AWAY_GOALS")
+
+    _verify_live_model_inputs(live_rows, live_inputs)
 
     governance = payload.get("governance") or {}
     required_false = {
@@ -109,6 +194,7 @@ def verify(payload: dict) -> dict:
         "live_in_play_n": len(live_rows),
         "live_match_captured": bool(live_rows),
         "zero_live_rows_is_valid_provider_runtime": True,
+        "live_model_input_linkage": "EXACT_VERIFIED",
         "secret_persisted": False,
         "capital_effect": "NONE",
         "real_money": "NO",
