@@ -13,7 +13,9 @@ on:
       - 'packages/intelligence-engine/tests/live-provider-orchestration.test.mjs'
       - 'scripts/test_api_football_live_provider.py'
       - 'scripts/test_api_football_runtime_artifact.py'
+      - 'scripts/test_api_football_runtime_evidence.py'
       - 'scripts/verify_api_football_runtime_artifact.py'
+      - 'scripts/write_api_football_runtime_evidence.py'
       - 'scripts/run_api_football_live_ingestion.py'
       - 'scripts/run_live_provider_orchestration.mjs'
       - 'contracts/realtime-live-football-provider-v0.1.json'
@@ -56,6 +58,9 @@ jobs:
       - name: Run runtime artifact verifier tests
         run: python scripts/test_api_football_runtime_artifact.py
 
+      - name: Run runtime evidence writer tests
+        run: python scripts/test_api_football_runtime_evidence.py
+
       - name: Run current snapshot regression
         run: python scripts/test_current_multileague_fixtures_results.py
 
@@ -95,5 +100,5 @@ jobs:
           assert activation['pull_request_secret_execution'] is False
           assert activation['provider_prediction_used'] is False
           assert activation['bookmaker_data_used_as_model_input'] is False
-          print(json.dumps({'provider_boundary':'PASS','runtime_artifact_verifier':'PASS','orchestration':'PASS','unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_execution':activation['real_provider_execution']},indent=2))
+          print(json.dumps({'provider_boundary':'PASS','runtime_artifact_verifier':'PASS','runtime_evidence_writer':'PASS','orchestration':'PASS','unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_execution':activation['real_provider_execution']},indent=2))
           PY
