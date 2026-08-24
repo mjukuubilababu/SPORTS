@@ -2,17 +2,24 @@
   "system": "Decision Intelligence & Evidence-Gated Prediction System",
   "status_version": "v0.1",
   "canonical_branch": "import/decision-intelligence-v0.5-qualified-set",
-  "generated_from_repo_state_after_pr": 29,
+  "canonical_head_after_pr_32": "33eee99d40303fb21832e01bd93f777210a7c44b",
+  "generated_from_repo_state_after_pr": 32,
   "engineering_assurance": "PROMOTE",
+  "full_platform_assurance": "PROMOTE",
   "capital_state": "LOCKED",
-  "blind_test_b": {"eligible_n": 1, "target_n": 100, "state": "BLIND_ACCUMULATING"},
+  "blind_test_b": {
+    "eligible_n": 1,
+    "target_n": 100,
+    "remaining_n": 99,
+    "state": "BLIND_ACCUMULATING"
+  },
   "completed_engineering_capabilities": [
     "GATE1_TO_GATE6",
     "REFERENCE_E2E",
     "REAL_HISTORICAL_PIPELINE",
     "POISSON_BASELINE",
     "NEGATIVE_BINOMIAL_PREREGISTERED_CHALLENGER",
-    "1X2_AND_LIVE_OUTCOME",
+    "1X2_AND_LIVE_OUTCOME_LOGIC",
     "MULTI_BOOKMAKER_INTELLIGENCE",
     "BIDIRECTIONAL_MARKET_REASONING",
     "HALF_SPECIFIC_INTELLIGENCE",
@@ -23,12 +30,15 @@
     "MODEL_PROBABILITY_ORCHESTRATOR_V0_1",
     "FUTURE_TEST_B_CAPTURE_AND_SETTLEMENT",
     "OPERATIONAL_CLOSING_BENCHMARK",
-    "POSTGRES_RUNTIME_VERIFICATION_V0_1"
+    "POSTGRES_RUNTIME_VERIFICATION_V0_1",
+    "PREDICTION_HTTP_API_V0_1",
+    "GLOBAL_MULTI_LEAGUE_HISTORICAL_REAL_DATA_V0_1",
+    "CURRENT_MULTI_LEAGUE_FIXTURES_RESULTS_SNAPSHOT_V0_1"
   ],
   "remaining_engineering_gaps": [
-    "PREDICTION_HTTP_API",
     "FRONTEND_UI",
-    "FULL_MULTI_LEAGUE_REAL_DATA_COVERAGE",
+    "COMPLETE_CURRENT_MULTI_LEAGUE_REAL_DATA_COVERAGE",
+    "DOCUMENTED_REALTIME_LIVE_IN_PLAY_PROVIDER_AND_INGESTION",
     "CANONICAL_TO_MAIN_RELEASE_SYNC"
   ],
   "remaining_evidence_gaps": [
@@ -38,6 +48,20 @@
     "GATE3_GATE4_FORWARD_EMPIRICAL_PROOF",
     "GATE5_FORWARD_SETTLED_CORPUS"
   ],
+  "prediction_evidence_state": {
+    "gate4_promotion_state": "BLOCK_PROMOTION",
+    "historical_research_n": 25,
+    "market_incumbent": true,
+    "poisson_promoted": false,
+    "predictive_edge_proven": false,
+    "negative_binomial_state": "PREREGISTERED_FORWARD_CHALLENGER"
+  },
+  "data_coverage": {
+    "historical_multileague": "MERGED_REAL_RESEARCH_BACKFILL_FIVE_LEAGUES",
+    "current_multileague": "MERGED_POLLABLE_SNAPSHOT_PARTIAL_SOURCE_AVAILABILITY",
+    "live_in_play_real_feed": "NOT_IMPLEMENTED",
+    "current_snapshot_is_live_feed": false
+  },
   "postgres_runtime": {
     "status": "VERIFIED",
     "pr": 29,
@@ -45,11 +69,37 @@
     "runtime_checks": "8/8 PASS",
     "manifest": "manifests/postgres-runtime-verification-v0.1.json"
   },
+  "latest_canonical_merges": [
+    {
+      "pr": 30,
+      "capability": "PREDICTION_HTTP_API_V0_1",
+      "merge_commit": "b805b0e3b2f633290d24bffe8a258f078c41e455"
+    },
+    {
+      "pr": 31,
+      "capability": "GLOBAL_MULTI_LEAGUE_REAL_DATA_V0_1",
+      "merge_commit": "628c9bbfc5fab7efd7442aed004e93111af9f989"
+    },
+    {
+      "pr": 32,
+      "capability": "CURRENT_MULTI_LEAGUE_FIXTURES_RESULTS_V0_1",
+      "merge_commit": "33eee99d40303fb21832e01bd93f777210a7c44b"
+    }
+  ],
+  "manifest_authority": {
+    "authoritative_current_status": "manifests/canonical-current-status-v0.1.json",
+    "legacy_system_manifest": "SYSTEM_MANIFEST.json",
+    "legacy_system_manifest_state": "STALE_NON_AUTHORITATIVE_PENDING_FUTURE_SCHEMA_PRESERVING_RECONCILIATION"
+  },
   "governance": {
     "real_money": "NO",
     "no_hindsight": true,
     "market_to_model_circularity_forbidden": true,
     "automatic_retuning": false,
-    "automatic_capital_unlock": false
+    "automatic_capital_unlock": false,
+    "p002_frozen_rules_changed_by_reconciliation": false,
+    "gate4_thresholds_changed_by_reconciliation": false,
+    "test_b_state_changed_by_reconciliation": false,
+    "model_parameters_changed_by_reconciliation": false
   }
 }
