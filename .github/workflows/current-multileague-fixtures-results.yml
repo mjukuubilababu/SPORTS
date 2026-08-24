@@ -8,9 +8,11 @@ on:
       - 'packages/gate1/current_multileague_fixtures_results.py'
       - 'packages/gate1/espn_current_fixture_provider.py'
       - 'packages/gate1/openligadb_bundesliga_verifier.py'
+      - 'packages/gate1/premierleague_sdp_epl_verifier.py'
       - 'scripts/test_current_multileague_fixtures_results.py'
       - 'scripts/test_espn_current_fixture_provider.py'
       - 'scripts/test_openligadb_bundesliga_verifier.py'
+      - 'scripts/test_premierleague_sdp_epl_verifier.py'
       - 'scripts/run_current_multileague_discovery.py'
       - 'scripts/verify_unified.py'
       - 'contracts/current-multileague-fixtures-results-v0.1.json'
@@ -39,6 +41,8 @@ jobs:
         run: python scripts/test_espn_current_fixture_provider.py
       - name: Run Bundesliga cross-source verifier tests
         run: python scripts/test_openligadb_bundesliga_verifier.py
+      - name: Run EPL official-site cross-source verifier tests
+        run: python scripts/test_premierleague_sdp_epl_verifier.py
       - name: Discover current 2026/27 sources
         run: python scripts/run_current_multileague_discovery.py artifacts/current-multileague-discovery-v0.1.json
       - name: Assert discovery governance
@@ -47,15 +51,22 @@ jobs:
           import json
           from pathlib import Path
           report=json.loads(Path('artifacts/current-multileague-discovery-v0.1.json').read_text())
-          assert report['report_version']=='CURRENT_MULTILEAGUE_SOURCE_DISCOVERY_V0_3'
+          assert report['report_version']=='CURRENT_MULTILEAGUE_SOURCE_DISCOVERY_V0_4'
           assert set(report['leagues']) == {'EPL','LA_LIGA','SERIE_A','BUNDESLIGA','LIGUE_1'}
-          assert report['governance']['live_in_play_claimed'] is False
-          assert report['governance']['bookmaker_data_used'] is False
-          assert report['governance']['provider_prediction_used'] is False
-          assert report['governance']['secondary_source_discovery_only_unless_independently_reconciled'] is True
-          assert report['governance']['cross_source_agreement_required_for_secondary_strict_gate1'] is True
-          assert report['governance']['bundesliga_fuzzy_identity_matching'] is False
-          assert report['governance']['complete_strict_truth_coverage_claimed'] is False
+          gov=report['governance']
+          assert gov['live_in_play_claimed'] is False
+          assert gov['bookmaker_data_used'] is False
+          assert gov['provider_prediction_used'] is False
+          assert gov['secondary_source_discovery_only_unless_independently_reconciled'] is True
+          assert gov['cross_source_agreement_required_for_secondary_strict_gate1'] is True
+          assert gov['epl_cross_source_provider']=='PREMIERLEAGUE_SDP'
+          assert gov['epl_cross_source_source_class']=='OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA'
+          assert gov['epl_official_backend_alone_auto_promotes'] is False
+          assert gov['epl_fuzzy_identity_matching'] is False
+          assert gov['bundesliga_cross_source_provider']=='OPENLIGADB'
+          assert gov['bundesliga_fuzzy_identity_matching'] is False
+          assert gov['complete_strict_truth_coverage_claimed'] is False
+
           for league,row in report['leagues'].items():
               assert row['availability'] in {'AVAILABLE_PRIMARY','AVAILABLE_SECONDARY_DISCOVERY','AVAILABLE_CROSS_SOURCE_VERIFIED','SECONDARY_AVAILABLE_EMPTY_WINDOW','UNAVAILABLE_OR_UNPARSABLE'}
               assert row['live_in_play_supported'] is False
@@ -75,9 +86,8 @@ jobs:
                   assert row['provider']=='ESPN_SITE_SCOREBOARD'
                   assert all(len(h)==64 for h in row['row_hash_inventory'])
               if row['availability']=='AVAILABLE_CROSS_SOURCE_VERIFIED':
-                  assert league=='BUNDESLIGA'
+                  assert league in {'EPL','BUNDESLIGA'}
                   assert row['rows_n'] > 0
-                  assert row['provider']=='ESPN_X_OPENLIGADB'
                   assert row['discovery_only'] is False
                   assert row['strict_gate1_eligible'] is True
                   assert row['strict_gate1_rows_n']==row['rows_n']
@@ -87,10 +97,31 @@ jobs:
                   assert verification['reconciled_n']==row['rows_n']
                   assert verification['unmatched_espn_n']==0
                   assert verification['fuzzy_matching'] is False
+                  if league=='EPL':
+                      assert row['provider']=='ESPN_X_PREMIERLEAGUE_SDP'
+                      assert verification['provider']=='PREMIERLEAGUE_SDP'
+                      assert verification['sdp_rows_n']==row['rows_n']
+                      assert verification['official_site_backend_alone_auto_promotes'] is False
+                  else:
+                      assert row['provider']=='ESPN_X_OPENLIGADB'
+                      assert verification['provider']=='OPENLIGADB'
+
+          epl=report['leagues']['EPL']
+          if epl['rows_n'] > 0 and epl.get('primary_failure'):
+              verification=epl.get('cross_source_verification')
+              assert verification is not None
+              assert verification['provider']=='PREMIERLEAGUE_SDP'
+              assert verification['fuzzy_matching'] is False
+              assert verification['official_site_backend_alone_auto_promotes'] is False
+              if epl['strict_gate1_eligible']:
+                  assert verification['full_window_reconciled'] is True
+                  assert verification['reconciled_n']==epl['rows_n']==verification['sdp_rows_n']
+
           bundesliga=report['leagues']['BUNDESLIGA']
           if bundesliga['strict_gate1_eligible']:
               assert bundesliga['cross_source_verification']['full_window_reconciled'] is True
               assert bundesliga['cross_source_verification']['provider']=='OPENLIGADB'
+
           print(json.dumps({
             'available_n':report['available_n'],
             'primary_available_n':report['primary_available_n'],
@@ -98,6 +129,7 @@ jobs:
             'cross_source_verified_available_n':report['cross_source_verified_available_n'],
             'strict_gate1_eligible_n':report['strict_gate1_eligible_n'],
             'strict_gate1_rows_n':report['strict_gate1_rows_n'],
+            'epl_verification':epl.get('cross_source_verification',{}),
             'bundesliga_verification':bundesliga.get('cross_source_verification',{}),
             'availability':{k:v['availability'] for k,v in report['leagues'].items()}
           },indent=2))
