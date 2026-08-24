@@ -28,6 +28,7 @@ for name,script in [
     ('future_test_b_prematch_frozen','verify_future_test_b_prematch_frozen.py'),
     ('operational_closing_benchmark','test_operational_closing_benchmark.py'),
     ('atlanta_test_b_settlement','verify_atlanta_test_b_settlement.py'),
+    ('global_multileague_adapter','test_global_multileague_adapter.py'),
 ]: results.append(run(name,[sys.executable,script],ROOT/'scripts'))
 for name,test_file in [
     ('transfer_impact_intelligence','tests/transfer-impact-intelligence.test.mjs'),
@@ -46,7 +47,9 @@ required=[
     ROOT/'contracts/transfer-impact-intelligence-v0.1.json', ROOT/'manifests/transfer-impact-intelligence-v0.1.json', ROOT/'packages/intelligence-engine/src/transfer-impact-intelligence.mjs',
     ROOT/'contracts/real-player-profile-ingestion-v0.1.json', ROOT/'manifests/real-player-profile-ingestion-v0.1.json', ROOT/'packages/intelligence-engine/src/real-player-profile-ingestion.mjs',
     ROOT/'contracts/model-probability-orchestrator-v0.1.json', ROOT/'manifests/model-probability-orchestrator-v0.1.json', ROOT/'packages/intelligence-engine/src/model-probability-orchestrator.mjs',
-    ROOT/'contracts/prediction-http-api-v0.1.json', ROOT/'manifests/prediction-http-api-v0.1.json', ROOT/'packages/prediction-api/src/server.mjs'
+    ROOT/'contracts/prediction-http-api-v0.1.json', ROOT/'manifests/prediction-http-api-v0.1.json', ROOT/'packages/prediction-api/src/server.mjs',
+    ROOT/'contracts/global-multileague-real-data-v0.1.json', ROOT/'manifests/global-multileague-real-data-v0.1.json',
+    ROOT/'packages/gate1/global_competition_registry.py', ROOT/'packages/gate1/football_data_multileague_adapter.py'
 ]
 struct_ok=all(p.exists() and p.stat().st_size>0 for p in required)
 results.append({'name':'unified_structure','command':[],'cwd':'.','returncode':0 if struct_ok else 1,'passed':struct_ok,'stdout':f'required_files={len(required)}','stderr':''})
