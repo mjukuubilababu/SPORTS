@@ -99,6 +99,10 @@ export function orchestrateLiveProviderPredictions({providerArtifact,prematchLin
       skipped.push(Object.freeze({providerFixtureId:row.provider_fixture_id,state:row.state,reason:'NOT_LIVE_IN_PLAY'}));
       continue;
     }
+    if(Date.parse(row.observed_at)<Date.parse(row.kickoff_utc)){
+      rejected.push(Object.freeze({providerFixtureId:row.provider_fixture_id,reason:'LIVE_OBSERVATION_BEFORE_KICKOFF'}));
+      continue;
+    }
     if(!Number.isFinite(row.elapsed_minute) || row.elapsed_minute<0 || row.elapsed_minute>120 || !Number.isInteger(row.elapsed_minute)){
       rejected.push(Object.freeze({providerFixtureId:row.provider_fixture_id,reason:'LIVE_ELAPSED_MINUTE_INVALID'}));
       continue;
