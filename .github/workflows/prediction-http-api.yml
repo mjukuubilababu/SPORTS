@@ -1,0 +1,64 @@
+name: Prediction HTTP API
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/prediction-api/**'
+      - 'packages/intelligence-engine/src/model-probability-orchestrator.mjs'
+      - 'packages/intelligence-engine/src/probabilistic-brain.mjs'
+      - 'scripts/verify_unified.py'
+      - 'contracts/prediction-http-api-v0.1.json'
+      - 'docs/prediction-http-api-v0.1.md'
+      - 'manifests/prediction-http-api-v0.1.json'
+      - '.github/workflows/prediction-http-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run API tests
+        working-directory: packages/prediction-api
+        run: npm run verify
+      - name: Run orchestrator regression
+        working-directory: packages/intelligence-engine
+        run: node --test tests/model-probability-orchestrator.test.mjs
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+      - name: Assert API governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('manifests/prediction-http-api-v0.1.json').read_text())
+          r=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          assert m['model_logic_duplicated'] is False
+          assert m['capital_effect'] == 'NONE'
+          assert m['real_money'] == 'NO'
+          assert r['core_integrated_assurance'] == 'PROMOTE'
+          assert r['tests_total'] == r['tests_passed']
+          assert r['capital_assurance'] == 'LOCKED'
+          print(json.dumps({'api':'PASS','unified':f"{r['tests_passed']}/{r['tests_total']}",'capital':r['capital_assurance']},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prediction-http-api-v0.1
+          path: |
+            manifests/prediction-http-api-v0.1.json
+            contracts/prediction-http-api-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+          if-no-files-found: error
