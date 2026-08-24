@@ -1,0 +1,16 @@
+{
+  "capability":"prediction-http-api",
+  "version":"v0.1",
+  "status":"FEATURE_BRANCH_IMPLEMENTED_TESTS_AUTHORED_CI_PENDING",
+  "source_branch":"feature/prediction-http-api-v0.1",
+  "package":"packages/prediction-api",
+  "server":"packages/prediction-api/src/server.mjs",
+  "tests":"packages/prediction-api/tests/prediction-api.test.mjs",
+  "contract":"contracts/prediction-http-api-v0.1.json",
+  "docs":"docs/prediction-http-api-v0.1.md",
+  "endpoint":"POST /v1/predict",
+  "delegates_to":"MODEL_PROBABILITY_ORCHESTRATOR_V0_1",
+  "model_logic_duplicated":false,
+  "capital_effect":"NONE",
+  "real_money":"NO"
+}
