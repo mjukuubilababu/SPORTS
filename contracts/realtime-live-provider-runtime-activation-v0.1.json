@@ -26,11 +26,27 @@
     "zero_live_rows": "VALID_PROVIDER_RUNTIME_RESPONSE_BUT_NOT_LIVE_MATCH_CAPTURE",
     "positive_live_rows": "REAL_LIVE_MATCH_CAPTURE_PRESENT"
   },
+  "observability": {
+    "evidence_writer": "scripts/write_api_football_runtime_evidence.py",
+    "evidence_writer_test": "scripts/test_api_football_runtime_evidence.py",
+    "runtime_ledger_issue": 44,
+    "ledger_contains_raw_provider_payload": false,
+    "ledger_contains_api_key": false,
+    "failure_evidence_published_before_final_gate": true,
+    "states": [
+      "BLOCKED_CREDENTIAL_NOT_CONFIGURED",
+      "PROVIDER_FETCH_FAILED",
+      "ARTIFACT_VERIFICATION_FAILED",
+      "UNIFIED_ASSURANCE_FAILED",
+      "VERIFIED_AUTHENTICATED_PROVIDER_RUNTIME_ZERO_LIVE",
+      "VERIFIED_AUTHENTICATED_PROVIDER_RUNTIME_WITH_LIVE_CAPTURE"
+    ]
+  },
   "governance": {
     "provider_prediction_used": false,
     "bookmaker_data_used_as_model_input": false,
     "automatic_capital_unlock": false,
     "real_money": "NO"
   },
-  "current_execution_state": "PENDING_CONTROLLED_CANONICAL_TRIGGER_WITH_CONFIGURED_APISPORTS_KEY"
+  "current_execution_state": "PENDING_OBSERVABLE_CONTROLLED_CANONICAL_TRIGGER"
 }

@@ -13,7 +13,9 @@ on:
       - 'packages/intelligence-engine/tests/live-provider-orchestration.test.mjs'
       - 'scripts/test_api_football_live_provider.py'
       - 'scripts/test_api_football_runtime_artifact.py'
+      - 'scripts/test_api_football_runtime_evidence.py'
       - 'scripts/verify_api_football_runtime_artifact.py'
+      - 'scripts/write_api_football_runtime_evidence.py'
       - 'scripts/run_api_football_live_ingestion.py'
       - 'scripts/run_live_provider_orchestration.mjs'
       - 'contracts/realtime-live-football-provider-v0.1.json'
@@ -56,6 +58,9 @@ jobs:
       - name: Run runtime artifact verifier tests
         run: python scripts/test_api_football_runtime_artifact.py
 
+      - name: Run runtime evidence writer tests
+        run: python scripts/test_api_football_runtime_evidence.py
+
       - name: Run current snapshot regression
         run: python scripts/test_current_multileague_fixtures_results.py
 
@@ -89,11 +94,14 @@ jobs:
           assert orchestration['rate_multipliers_fixed_at_one'] is True
           assert orchestration['missing_identity_link']=='WAIT'
           assert activation['credential']=='APISPORTS_KEY_GITHUB_ACTIONS_SECRET_ONLY'
-          assert activation['real_provider_execution']=='PENDING_CONTROLLED_CANONICAL_TRIGGER_WITH_CONFIGURED_APISPORTS_KEY'
+          assert activation['real_provider_execution']=='PENDING_OBSERVABLE_CONTROLLED_CANONICAL_TRIGGER'
           assert 'workflow_dispatch' in activation['activation_triggers']
           assert 'CANONICAL_PUSH_TO_runtime-triggers/api-football/**' in activation['activation_triggers']
           assert activation['pull_request_secret_execution'] is False
+          assert activation['runtime_evidence_ledger_issue']==44
+          assert activation['runtime_evidence_contains_api_key'] is False
+          assert activation['runtime_evidence_contains_raw_provider_payload'] is False
           assert activation['provider_prediction_used'] is False
           assert activation['bookmaker_data_used_as_model_input'] is False
-          print(json.dumps({'provider_boundary':'PASS','runtime_artifact_verifier':'PASS','orchestration':'PASS','unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_execution':activation['real_provider_execution']},indent=2))
+          print(json.dumps({'provider_boundary':'PASS','runtime_artifact_verifier':'PASS','runtime_evidence_writer':'PASS','runtime_ledger_issue':activation['runtime_evidence_ledger_issue'],'orchestration':'PASS','unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_execution':activation['real_provider_execution']},indent=2))
           PY
