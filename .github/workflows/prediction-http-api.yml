@@ -8,10 +8,15 @@ on:
       - 'packages/prediction-api/**'
       - 'packages/intelligence-engine/src/model-probability-orchestrator.mjs'
       - 'packages/intelligence-engine/src/probabilistic-brain.mjs'
+      - 'packages/intelligence-engine/src/live-outcome.mjs'
+      - 'packages/intelligence-engine/src/outcome-1x2.mjs'
       - 'scripts/verify_unified.py'
       - 'contracts/prediction-http-api-v0.1.json'
+      - 'contracts/prediction-live-http-api-v0.1.json'
       - 'docs/prediction-http-api-v0.1.md'
+      - 'docs/prediction-live-http-api-v0.1.md'
       - 'manifests/prediction-http-api-v0.1.json'
+      - 'manifests/prediction-live-http-api-v0.1.json'
       - '.github/workflows/prediction-http-api.yml'
   workflow_dispatch:
 
@@ -36,6 +41,9 @@ jobs:
       - name: Run orchestrator regression
         working-directory: packages/intelligence-engine
         run: node --test tests/model-probability-orchestrator.test.mjs
+      - name: Run live outcome regression
+        working-directory: packages/intelligence-engine
+        run: node --test tests/outcome-1x2.test.mjs
       - name: Run unified repository verifier
         run: python scripts/verify_unified.py
       - name: Assert API governance
@@ -44,21 +52,31 @@ jobs:
           import json
           from pathlib import Path
           m=json.loads(Path('manifests/prediction-http-api-v0.1.json').read_text())
+          live=json.loads(Path('manifests/prediction-live-http-api-v0.1.json').read_text())
           r=json.loads(Path('artifacts/unified-verification-report.json').read_text())
           assert m['model_logic_duplicated'] is False
           assert m['capital_effect'] == 'NONE'
           assert m['real_money'] == 'NO'
+          assert live['model_logic_duplicated'] is False
+          assert live['arbitrary_rate_multiplier_override_allowed'] is False
+          assert live['provider_prediction_used'] is False
+          assert live['bookmaker_odds_used_as_live_model_input'] is False
+          assert live['prematch_snapshot_immutable'] is True
+          assert live['capital_effect'] == 'NONE'
+          assert live['real_money'] == 'NO'
           assert r['core_integrated_assurance'] == 'PROMOTE'
           assert r['tests_total'] == r['tests_passed']
           assert r['capital_assurance'] == 'LOCKED'
-          print(json.dumps({'api':'PASS','unified':f"{r['tests_passed']}/{r['tests_total']}",'capital':r['capital_assurance']},indent=2))
+          print(json.dumps({'api':'PASS','live_api':'PASS','unified':f"{r['tests_passed']}/{r['tests_total']}",'capital':r['capital_assurance']},indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
           name: prediction-http-api-v0.1
           path: |
             manifests/prediction-http-api-v0.1.json
+            manifests/prediction-live-http-api-v0.1.json
             contracts/prediction-http-api-v0.1.json
+            contracts/prediction-live-http-api-v0.1.json
             artifacts/unified-verification-report.json
             artifacts/unified-verification.log
           if-no-files-found: error
