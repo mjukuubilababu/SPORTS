@@ -19,6 +19,7 @@
     "team:match": "node ../../scripts/run_team_match_intelligence.mjs",
     "real:football-features": "node ../../scripts/run_real_football_feature_ingestion.mjs data/real-football-features-epl-2025-26-to-2026-08-23.json",
     "real:football-features:write": "node ../../scripts/run_real_football_feature_ingestion.mjs data/real-football-features-epl-2025-26-to-2026-08-23.json data/real-football-feature-output-2026-08-23.json",
+    "player:profiles": "node ../../scripts/run_real_player_profile_ingestion.mjs",
     "player:matchup": "node ../../scripts/run_player_matchup_intelligence.mjs",
     "transfer:impact": "node ../../scripts/run_transfer_impact_intelligence.mjs",
     "final:prematch": "node ../../scripts/run_final_prematch_intelligence.mjs"
