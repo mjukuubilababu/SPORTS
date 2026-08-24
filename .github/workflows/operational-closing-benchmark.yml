@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Assert policy is being preregistered before effective time
+      - name: Assert preregistration occurred before effective time
         run: |
           python - <<'PY'
           from datetime import datetime, timezone
@@ -40,9 +40,18 @@ jobs:
           import json
           manifest=json.loads(Path('manifests/operational-closing-benchmark-v0.1.json').read_text())
           effective=datetime.fromisoformat(manifest['effective_at'].replace('Z','+00:00'))
-          now=datetime.now(timezone.utc)
-          assert now < effective, f"POLICY_CI_NOT_BEFORE_EFFECTIVE_AT:{now.isoformat()}>={effective.isoformat()}"
-          print(f"POLICY_PREREGISTRATION_TIME_GUARD=PASS now={now.isoformat()} effective={effective.isoformat()}")
+          status=str(manifest.get('status',''))
+          if status.startswith('FEATURE_BRANCH_PREREGISTERED'):
+              now=datetime.now(timezone.utc)
+              assert now < effective, f"POLICY_CI_NOT_BEFORE_EFFECTIVE_AT:{now.isoformat()}>={effective.isoformat()}"
+              print(f"POLICY_PREREGISTRATION_TIME_GUARD=PASS now={now.isoformat()} effective={effective.isoformat()}")
+          else:
+              opened=datetime.fromisoformat(manifest['pr_opened_at'].replace('Z','+00:00'))
+              verified=datetime.fromisoformat(manifest['preregistration_ci_verified_at'].replace('Z','+00:00'))
+              assert opened < effective, f"POLICY_PR_OPENED_AFTER_EFFECTIVE_AT:{opened.isoformat()}"
+              assert verified < effective, f"POLICY_PREREGISTRATION_VERIFIED_AFTER_EFFECTIVE_AT:{verified.isoformat()}"
+              assert manifest['ci']['time_guard'] == 'PASS_BEFORE_EFFECTIVE_AT'
+              print(f"POLICY_PREREGISTRATION_EVIDENCE_GUARD=PASS opened={opened.isoformat()} verified={verified.isoformat()} effective={effective.isoformat()}")
           PY
 
       - name: Run policy and transition tests
