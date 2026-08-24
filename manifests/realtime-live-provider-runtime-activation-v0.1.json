@@ -6,6 +6,11 @@
   "merged_via_pr": 40,
   "merge_commit": "89209d0275e6345ec3dcc585f124055be93fce63",
   "workflow": ".github/workflows/realtime-live-provider-runtime.yml",
+  "activation_triggers": [
+    "workflow_dispatch",
+    "CANONICAL_PUSH_TO_runtime-triggers/api-football/**"
+  ],
+  "pull_request_secret_execution": false,
   "artifact_verifier": "scripts/verify_api_football_runtime_artifact.py",
   "artifact_verifier_test": "scripts/test_api_football_runtime_artifact.py",
   "contract": "contracts/realtime-live-provider-runtime-activation-v0.1.json",
@@ -15,7 +20,7 @@
   "canonical_ref_required": "import/decision-intelligence-v0.5-qualified-set",
   "live_model_input_linkage": "EXACT_EVENT_MINUTE_SCORE_OBSERVED_AT_AND_PROVIDER_PROVENANCE_REQUIRED",
   "zero_live_rows_semantics": "PROVIDER_RUNTIME_VERIFIED_IF_AUTHENTICATED_CALL_SUCCEEDS_BUT_LIVE_MATCH_NOT_CAPTURED",
-  "real_provider_execution": "PENDING_MANUAL_CANONICAL_WORKFLOW_RUN_WITH_CONFIGURED_SECRET",
+  "real_provider_execution": "PENDING_CONTROLLED_CANONICAL_TRIGGER_WITH_CONFIGURED_APISPORTS_KEY",
   "real_live_match_capture": "NOT_YET_EVIDENCED",
   "ci": {
     "verified_head": "6c9a84b9891a68bac692d603ecb68d90e2f35964",
