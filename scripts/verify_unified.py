@@ -29,7 +29,7 @@ for name,script in [
     ('operational_closing_benchmark','test_operational_closing_benchmark.py'),
     ('atlanta_test_b_settlement','verify_atlanta_test_b_settlement.py'),
 ]: results.append(run(name,[sys.executable,script],ROOT/'scripts'))
-results.append(run('intelligence_engine_verify',['npm','run','verify'],ROOT/'packages/intelligence-engine'))
+results.append(run('transfer_impact_intelligence',['node','--test','tests/transfer-impact-intelligence.test.mjs'],ROOT/'packages/intelligence-engine'))
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
 
 required=[
