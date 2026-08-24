@@ -25,6 +25,12 @@ async function readJson(req){
   catch{throw Object.assign(new Error('INVALID_JSON'),{statusCode:400});}
 }
 
+function deepFreeze(value){
+  if(!value || typeof value!=='object' || Object.isFrozen(value))return value;
+  for(const child of Object.values(value))deepFreeze(child);
+  return Object.freeze(value);
+}
+
 function publicPrediction(result){
   return {
     apiVersion:API_VERSION,
@@ -54,7 +60,7 @@ function publicPrediction(result){
 function assertLiveApiInput(body){
   if(!body || typeof body!=='object' || Array.isArray(body))throw new Error('LIVE_REQUEST_OBJECT_REQUIRED');
   const {preMatchSnapshot,live}=body;
-  if(!preMatchSnapshot)throw new Error('PREMATCH_SNAPSHOT_REQUIRED');
+  if(!preMatchSnapshot || typeof preMatchSnapshot!=='object' || Array.isArray(preMatchSnapshot))throw new Error('PREMATCH_SNAPSHOT_REQUIRED');
   if(!live || typeof live!=='object' || Array.isArray(live))throw new Error('LIVE_STATE_REQUIRED');
   if(!live.eventId)throw new Error('LIVE_EVENT_ID_REQUIRED');
   if(live.eventId!==preMatchSnapshot.eventId)throw new Error('LIVE_EVENT_ID_MISMATCH');
@@ -68,7 +74,7 @@ function assertLiveApiInput(body){
   ]){
     if(value!==undefined && value!==1)throw new Error(`${name}_REQUIRES_SEPARATE_VERIFIED_IMPACT_PIPELINE`);
   }
-  return {preMatchSnapshot,live};
+  return {preMatchSnapshot:deepFreeze(preMatchSnapshot),live};
 }
 
 function publicLivePrediction(result){
