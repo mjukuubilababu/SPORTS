@@ -89,7 +89,10 @@ jobs:
           assert orchestration['rate_multipliers_fixed_at_one'] is True
           assert orchestration['missing_identity_link']=='WAIT'
           assert activation['credential']=='APISPORTS_KEY_GITHUB_ACTIONS_SECRET_ONLY'
-          assert activation['real_provider_execution']=='PENDING_CONFIGURED_APISPORTS_KEY_AND_MANUAL_RUN'
+          assert activation['real_provider_execution']=='PENDING_CONTROLLED_CANONICAL_TRIGGER_WITH_CONFIGURED_APISPORTS_KEY'
+          assert 'workflow_dispatch' in activation['activation_triggers']
+          assert 'CANONICAL_PUSH_TO_runtime-triggers/api-football/**' in activation['activation_triggers']
+          assert activation['pull_request_secret_execution'] is False
           assert activation['provider_prediction_used'] is False
           assert activation['bookmaker_data_used_as_model_input'] is False
           print(json.dumps({'provider_boundary':'PASS','runtime_artifact_verifier':'PASS','orchestration':'PASS','unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_execution':activation['real_provider_execution']},indent=2))

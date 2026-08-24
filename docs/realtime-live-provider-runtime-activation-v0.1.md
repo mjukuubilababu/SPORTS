@@ -4,11 +4,17 @@
 
 Provides the controlled production-style verification path for the documented API-Football provider boundary already merged in canonical.
 
-The workflow is manual (`workflow_dispatch`) because it requires the private `APISPORTS_KEY` credential and must not run on pull requests or expose the credential to untrusted code.
+The runtime workflow can be started by `workflow_dispatch` or by a controlled push to the canonical branch that changes only a marker under `runtime-triggers/api-football/**`. It does not run with secrets on pull requests. The canonical marker path exists so the runtime can still be activated when the connected GitHub tooling cannot invoke `workflow_dispatch` directly.
 
 ## Credential policy
 
-`APISPORTS_KEY` must exist only as a GitHub Actions secret. It is injected into the provider request as a request header by the existing Gate1 runner. It is never written into source code, artifact JSON, request URLs or audit output.
+`APISPORTS_KEY` must exist only as a GitHub Actions secret. It is injected into the provider request as a request header by the existing Gate1 runner. It is never written into source code, artifact JSON, request URLs, trigger markers or audit output.
+
+## Controlled canonical trigger
+
+A marker is harmless repository metadata and contains no credential. A pull request may add a new marker, but the authenticated provider workflow runs only after that marker reaches `import/decision-intelligence-v0.5-qualified-set` through a canonical push/merge. This keeps repository secrets away from pull-request execution while providing an auditable one-shot trigger.
+
+If `workflow_dispatch` provides competitions, those are used. For a canonical marker trigger, the workflow defaults to EPL, La Liga, Serie A, Bundesliga and Ligue 1.
 
 ## What a successful run proves
 
@@ -16,7 +22,7 @@ A successful canonical workflow run proves that the configured credential can au
 
 The sanitized artifact verifier also requires each `live_model_input` to match exactly one `LIVE_IN_PLAY` provider snapshot by canonical event ID, elapsed minute, home/away score, observation timestamp and verified provider provenance hash. Snapshot observation timestamps must match the artifact observation timestamp, and canonical fixture IDs must match the provider fixture and competition identity. Mixed or cross-wired live inputs fail closed.
 
-The run writes an attestation containing the GitHub run ID, commit SHA, provider observation timestamp and row counts.
+The run writes an attestation containing the trigger event, GitHub run ID, commit SHA, provider observation timestamp and row counts.
 
 ## Zero-live semantics
 
@@ -26,6 +32,6 @@ Only a run with one or more verified `LIVE_IN_PLAY` rows may claim a real live-m
 
 ## Current state
 
-The workflow and verifier can be implemented and CI-tested without the credential. Genuine external runtime evidence remains pending until `APISPORTS_KEY` is configured and the workflow is manually run from the canonical branch.
+The activation workflow, artifact verifier and controlled canonical trigger are engineering capabilities. Genuine external runtime evidence remains pending until a canonical trigger executes successfully with `APISPORTS_KEY` available to GitHub Actions.
 
 No model parameter, P002 rule, Gate4 threshold, Test B state or capital rule is changed. `realMoney` remains `NO`.

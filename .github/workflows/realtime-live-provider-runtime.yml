@@ -8,9 +8,18 @@ on:
         required: true
         default: 'EPL,LA_LIGA,SERIE_A,BUNDESLIGA,LIGUE_1'
         type: string
+  push:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'runtime-triggers/api-football/**'
 
 permissions:
   contents: read
+
+concurrency:
+  group: api-football-real-runtime-verification
+  cancel-in-progress: false
 
 jobs:
   verify-authenticated-provider-runtime:
@@ -41,10 +50,21 @@ jobs:
             exit 1
           fi
 
+      - name: Resolve competitions
+        env:
+          INPUT_COMPETITIONS: ${{ inputs.competitions }}
+        run: |
+          if [ -n "$INPUT_COMPETITIONS" ]; then
+            COMPETITIONS="$INPUT_COMPETITIONS"
+          else
+            COMPETITIONS='EPL,LA_LIGA,SERIE_A,BUNDESLIGA,LIGUE_1'
+          fi
+          echo "COMPETITIONS=$COMPETITIONS" >> "$GITHUB_ENV"
+          echo "Resolved canonical competition set."
+
       - name: Fetch authenticated provider response
         env:
           APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
-          COMPETITIONS: ${{ inputs.competitions }}
         run: |
           python scripts/run_api_football_live_ingestion.py \
             artifacts/api-football-real-runtime-v0.1.json \
@@ -68,6 +88,7 @@ jobs:
             'provider':'API_FOOTBALL',
             'workflow_run_id':os.environ['GITHUB_RUN_ID'],
             'workflow_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+            'trigger_event':os.environ['GITHUB_EVENT_NAME'],
             'repository':os.environ['GITHUB_REPOSITORY'],
             'ref_name':os.environ['GITHUB_REF_NAME'],
             'commit_sha':os.environ['GITHUB_SHA'],
@@ -85,12 +106,13 @@ jobs:
             'capital_assurance':unified['capital_assurance'],
             'real_money':'NO'
           }
+          assert attestation['trigger_event'] in {'workflow_dispatch','push'}
           assert attestation['ref_name']=='import/decision-intelligence-v0.5-qualified-set'
           assert attestation['core_integrated_assurance']=='PROMOTE'
           assert unified['tests_total']==unified['tests_passed']
           assert attestation['capital_assurance']=='LOCKED'
           Path('artifacts/api-football-real-runtime-attestation-v0.1.json').write_text(json.dumps(attestation,indent=2,sort_keys=True)+'\n')
-          print(json.dumps({'authenticated_provider_response':attestation['authenticated_provider_response'],'rows_n':attestation['rows_n'],'live_in_play_n':attestation['live_in_play_n'],'live_match_captured':attestation['live_match_captured'],'capital':attestation['capital_assurance']},indent=2))
+          print(json.dumps({'trigger_event':attestation['trigger_event'],'authenticated_provider_response':attestation['authenticated_provider_response'],'rows_n':attestation['rows_n'],'live_in_play_n':attestation['live_in_play_n'],'live_match_captured':attestation['live_match_captured'],'capital':attestation['capital_assurance']},indent=2))
           PY
 
       - name: Upload runtime evidence
