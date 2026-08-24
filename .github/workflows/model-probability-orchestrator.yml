@@ -1,0 +1,72 @@
+name: Model Probability Orchestrator
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/intelligence-engine/src/model-probability-orchestrator.mjs'
+      - 'packages/intelligence-engine/src/probabilistic-brain.mjs'
+      - 'packages/intelligence-engine/src/reliability.mjs'
+      - 'packages/intelligence-engine/src/index.mjs'
+      - 'packages/intelligence-engine/tests/model-probability-orchestrator.test.mjs'
+      - 'packages/intelligence-engine/package.json'
+      - 'scripts/run_model_probability_orchestrator.mjs'
+      - 'scripts/verify_unified.py'
+      - 'contracts/model-probability-orchestrator-v0.1.json'
+      - 'docs/model-probability-orchestrator-v0.1.md'
+      - 'manifests/model-probability-orchestrator-v0.1.json'
+      - '.github/workflows/model-probability-orchestrator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-orchestrator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run orchestrator tests
+        working-directory: packages/intelligence-engine
+        run: node --test tests/model-probability-orchestrator.test.mjs
+      - name: Run existing brain regression
+        working-directory: packages/intelligence-engine
+        run: node --test tests/intelligence.test.mjs
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+      - name: Assert governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('manifests/model-probability-orchestrator-v0.1.json').read_text())
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          assert manifest['market_probability_circularity'] == 'FORBIDDEN'
+          assert manifest['automatic_retuning'] is False
+          assert manifest['automatic_promotion'] is False
+          assert report['core_integrated_assurance'] == 'PROMOTE'
+          assert report['tests_total'] == report['tests_passed']
+          assert report['capital_assurance'] == 'LOCKED'
+          print(json.dumps({'capability':manifest['capability'],'unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital_assurance':report['capital_assurance']},indent=2))
+          PY
+      - name: Upload verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-probability-orchestrator-v0.1
+          path: |
+            manifests/model-probability-orchestrator-v0.1.json
+            contracts/model-probability-orchestrator-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+          if-no-files-found: error
