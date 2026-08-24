@@ -35,3 +35,4 @@ export * from './team-match-intelligence.mjs';
 export * from './calibrated-intelligence-adjustment.mjs';
 export * from './real-football-feature-ingestion.mjs';
 export * from './player-matchup-intelligence.mjs';
+export * from './transfer-impact-intelligence.mjs';
