@@ -4,6 +4,7 @@ import hashlib
 import json
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -14,6 +15,7 @@ sys.path.insert(0,str(ROOT/'packages'/'gate1'))
 from current_multileague_fixtures_results import SOURCES,parse_current_snapshot
 from espn_current_fixture_provider import parse_scoreboard,source_by_competition as espn_source_by_competition,source_url as espn_source_url
 from openligadb_bundesliga_verifier import SOURCE_URL as OPENLIGADB_BUNDESLIGA_URL, parse_openligadb, reconcile_espn_openligadb
+from premierleague_sdp_epl_verifier import BASE_URL as PREMIERLEAGUE_SDP_BASE_URL, MATCHES_PATH as PREMIERLEAGUE_SDP_MATCHES_PATH, parse_sdp_matches, reconcile_espn_sdp
 
 LOOKBACK_DAYS=7
 LOOKAHEAD_DAYS=14
@@ -36,6 +38,21 @@ def _date_window(observed_dt):
     while cursor<=end:
         yield cursor.strftime('%Y%m%d')
         cursor+=timedelta(days=1)
+
+
+def _premierleague_sdp_window_url(observed_dt):
+    start=(observed_dt.date()-timedelta(days=LOOKBACK_DAYS)).isoformat()
+    # exclusive upper boundary one day after the inclusive ESPN window end
+    end=(observed_dt.date()+timedelta(days=LOOKAHEAD_DAYS+1)).isoformat()
+    query=urllib.parse.urlencode([
+        ('competition','8'),
+        ('season','2026'),
+        ('kickoff>',start),
+        ('kickoff<',end),
+        ('_limit','100'),
+        ('_sort','kickoff:asc'),
+    ])
+    return f"{PREMIERLEAGUE_SDP_BASE_URL}{PREMIERLEAGUE_SDP_MATCHES_PATH}?{query}"
 
 
 def discover_secondary(competition_id, observed, observed_dt):
@@ -89,6 +106,58 @@ def discover_secondary(competition_id, observed, observed_dt):
         'row_hash_inventory':[r.source_event_sha256 for r in rows],
     }
     return summary, rows
+
+
+def verify_epl_secondary(summary, espn_rows, observed, observed_dt):
+    url=_premierleague_sdp_window_url(observed_dt)
+    verification={
+        'provider':'PREMIERLEAGUE_SDP',
+        'source_class':'OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA',
+        'source_url':url,
+        'status':'PENDING',
+        'cross_source_agreement_required':True,
+        'official_site_backend_alone_auto_promotes':False,
+        'fuzzy_matching':False,
+        'strict_gate1_rows_n':0,
+        'full_window_reconciled':False,
+    }
+    try:
+        payload=fetch_json(url)
+        sdp_rows=parse_sdp_matches(payload,observed_at=observed,source_url=url)
+        reconciliation=reconcile_espn_sdp(espn_rows,sdp_rows)
+        full_window=(
+            bool(espn_rows)
+            and reconciliation['reconciled_n']==len(espn_rows)
+            and reconciliation['reconciled_n']==len(sdp_rows)
+            and reconciliation['unmatched_espn_n']==0
+        )
+        verification.update({
+            'status':'VERIFIED' if full_window else 'PARTIAL_OR_MISMATCHED',
+            'sdp_rows_n':len(sdp_rows),
+            'espn_rows_n':len(espn_rows),
+            'reconciled_n':reconciliation['reconciled_n'],
+            'unmatched_espn_n':reconciliation['unmatched_espn_n'],
+            'strict_gate1_rows_n':reconciliation['strict_gate1_eligible_n'],
+            'full_window_reconciled':full_window,
+            'identity_rule':reconciliation['identity_rule'],
+            'settled_rule':reconciliation['settled_rule'],
+            'unmatched':reconciliation['unmatched'][:10],
+            'sdp_hash_inventory':[r.source_event_sha256 for r in sdp_rows],
+        })
+        summary['cross_source_verification']=verification
+        summary['strict_gate1_rows_n']=reconciliation['strict_gate1_eligible_n']
+        if full_window:
+            summary['availability']='AVAILABLE_CROSS_SOURCE_VERIFIED'
+            summary['provider']='ESPN_X_PREMIERLEAGUE_SDP'
+            summary['source_class']='CROSS_SOURCE_VERIFIED_OFFICIAL_CURRENT_FIXTURES'
+            summary['discovery_only']=False
+            summary['strict_gate1_eligible']=True
+        return summary
+    except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError,ValueError,json.JSONDecodeError) as exc:
+        verification['status']='UNAVAILABLE_OR_VERIFICATION_FAILED'
+        verification['reason']=type(exc).__name__+':'+str(exc)
+        summary['cross_source_verification']=verification
+        return summary
 
 
 def verify_bundesliga_secondary(summary, espn_rows, observed):
@@ -164,6 +233,8 @@ def main(argv):
             fallback, secondary_rows=discover_secondary(source.competition_id,observed,observed_dt)
             fallback['primary_source_url']=source.source_url
             fallback['primary_failure']=primary_failure
+            if source.competition_id=='EPL' and fallback['rows_n']>0:
+                fallback=verify_epl_secondary(fallback,secondary_rows,observed,observed_dt)
             if source.competition_id=='BUNDESLIGA' and fallback['rows_n']>0:
                 fallback=verify_bundesliga_secondary(fallback,secondary_rows,observed)
             leagues[source.competition_id]=fallback
@@ -178,7 +249,7 @@ def main(argv):
 
     rows_available=lambda row: row['rows_n']>0 and row['availability'] in {'AVAILABLE_PRIMARY','AVAILABLE_SECONDARY_DISCOVERY','AVAILABLE_CROSS_SOURCE_VERIFIED'}
     report={
-        'report_version':'CURRENT_MULTILEAGUE_SOURCE_DISCOVERY_V0_3','observed_at':observed,'season':'2026/27','leagues':leagues,
+        'report_version':'CURRENT_MULTILEAGUE_SOURCE_DISCOVERY_V0_4','observed_at':observed,'season':'2026/27','leagues':leagues,
         'available_n':sum(rows_available(v) for v in leagues.values()),
         'primary_available_n':sum(v['availability']=='AVAILABLE_PRIMARY' for v in leagues.values()),
         'secondary_discovery_available_n':sum(v['availability']=='AVAILABLE_SECONDARY_DISCOVERY' for v in leagues.values()),
@@ -190,6 +261,10 @@ def main(argv):
             'secondary_source_is_public_unofficial':True,
             'secondary_source_discovery_only_unless_independently_reconciled':True,
             'secondary_live_events_skipped_to_dedicated_live_pipeline':True,
+            'epl_cross_source_provider':'PREMIERLEAGUE_SDP',
+            'epl_cross_source_source_class':'OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA',
+            'epl_official_backend_alone_auto_promotes':False,
+            'epl_fuzzy_identity_matching':False,
             'bundesliga_cross_source_provider':'OPENLIGADB',
             'bundesliga_fuzzy_identity_matching':False,
             'cross_source_agreement_required_for_secondary_strict_gate1':True,
