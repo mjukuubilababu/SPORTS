@@ -268,6 +268,13 @@ def walk_forward_predict(truth_store: Dict, gate2_backfill: Dict) -> Dict:
                     feature, state, training
                 )
             except ValueError:
+                if score is not None:
+                    additions.append(TrainingMatch(
+                        home=str(feature.get("home", "")),
+                        away=str(feature.get("away", "")),
+                        home_goals=score[0],
+                        away_goals=score[1],
+                    ))
                 continue
 
             model_p = poisson_u35(model_mu)
