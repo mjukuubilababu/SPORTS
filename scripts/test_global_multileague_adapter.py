@@ -52,8 +52,12 @@ def main() -> int:
     assert first.closing_home_odds == 1.8
     assert first.closing_over25_odds == 1.95
     assert first.market_semantics == "SOURCE_CLOSING_COLUMNS"
+    assert first.source_row_verified is True
+    assert first.qualification_scope == "RESEARCH_BACKFILL_ONLY"
+    assert first.strict_gate1_eligible is False
     assert first.bookmaker_odds_used_as_model_input is False
     assert len(first.source_row_sha256) == 64
+    assert sum(1 for row in [*epl, *laliga] if row.strict_gate1_eligible) == 0
 
     features = build_gate2_features_by_competition([*epl, *laliga])
     assert set(features) == {"EPL", "LA_LIGA"}
@@ -62,6 +66,7 @@ def main() -> int:
     assert features["EPL"][0]["home_prior_n"] == 0
     assert features["LA_LIGA"][0]["home_prior_n"] == 0
     assert any(row["warmup_pass"] for row in features["EPL"][4:])
+    # O2.5 may be retained as observed research metadata, but no O3.5/U3.5 pair is invented.
     assert all(row["market_u35_prob"] is None for row in features["EPL"])
 
     wrong = csv_for("SP1", "ESP")
