@@ -1,0 +1,29 @@
+{
+  "contract": "realtime-live-provider-runtime-activation",
+  "version": "v0.1",
+  "workflow": ".github/workflows/realtime-live-provider-runtime.yml",
+  "trigger": "workflow_dispatch",
+  "canonical_ref_required": "import/decision-intelligence-v0.5-qualified-set",
+  "credential": {
+    "name": "APISPORTS_KEY",
+    "storage": "GITHUB_ACTIONS_SECRET_ONLY",
+    "source_code_forbidden": true,
+    "artifact_persistence_forbidden": true,
+    "request_url_forbidden": true
+  },
+  "runtime_proof": {
+    "successful_documented_api_call_required": true,
+    "sanitized_artifact_validation_required": true,
+    "unified_assurance_required": "PROMOTE",
+    "capital_assurance_required": "LOCKED",
+    "zero_live_rows": "VALID_PROVIDER_RUNTIME_RESPONSE_BUT_NOT_LIVE_MATCH_CAPTURE",
+    "positive_live_rows": "REAL_LIVE_MATCH_CAPTURE_PRESENT"
+  },
+  "governance": {
+    "provider_prediction_used": false,
+    "bookmaker_data_used_as_model_input": false,
+    "automatic_capital_unlock": false,
+    "real_money": "NO"
+  },
+  "current_execution_state": "PENDING_CONFIGURED_APISPORTS_KEY_AND_MANUAL_CANONICAL_RUN"
+}
