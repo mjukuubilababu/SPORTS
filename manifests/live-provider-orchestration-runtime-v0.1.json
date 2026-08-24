@@ -1,7 +1,9 @@
 {
   "capability": "live-provider-orchestration-runtime",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_CI_VERIFIED",
+  "status": "MERGED_CANONICAL_CI_VERIFIED",
+  "merged_via_pr": 38,
+  "merge_commit": "bd71eb01f27cb386c15afbd90940a4a03428400f",
   "source_branch": "feature/live-provider-orchestration-runtime-v0.1",
   "module": "packages/intelligence-engine/src/live-provider-orchestration.mjs",
   "test": "packages/intelligence-engine/tests/live-provider-orchestration.test.mjs",
