@@ -1,7 +1,7 @@
 {
   "capability": "realtime-live-football-provider",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_UNIT_TEST_AUTHORED_REAL_PROVIDER_RUNTIME_PENDING_KEY",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_CI_VERIFIED_REAL_PROVIDER_RUNTIME_PENDING_KEY",
   "source_branch": "feature/realtime-live-provider-ingestion-v0.1",
   "provider": "API_FOOTBALL",
   "provider_base_url": "https://v3.football.api-sports.io/fixtures",
@@ -17,6 +17,18 @@
   "silent_rate_multiplier_derivation": false,
   "api_key_policy": "APISPORTS_KEY_ENVIRONMENT_ONLY_NEVER_PERSIST",
   "real_provider_runtime": "PENDING_CONFIGURED_KEY",
+  "ci": {
+    "workflow_run_id": 32777643262,
+    "job_id": 97592283125,
+    "conclusion": "SUCCESS",
+    "unit_test": "API_FOOTBALL_LIVE_PROVIDER=PASS",
+    "current_snapshot_regression": "PASS",
+    "unified_tests": "29/29 PASS",
+    "full_platform_assurance": "PROMOTE",
+    "capital_assurance": "LOCKED",
+    "historical_regression_run_id": 32777643218,
+    "historical_regression": "SUCCESS"
+  },
   "performance_claim": "NONE_DATA_BOUNDARY_ONLY",
   "capital_effect": "NONE",
   "real_money": "NO"
