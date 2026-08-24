@@ -1,0 +1,20 @@
+{
+  "capability": "model-probability-orchestrator",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_TESTS_AUTHORED_CI_PENDING",
+  "source_branch": "feature/unified-multimodel-probability-orchestrator-v0.1",
+  "core": "packages/intelligence-engine/src/model-probability-orchestrator.mjs",
+  "test": "packages/intelligence-engine/tests/model-probability-orchestrator.test.mjs",
+  "runner": "scripts/run_model_probability_orchestrator.mjs",
+  "contract": "contracts/model-probability-orchestrator-v0.1.json",
+  "docs": "docs/model-probability-orchestrator-v0.1.md",
+  "command": "npm run model:orchestrate -- <input.json> [output.json]",
+  "brain": "packages/intelligence-engine/src/probabilistic-brain.mjs",
+  "reliability": "packages/intelligence-engine/src/reliability.mjs",
+  "correlation_policy": "SAME_FAMILY_COLLAPSED_BEFORE_BRAIN",
+  "market_probability_circularity": "FORBIDDEN",
+  "automatic_retuning": false,
+  "automatic_promotion": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
