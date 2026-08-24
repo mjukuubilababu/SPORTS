@@ -1,0 +1,10 @@
+{
+  "trigger_id": "API_FOOTBALL_REAL_RUNTIME_2026_08_25_002",
+  "purpose": "OBSERVABLE_AUTHENTICATED_PROVIDER_RUNTIME_VERIFICATION",
+  "evidence_ledger_issue": 44,
+  "competitions": ["EPL", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"],
+  "contains_secret": false,
+  "model_parameters_changed": false,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
