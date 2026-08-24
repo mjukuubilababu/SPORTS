@@ -2,8 +2,8 @@
   "system": "Decision Intelligence & Evidence-Gated Prediction System",
   "status_version": "v0.1",
   "canonical_branch": "import/decision-intelligence-v0.5-qualified-set",
-  "canonical_head_after_pr_32": "33eee99d40303fb21832e01bd93f777210a7c44b",
-  "generated_from_repo_state_after_pr": 32,
+  "canonical_head_after_pr_34": "364419711c6abd8f08f4f78c7d21fda2de7228f3",
+  "generated_from_repo_state_after_pr": 34,
   "engineering_assurance": "PROMOTE",
   "full_platform_assurance": "PROMOTE",
   "capital_state": "LOCKED",
@@ -33,12 +33,13 @@
     "POSTGRES_RUNTIME_VERIFICATION_V0_1",
     "PREDICTION_HTTP_API_V0_1",
     "GLOBAL_MULTI_LEAGUE_HISTORICAL_REAL_DATA_V0_1",
-    "CURRENT_MULTI_LEAGUE_FIXTURES_RESULTS_SNAPSHOT_V0_1"
+    "CURRENT_MULTI_LEAGUE_FIXTURES_RESULTS_SNAPSHOT_V0_1",
+    "REALTIME_LIVE_FOOTBALL_PROVIDER_BOUNDARY_V0_1"
   ],
   "remaining_engineering_gaps": [
     "FRONTEND_UI",
     "COMPLETE_CURRENT_MULTI_LEAGUE_REAL_DATA_COVERAGE",
-    "DOCUMENTED_REALTIME_LIVE_IN_PLAY_PROVIDER_AND_INGESTION",
+    "CONFIGURE_APISPORTS_KEY_AND_VERIFY_REAL_LIVE_PROVIDER_RUNTIME",
     "CANONICAL_TO_MAIN_RELEASE_SYNC"
   ],
   "remaining_evidence_gaps": [
@@ -59,8 +60,11 @@
   "data_coverage": {
     "historical_multileague": "MERGED_REAL_RESEARCH_BACKFILL_FIVE_LEAGUES",
     "current_multileague": "MERGED_POLLABLE_SNAPSHOT_PARTIAL_SOURCE_AVAILABILITY",
-    "live_in_play_real_feed": "NOT_IMPLEMENTED",
-    "current_snapshot_is_live_feed": false
+    "live_in_play_provider_boundary": "MERGED_CANONICAL_CI_VERIFIED",
+    "live_in_play_real_runtime": "PENDING_CONFIGURED_APISPORTS_KEY",
+    "current_snapshot_is_live_feed": false,
+    "provider_prediction_used": false,
+    "bookmaker_data_used_as_live_model_input": false
   },
   "postgres_runtime": {
     "status": "VERIFIED",
@@ -71,11 +75,6 @@
   },
   "latest_canonical_merges": [
     {
-      "pr": 30,
-      "capability": "PREDICTION_HTTP_API_V0_1",
-      "merge_commit": "b805b0e3b2f633290d24bffe8a258f078c41e455"
-    },
-    {
       "pr": 31,
       "capability": "GLOBAL_MULTI_LEAGUE_REAL_DATA_V0_1",
       "merge_commit": "628c9bbfc5fab7efd7442aed004e93111af9f989"
@@ -84,6 +83,16 @@
       "pr": 32,
       "capability": "CURRENT_MULTI_LEAGUE_FIXTURES_RESULTS_V0_1",
       "merge_commit": "33eee99d40303fb21832e01bd93f777210a7c44b"
+    },
+    {
+      "pr": 33,
+      "capability": "CANONICAL_REALITY_RECONCILIATION_V0_1",
+      "merge_commit": "dcb93b18fccfcd218c60270192d0017ffdc3b970"
+    },
+    {
+      "pr": 34,
+      "capability": "REALTIME_LIVE_FOOTBALL_PROVIDER_BOUNDARY_V0_1",
+      "merge_commit": "364419711c6abd8f08f4f78c7d21fda2de7228f3"
     }
   ],
   "manifest_authority": {
@@ -97,9 +106,11 @@
     "market_to_model_circularity_forbidden": true,
     "automatic_retuning": false,
     "automatic_capital_unlock": false,
-    "p002_frozen_rules_changed_by_reconciliation": false,
-    "gate4_thresholds_changed_by_reconciliation": false,
-    "test_b_state_changed_by_reconciliation": false,
-    "model_parameters_changed_by_reconciliation": false
+    "provider_prediction_endpoint_used": false,
+    "silent_live_rate_multiplier_derivation": false,
+    "p002_frozen_rules_changed_by_status_update": false,
+    "gate4_thresholds_changed_by_status_update": false,
+    "test_b_state_changed_by_status_update": false,
+    "model_parameters_changed_by_status_update": false
   }
 }
