@@ -1,0 +1,16 @@
+{
+  "capability": "postgres-runtime-verification",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_CI_PENDING",
+  "source_branch": "feature/postgres-runtime-verification-v0.1",
+  "runner": "scripts/verify_postgres_migrations.py",
+  "contract": "contracts/postgres-runtime-verification-v0.1.json",
+  "docs": "docs/postgres-runtime-verification-v0.1.md",
+  "workflow": ".github/workflows/postgres-runtime-verification.yml",
+  "postgres_version": "16",
+  "migration_versions": ["0009","0010","0011","0012","0013","0014"],
+  "runtime_checks_required": 8,
+  "database_scope": "EPHEMERAL_ISOLATED_CI_POSTGRES_NOT_PRODUCTION",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}

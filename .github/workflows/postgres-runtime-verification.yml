@@ -1,0 +1,74 @@
+name: PostgreSQL Runtime Verification
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/infrastructure/**/migrations/*.sql'
+      - 'scripts/verify_postgres_migrations.py'
+      - 'contracts/postgres-runtime-verification-v0.1.json'
+      - 'docs/postgres-runtime-verification-v0.1.md'
+      - 'manifests/postgres-runtime-verification-v0.1.json'
+      - '.github/workflows/postgres-runtime-verification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: decision_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d decision_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/decision_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+          pg_isready -h localhost -p 5432 -U postgres -d decision_test
+      - name: Run migration runtime verifier
+        run: python scripts/verify_postgres_migrations.py
+      - name: Assert all runtime checks passed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/migrations/postgres-migration-verification.json').read_text())
+          expected={'all_migrations_apply','idempotent_reapply','expected_catalog_tables','critical_column_0014','constraint_negative_tests','immutable_trigger_blocks_update','transaction_rollback','migration_ledger_exact'}
+          assert report['decision']=='PASS', report
+          assert set(report['checks'])==expected
+          assert all(report['checks'].values())
+          assert report['versions']==['0009','0010','0011','0012','0013','0014']
+          print(json.dumps({'decision':report['decision'],'versions':report['versions'],'checks':report['checks']},indent=2))
+          PY
+      - name: Upload PostgreSQL runtime evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-runtime-verification-v0.1
+          path: artifacts/migrations/postgres-migration-verification.json
+          if-no-files-found: error

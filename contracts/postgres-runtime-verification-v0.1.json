@@ -1,0 +1,27 @@
+{
+  "contract": "postgres-runtime-verification",
+  "version": "v0.1",
+  "purpose": "Execute canonical infrastructure migrations against an isolated real PostgreSQL service and verify runtime constraints, triggers, idempotency and rollback.",
+  "database": {
+    "engine": "PostgreSQL",
+    "ci_service_version": "16",
+    "ephemeral": true,
+    "production_database_used": false,
+    "isolated_schema_per_run": true
+  },
+  "migration_versions": ["0009","0010","0011","0012","0013","0014"],
+  "required_checks": [
+    "all_migrations_apply",
+    "idempotent_reapply",
+    "expected_catalog_tables",
+    "critical_column_0014",
+    "constraint_negative_tests",
+    "immutable_trigger_blocks_update",
+    "transaction_rollback",
+    "migration_ledger_exact"
+  ],
+  "runner": "scripts/verify_postgres_migrations.py",
+  "database_credentials": "CI_EPHEMERAL_ONLY_NOT_PERSISTED",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
