@@ -1,0 +1,31 @@
+{
+  "contract": "realtime-live-football-provider",
+  "version": "v0.1",
+  "provider": "API_FOOTBALL",
+  "provider_class": "DOCUMENTED_AUTHENTICATED_EXTERNAL_API",
+  "endpoint": "GET /fixtures?live=<league-ids>",
+  "supported_competitions": ["EPL", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"],
+  "canonical_states": ["SCHEDULED", "LIVE_IN_PLAY", "SETTLED", "POSTPONED", "CANCELLED", "SUSPENDED", "INTERRUPTED", "ABANDONED"],
+  "required_live_fields": ["provider_fixture_id", "competition_id", "kickoff_utc", "home_team", "away_team", "status_short", "elapsed_minute", "home_goals", "away_goals", "observed_at", "source_fixture_sha256"],
+  "live_model_bridge": ["eventId", "minute", "homeScore", "awayScore", "observedAt", "evidence"],
+  "security": {
+    "api_key_environment_only": true,
+    "api_key_must_not_be_persisted": true,
+    "api_key_must_not_appear_in_source_url": true
+  },
+  "governance": {
+    "provider_prediction_endpoint_used": false,
+    "bookmaker_odds_used_as_model_inputs": false,
+    "live_score_time_are_truth_inputs_only": true,
+    "silent_rate_multiplier_derivation": false,
+    "separate_verified_event_impact_required_for_rate_multipliers": true,
+    "no_hindsight": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "verification": {
+    "unit_payload_tests_required": true,
+    "real_provider_runtime_requires_configured_APISPORTS_KEY": true,
+    "real_provider_runtime_claimed_by_v0_1_implementation": false
+  }
+}
