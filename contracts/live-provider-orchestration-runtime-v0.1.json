@@ -1,0 +1,36 @@
+{
+  "contract": "live-provider-orchestration-runtime",
+  "version": "v0.1",
+  "inputs": {
+    "provider_artifact": "API_FOOTBALL_LIVE_PROVIDER_V0_1_SNAPSHOT_ARTIFACT",
+    "prematch_links": "EXPLICIT_VERIFIED_PROVIDER_FIXTURE_TO_CANONICAL_EVENT_LINKS_WITH_FROZEN_PREMATCH_SNAPSHOT"
+  },
+  "identity_policy": {
+    "provider_fixture_id_exact": true,
+    "provider_home_team_id_exact": true,
+    "provider_away_team_id_exact": true,
+    "kickoff_utc_exact": true,
+    "fuzzy_team_matching": false,
+    "missing_link": "WAIT",
+    "identity_mismatch": "REJECT"
+  },
+  "temporal_policy": {
+    "identity_link_must_be_observed_before_kickoff": true,
+    "prematch_snapshot_must_be_frozen_before_kickoff": true,
+    "live_observation_must_not_precede_prematch_freeze": true
+  },
+  "model": {
+    "delegates_to": "predictLive1X2",
+    "home_rate_multiplier": 1.0,
+    "away_rate_multiplier": 1.0,
+    "provider_prediction_used": false,
+    "bookmaker_odds_used_as_live_model_input": false
+  },
+  "outputs": ["predictions", "waits", "rejected", "skipped", "counts", "governance"],
+  "governance": {
+    "no_hindsight": true,
+    "capital_state": "LOCKED",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}

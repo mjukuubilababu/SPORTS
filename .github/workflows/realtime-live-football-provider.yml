@@ -6,11 +6,20 @@ on:
       - import/decision-intelligence-v0.5-qualified-set
     paths:
       - 'packages/gate1/api_football_live_provider.py'
+      - 'packages/intelligence-engine/src/live-provider-orchestration.mjs'
+      - 'packages/intelligence-engine/src/live-outcome.mjs'
+      - 'packages/intelligence-engine/src/index.mjs'
+      - 'packages/intelligence-engine/package.json'
+      - 'packages/intelligence-engine/tests/live-provider-orchestration.test.mjs'
       - 'scripts/test_api_football_live_provider.py'
       - 'scripts/run_api_football_live_ingestion.py'
+      - 'scripts/run_live_provider_orchestration.mjs'
       - 'contracts/realtime-live-football-provider-v0.1.json'
+      - 'contracts/live-provider-orchestration-runtime-v0.1.json'
       - 'docs/realtime-live-football-provider-v0.1.md'
+      - 'docs/live-provider-orchestration-runtime-v0.1.md'
       - 'manifests/realtime-live-football-provider-v0.1.json'
+      - 'manifests/live-provider-orchestration-runtime-v0.1.json'
       - '.github/workflows/realtime-live-football-provider.yml'
   workflow_dispatch:
 
@@ -30,11 +39,22 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Run live provider unit tests
         run: python scripts/test_api_football_live_provider.py
 
       - name: Run current snapshot regression
         run: python scripts/test_current_multileague_fixtures_results.py
+
+      - name: Run live provider orchestration tests
+        run: node --test packages/intelligence-engine/tests/live-provider-orchestration.test.mjs
+
+      - name: Run live outcome regression
+        run: node --test packages/intelligence-engine/tests/outcome-1x2.test.mjs
 
       - name: Run unified repository verifier
         run: python scripts/verify_unified.py
@@ -45,13 +65,18 @@ jobs:
           import json
           from pathlib import Path
           report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
-          manifest=json.loads(Path('manifests/realtime-live-football-provider-v0.1.json').read_text())
+          provider=json.loads(Path('manifests/realtime-live-football-provider-v0.1.json').read_text())
+          orchestration=json.loads(Path('manifests/live-provider-orchestration-runtime-v0.1.json').read_text())
           assert report['core_integrated_assurance']=='PROMOTE'
           assert report['tests_total']==report['tests_passed']
           assert report['capital_assurance']=='LOCKED'
-          assert manifest['provider_prediction_used'] is False
-          assert manifest['bookmaker_data_used_as_model_input'] is False
-          assert manifest['silent_rate_multiplier_derivation'] is False
-          assert manifest['real_provider_runtime']=='PENDING_CONFIGURED_KEY'
-          print(json.dumps({'unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_runtime':manifest['real_provider_runtime']},indent=2))
+          assert provider['provider_prediction_used'] is False
+          assert provider['bookmaker_data_used_as_model_input'] is False
+          assert provider['silent_rate_multiplier_derivation'] is False
+          assert provider['real_provider_runtime']=='PENDING_CONFIGURED_KEY'
+          assert orchestration['provider_prediction_used'] is False
+          assert orchestration['bookmaker_odds_used_as_live_model_input'] is False
+          assert orchestration['rate_multipliers_fixed_at_one'] is True
+          assert orchestration['missing_identity_link']=='WAIT'
+          print(json.dumps({'provider_boundary':'PASS','orchestration':'PASS','unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_runtime':provider['real_provider_runtime']},indent=2))
           PY
