@@ -1,21 +1,28 @@
 {
   "capability": "player-matchup-intelligence",
   "version": "v0.1",
-  "status": "MERGED_CANONICAL_TESTS_AUTHORED_STATIC_REVIEWED",
+  "status": "MERGED_CANONICAL_ENGINE_AND_PROFILE_INGESTION_AVAILABLE_REAL_DATA_PENDING",
   "merged_via_pr": 13,
   "merge_commit": "bb5bc2a4300f06e6c51ab6fa88a00af186aa154c",
   "source_branch": "feature/player-matchup-intelligence-v0.1",
   "tests": "9 AUTHORED",
-  "full_repository_runtime": "NOT_CLAIMED_CURRENT_LOCAL_EXECUTION_ENVIRONMENT",
   "contract": "contracts/player-matchup-intelligence-v0.1.json",
   "docs": "docs/player-matchup-intelligence-v0.1.md",
   "runner": "scripts/run_player_matchup_intelligence.mjs",
   "command": "npm run player:matchup -- <confirmed-lineup-player-input.json> [output.json]",
-  "current_real_data_status": "WAIT_CONFIRMED_STARTING_XI_AND_VERIFIED_PLAYER_PROFILES",
+  "profile_ingestion_dependency": {
+    "capability": "real-player-profile-ingestion-v0.1",
+    "manifest": "manifests/real-player-profile-ingestion-v0.1.json",
+    "merge_commit": "e0c3d12a0e210c25f7faa0cc855060c2f7f7ab6e",
+    "ci": "SUCCESS",
+    "raw_stats_to_confirmed_xi_player_matchup_regression": "PASS"
+  },
+  "current_real_data_status": "WAIT_REAL_VERIFIED_PROVIDER_PLAYER_DATASET_AND_CONFIRMED_STARTING_XI_CAPTURE",
   "outputs": ["PLAYER_MATCHUP", "PLAYER_QUALITY_AND_COHESION", "REAL_FOOTBALL_PLAYER_EVIDENCE"],
   "tactical_lanes": 7,
   "default_minimum_player_sample": 8,
-  "governance": "CONFIRMED_XI_ONLY; EXACTLY_11_UNIQUE_STARTERS; ONE_GOALKEEPER; LINEUP_AND_PROFILES_PRE_KICKOFF; ROLE_SPECIFIC_METRICS; COMPETITION_ADJUSTED; NO_REPUTATION_SCORE; BOOKMAKER_ODDS_FORBIDDEN; NO_UNCALIBRATED_LAMBDA_REWRITE; NO_HINDSIGHT",
+  "governance": "CONFIRMED_XI_ONLY; EXACTLY_11_UNIQUE_STARTERS; ONE_GOALKEEPER; LINEUP_AND_PROFILES_PRE_KICKOFF; ROLE_SPECIFIC_METRICS; COMPETITION_ADJUSTED; REAL_PROFILE_BUILDER_AVAILABLE; NO_REPUTATION_SCORE; BOOKMAKER_ODDS_FORBIDDEN; NO_UNCALIBRATED_LAMBDA_REWRITE; NO_HINDSIGHT",
+  "performance_claim": "NONE_ENGINEERING_CAPABILITY_ONLY",
   "capital_effect": "NONE",
   "real_money": "NO"
 }
