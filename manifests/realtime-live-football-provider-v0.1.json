@@ -1,0 +1,23 @@
+{
+  "capability": "realtime-live-football-provider",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_UNIT_TEST_AUTHORED_REAL_PROVIDER_RUNTIME_PENDING_KEY",
+  "source_branch": "feature/realtime-live-provider-ingestion-v0.1",
+  "provider": "API_FOOTBALL",
+  "provider_base_url": "https://v3.football.api-sports.io/fixtures",
+  "adapter": "packages/gate1/api_football_live_provider.py",
+  "runner": "scripts/run_api_football_live_ingestion.py",
+  "test": "scripts/test_api_football_live_provider.py",
+  "contract": "contracts/realtime-live-football-provider-v0.1.json",
+  "docs": "docs/realtime-live-football-provider-v0.1.md",
+  "competitions": ["EPL", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"],
+  "live_model_bridge": "EXISTING_predictLive1X2_INPUT_COMPATIBLE",
+  "provider_prediction_used": false,
+  "bookmaker_data_used_as_model_input": false,
+  "silent_rate_multiplier_derivation": false,
+  "api_key_policy": "APISPORTS_KEY_ENVIRONMENT_ONLY_NEVER_PERSIST",
+  "real_provider_runtime": "PENDING_CONFIGURED_KEY",
+  "performance_claim": "NONE_DATA_BOUNDARY_ONLY",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
