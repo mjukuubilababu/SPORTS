@@ -14,6 +14,9 @@
   "runtime_proof": {
     "successful_documented_api_call_required": true,
     "sanitized_artifact_validation_required": true,
+    "live_model_input_linkage": "EXACT_EVENT_MINUTE_SCORE_OBSERVED_AT_AND_PROVIDER_PROVENANCE_REQUIRED",
+    "row_observation_must_match_artifact_observation": true,
+    "canonical_fixture_identity_required": true,
     "unified_assurance_required": "PROMOTE",
     "capital_assurance_required": "LOCKED",
     "zero_live_rows": "VALID_PROVIDER_RUNTIME_RESPONSE_BUT_NOT_LIVE_MATCH_CAPTURE",
