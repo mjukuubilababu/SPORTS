@@ -1,0 +1,93 @@
+name: Global Multi-League Real Data
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/gate1/global_competition_registry.py'
+      - 'packages/gate1/football_data_multileague_adapter.py'
+      - 'scripts/test_global_multileague_adapter.py'
+      - 'scripts/run_global_multileague_pilot.py'
+      - 'scripts/verify_unified.py'
+      - 'contracts/global-multileague-real-data-v0.1.json'
+      - 'docs/global-multileague-real-data-v0.1.md'
+      - 'manifests/global-multileague-real-data-v0.1.json'
+      - '.github/workflows/global-multileague-real-data.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-multileague:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run adapter tests
+        run: python scripts/test_global_multileague_adapter.py
+
+      - name: Run real five-league pilot
+        run: python scripts/run_global_multileague_pilot.py artifacts/global-multileague-real-data-v0.1.json
+
+      - name: Assert real coverage and governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/global-multileague-real-data-v0.1.json').read_text())
+          expected={'EPL','LA_LIGA','SERIE_A','BUNDESLIGA','LIGUE_1'}
+          assert report['league_count'] == 5
+          assert set(report['leagues']) == expected
+          assert report['strict_gate1_eligible_n'] == 0
+          assert report['governance']['strict_p002_qualification_granted'] is False
+          assert report['governance']['bookmaker_odds_used_as_model_inputs'] is False
+          assert report['governance']['gate2_history_isolated_by_competition'] is True
+          assert report['governance']['current_live_global_coverage_claimed'] is False
+          for league,row in report['leagues'].items():
+              assert row['settled_n'] >= 100, (league,row['settled_n'])
+              assert row['gate2_feature_n'] == row['settled_n']
+              assert row['warmup_pass_n'] > 0
+              assert row['model_probability_n'] > 0
+              assert row['strict_gate1_eligible_n'] == 0
+              assert len(row['raw_csv_sha256']) == 64
+          print(json.dumps({k:{'settled_n':v['settled_n'],'model_probability_n':v['model_probability_n']} for k,v in report['leagues'].items()},indent=2))
+          PY
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Assert unified governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          manifest=json.loads(Path('manifests/global-multileague-real-data-v0.1.json').read_text())
+          assert report['core_integrated_assurance'] == 'PROMOTE'
+          assert report['tests_total'] == report['tests_passed']
+          assert report['capital_assurance'] == 'LOCKED'
+          assert manifest['strict_gate1_eligible'] is False
+          assert manifest['bookmaker_odds_used_as_model_inputs'] is False
+          print(json.dumps({'unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance']},indent=2))
+          PY
+
+      - name: Upload multi-league evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-multileague-real-data-v0.1
+          path: |
+            artifacts/global-multileague-real-data-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+            manifests/global-multileague-real-data-v0.1.json
+            contracts/global-multileague-real-data-v0.1.json
+          if-no-files-found: error

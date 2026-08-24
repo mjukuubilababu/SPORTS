@@ -1,0 +1,32 @@
+{
+  "contract": "global-multileague-real-data",
+  "version": "v0.1",
+  "registry": "GLOBAL_COMPETITION_REGISTRY_V0_1",
+  "adapter": "FOOTBALL_DATA_MULTILEAGUE_ADAPTER_V0_1",
+  "pilot_competitions": ["EPL", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"],
+  "pilot_season": "2025/26",
+  "source": "Football-Data.co.uk",
+  "source_class": "PUBLIC_RESEARCH_DATASET",
+  "required_result_fields": ["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG"],
+  "canonical_identity": ["competition_id", "season", "date", "home", "away"],
+  "history_policy": "ISOLATED_BY_COMPETITION",
+  "market_policy": {
+    "source_closing_columns_may_be_preserved": true,
+    "bookmaker_odds_as_model_inputs": false,
+    "missing_O3_5_U3_5_must_not_be_invented": true,
+    "strict_gate1_eligibility": false,
+    "qualification_scope": "RESEARCH_BACKFILL_ONLY"
+  },
+  "provenance": {
+    "source_url_required": true,
+    "raw_csv_sha256_required_in_runtime_report": true,
+    "source_row_sha256_required": true
+  },
+  "claims": {
+    "current_live_global_coverage": false,
+    "strict_p002_qualification": false,
+    "predictive_promotion": false,
+    "capital_unlock": false
+  },
+  "real_money": "NO"
+}

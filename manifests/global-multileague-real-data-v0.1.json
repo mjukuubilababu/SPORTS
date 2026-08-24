@@ -1,0 +1,22 @@
+{
+  "capability": "global-multileague-real-data",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_CI_PENDING",
+  "source_branch": "feature/global-multileague-real-data-v0.1",
+  "registry": "packages/gate1/global_competition_registry.py",
+  "adapter": "packages/gate1/football_data_multileague_adapter.py",
+  "test": "scripts/test_global_multileague_adapter.py",
+  "real_runner": "scripts/run_global_multileague_pilot.py",
+  "contract": "contracts/global-multileague-real-data-v0.1.json",
+  "docs": "docs/global-multileague-real-data-v0.1.md",
+  "pilot_competitions": ["EPL", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"],
+  "pilot_season": "2025/26",
+  "source": "Football-Data.co.uk",
+  "qualification_scope": "RESEARCH_BACKFILL_ONLY",
+  "strict_gate1_eligible": false,
+  "current_live_global_coverage_claimed": false,
+  "bookmaker_odds_used_as_model_inputs": false,
+  "performance_claim": "NONE_DATA_COVERAGE_ONLY",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
