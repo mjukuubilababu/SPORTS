@@ -1,0 +1,54 @@
+{
+  "contract": "transfer-impact-intelligence",
+  "version": "v0.1",
+  "domain": "TRANSFER_IMPACT",
+  "purpose": "Derive a verified, role/minutes/capability-based transfer transition signal without transfer fees, reputation scores, bookmaker odds or hindsight.",
+  "required_match_input": ["eventId", "asOf", "home", "away"],
+  "required_team_input": {
+    "teamId": "required",
+    "incoming": "array of verified player observations",
+    "outgoing": "array of verified player observations",
+    "rosterAudit": "verified before/after roster reconciliation with allMaterialMovesCovered=true"
+  },
+  "required_player_fields": [
+    "playerId", "roles", "priorMinutesShare", "capability", "sampleSize",
+    "competitionAdjustment", "source", "observedAt", "verified"
+  ],
+  "minimum_player_sample": 8,
+  "allowed_roles": ["GK","CB","LB","RB","LWB","RWB","DM","CM","AM","LM","RM","LW","RW","SS","CF","ST"],
+  "role_fit": {
+    "exact_role": 1.0,
+    "same_role_family": 0.75,
+    "unrelated_role": 0.4,
+    "no_outgoing_vacancy_reference": 0.75
+  },
+  "calculation": {
+    "incoming_contribution": "priorMinutesShare * capability * competitionAdjustment * roleFit",
+    "outgoing_loss": "priorMinutesShare * capability * competitionAdjustment",
+    "churn_penalty": "min(0.25, outgoingMinutesShare*0.15 + incomingMinutesShare*0.05)",
+    "net_raw": "incomingImpactRaw - outgoingLossRaw - churnPenalty",
+    "net_impact_0_to_1": "0.5 + 0.5*tanh(net_raw)"
+  },
+  "fail_closed": [
+    "incomplete material-move coverage",
+    "unverified roster audit",
+    "unverified player evidence",
+    "player sample below 8",
+    "evidence observed after asOf",
+    "transfer effective after asOf",
+    "incoming player absent from after roster",
+    "outgoing player absent from before roster",
+    "duplicate or both-direction player identity",
+    "unknown role"
+  ],
+  "integration_output": "transferAuditToFeatureSet() matches existing team-match featureSet.transferImpact schema",
+  "governance": {
+    "transfer_fees_used": false,
+    "reputation_scores_used": false,
+    "bookmaker_odds_used": false,
+    "uncalibrated_lambda_rewrite": false,
+    "both_teams_required": true,
+    "post_asOf_evidence_forbidden": true,
+    "real_money": "NO"
+  }
+}
