@@ -1,0 +1,54 @@
+{
+  "records": [
+    {
+      "match_id": "MLS-2026-2026-08-23-974daa85d59a",
+      "competition": "MLS",
+      "kickoff_at": "2026-08-23T23:00:00Z",
+      "prediction": {
+        "snapshot_id": "PRED-MLS-2026-2026-08-23-974daa85d59a-20260823T160852Z",
+        "snapshot_sha256": "8a858ab98852fab522e1a1a739132377d833d3b3631a6a9d22d5aeb4dc2634bf",
+        "frozen_at": "2026-08-23T16:08:52.749016Z",
+        "poisson_model_version": "P002_GATE2_POISSON_U35_V0_1",
+        "poisson_probability_u35": 0.5668777509918694,
+        "negbin_model_version": "P002_NEGBIN_CHALLENGER_V0_1",
+        "negbin_specification_sha256": "650d6cdd6eccc31ec0756cd1bfe80b51032e079ba90c00ad950b86db85508c00",
+        "negbin_probability_u35": 0.5871880763482035,
+        "uses_market_odds": false
+      },
+      "market": {
+        "snapshot_id": "MKT-MLS-2026-2026-08-23-974daa85d59a-20260823T225500Z",
+        "snapshot_sha256": "c668335d5b92b52f8bfdf2aa613866097ed20c1ba3d27bb05b4c10b7296f7cfb",
+        "provider": "Betfred",
+        "source": "Betfred public sportsbook event page",
+        "source_url": "https://www.betfred.com/sports/football/event/36566455",
+        "source_class": "DIRECT_BOOKMAKER_PUBLIC",
+        "source_observation_sha256": "4484c6388672666843d799ea637f95316bfa43f557d2eccd536b85994b81d035",
+        "observed_at": "2026-08-23T22:55:00Z",
+        "fair_probability_u35": 0.5766129032258064,
+        "source_verified": true,
+        "closing_semantics_verified": true,
+        "closing_semantics_id": "OPERATIONAL_PREKICKOFF_CLOSE_300S_V0_1",
+        "seconds_before_kickoff": 300.0
+      },
+      "regime": {
+        "snapshot_id": "REG-MLS-2026-2026-08-23-974daa85d59a-20260823T160852Z",
+        "label": "MLS_2026_REGULAR_SEASON",
+        "source": "MLS_OFFICIAL_2026_REGULAR_SEASON_SCHEDULE",
+        "source_url": "https://www.mlssoccer.com/news/mls-announces-2026-regular-season-schedule",
+        "observed_at": "2026-08-23T16:08:52.749016Z",
+        "verified": true,
+        "uses_outcome": false,
+        "uses_market_odds": false,
+        "snapshot_sha256": "86eb0e763db52725024f45bca09163f76d65729b1f0d15b1c0457012aacb889b"
+      },
+      "settlement": {
+        "source": "Sporting Kansas City official match recap",
+        "source_url": "https://www.sportingkc.com/news/latest/",
+        "verified": true,
+        "settled_at": "2026-08-24T17:52:06Z",
+        "home_goals": 2,
+        "away_goals": 1
+      }
+    }
+  ]
+}
