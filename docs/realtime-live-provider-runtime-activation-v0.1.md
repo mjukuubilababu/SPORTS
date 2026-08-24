@@ -14,13 +14,15 @@ The workflow is manual (`workflow_dispatch`) because it requires the private `AP
 
 A successful canonical workflow run proves that the configured credential can authenticate against the documented provider endpoint, that the provider response can be parsed into the canonical sanitized artifact, and that repository assurance remains `PROMOTE` with capital `LOCKED`.
 
-The run also writes an attestation containing the GitHub run ID, commit SHA, provider observation timestamp and row counts.
+The sanitized artifact verifier also requires each `live_model_input` to match exactly one `LIVE_IN_PLAY` provider snapshot by canonical event ID, elapsed minute, home/away score, observation timestamp and verified provider provenance hash. Snapshot observation timestamps must match the artifact observation timestamp, and canonical fixture IDs must match the provider fixture and competition identity. Mixed or cross-wired live inputs fail closed.
+
+The run writes an attestation containing the GitHub run ID, commit SHA, provider observation timestamp and row counts.
 
 ## Zero-live semantics
 
 The provider may legitimately return zero live fixtures. A successful authenticated response with `live_in_play_n = 0` proves provider network/auth runtime only. It does **not** prove that a live match was captured.
 
-Only a run with one or more `LIVE_IN_PLAY` rows may claim a real live-match capture.
+Only a run with one or more verified `LIVE_IN_PLAY` rows may claim a real live-match capture.
 
 ## Current state
 
