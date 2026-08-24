@@ -69,6 +69,7 @@ test('POST /v1/predict/live returns governed live 1X2 probabilities from frozen 
   const mass=j.probabilities.homeWin+j.probabilities.draw+j.probabilities.awayWin;
   assert.ok(Math.abs(mass-1)<1e-12);assert.equal(j.capitalState,'LOCKED');assert.equal(j.realMoney,'NO');
   assert.deepEqual(j.audit.rateMultipliers,{home:1,away:1});assert.equal(j.audit.governance.arbitraryRateMultiplierOverrideAllowed,false);
+  assert.equal(j.audit.preMatchSnapshotPreserved,true);
   assert.equal(JSON.stringify(p.preMatchSnapshot),frozenBefore);
 }));
 
