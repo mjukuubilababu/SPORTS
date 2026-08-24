@@ -1,0 +1,21 @@
+{
+  "capability": "prediction-live-http-api",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_CI_PENDING",
+  "source_branch": "feature/prediction-live-http-api-v0.1",
+  "package": "packages/prediction-api",
+  "server": "packages/prediction-api/src/server.mjs",
+  "tests": "packages/prediction-api/tests/prediction-api.test.mjs",
+  "contract": "contracts/prediction-live-http-api-v0.1.json",
+  "docs": "docs/prediction-live-http-api-v0.1.md",
+  "endpoint": "POST /v1/predict/live",
+  "delegates_to": "predictLive1X2",
+  "compatible_provider_bridge": "API_FOOTBALL_LIVE_PROVIDER_V0_1",
+  "model_logic_duplicated": false,
+  "arbitrary_rate_multiplier_override_allowed": false,
+  "provider_prediction_used": false,
+  "bookmaker_odds_used_as_live_model_input": false,
+  "prematch_snapshot_immutable": true,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
