@@ -15,7 +15,7 @@ on:
       - 'runtime-triggers/api-football/**'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: api-football-real-runtime-verification
@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Require canonical branch
         run: |
@@ -41,13 +43,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Require APISPORTS_KEY secret
+      - name: Detect APISPORTS_KEY availability without exposing it
+        id: credential
         env:
           APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
         run: |
-          if [ -z "$APISPORTS_KEY" ]; then
-            echo "::error::APISPORTS_KEY GitHub Actions secret is not configured."
-            exit 1
+          if [ -n "$APISPORTS_KEY" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Credential availability: configured."
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Credential availability: not configured."
           fi
 
       - name: Resolve competitions
@@ -63,6 +69,9 @@ jobs:
           echo "Resolved canonical competition set."
 
       - name: Fetch authenticated provider response
+        id: provider_fetch
+        if: steps.credential.outputs.available == 'true'
+        continue-on-error: true
         env:
           APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
         run: |
@@ -71,57 +80,82 @@ jobs:
             --competitions "$COMPETITIONS"
 
       - name: Verify sanitized provider artifact
+        id: artifact_verify
+        if: steps.provider_fetch.outcome == 'success'
+        continue-on-error: true
         run: python scripts/verify_api_football_runtime_artifact.py artifacts/api-football-real-runtime-v0.1.json
 
       - name: Run unified repository verifier
+        id: unified
+        if: always()
+        continue-on-error: true
         run: python scripts/verify_unified.py
 
-      - name: Write runtime attestation
+      - name: Write sanitized persistent runtime evidence
+        id: evidence
+        if: always()
+        env:
+          RUNTIME_CREDENTIAL_AVAILABLE: ${{ steps.credential.outputs.available }}
+          RUNTIME_PROVIDER_FETCH_OUTCOME: ${{ steps.provider_fetch.outcome }}
+          RUNTIME_ARTIFACT_VERIFY_OUTCOME: ${{ steps.artifact_verify.outcome }}
+          RUNTIME_UNIFIED_OUTCOME: ${{ steps.unified.outcome }}
         run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          source=json.loads(Path('artifacts/api-football-real-runtime-v0.1.json').read_text())
-          unified=json.loads(Path('artifacts/unified-verification-report.json').read_text())
-          attestation={
-            'capability':'API_FOOTBALL_REAL_RUNTIME_ACTIVATION_V0_1',
-            'provider':'API_FOOTBALL',
-            'workflow_run_id':os.environ['GITHUB_RUN_ID'],
-            'workflow_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
-            'trigger_event':os.environ['GITHUB_EVENT_NAME'],
-            'repository':os.environ['GITHUB_REPOSITORY'],
-            'ref_name':os.environ['GITHUB_REF_NAME'],
-            'commit_sha':os.environ['GITHUB_SHA'],
-            'provider_response_observed_at':source['observed_at'],
-            'authenticated_provider_response':'VERIFIED_BY_SUCCESSFUL_DOCUMENTED_API_CALL',
-            'rows_n':source['rows_n'],
-            'live_in_play_n':source['live_in_play_n'],
-            'live_match_captured':source['live_in_play_n'] > 0,
-            'zero_live_rows_semantics':'VALID_RUNTIME_RESPONSE_NOT_A_LIVE_MATCH_CAPTURE',
-            'api_key_persisted':False,
-            'provider_prediction_used':False,
-            'bookmaker_data_used_as_model_input':False,
-            'core_integrated_assurance':unified['core_integrated_assurance'],
-            'full_platform_assurance':unified['full_platform_assurance'],
-            'capital_assurance':unified['capital_assurance'],
-            'real_money':'NO'
-          }
-          assert attestation['trigger_event'] in {'workflow_dispatch','push'}
-          assert attestation['ref_name']=='import/decision-intelligence-v0.5-qualified-set'
-          assert attestation['core_integrated_assurance']=='PROMOTE'
-          assert unified['tests_total']==unified['tests_passed']
-          assert attestation['capital_assurance']=='LOCKED'
-          Path('artifacts/api-football-real-runtime-attestation-v0.1.json').write_text(json.dumps(attestation,indent=2,sort_keys=True)+'\n')
-          print(json.dumps({'trigger_event':attestation['trigger_event'],'authenticated_provider_response':attestation['authenticated_provider_response'],'rows_n':attestation['rows_n'],'live_in_play_n':attestation['live_in_play_n'],'live_match_captured':attestation['live_match_captured'],'capital':attestation['capital_assurance']},indent=2))
-          PY
+          python scripts/write_api_football_runtime_evidence.py \
+            --runtime-artifact artifacts/api-football-real-runtime-v0.1.json \
+            --unified-report artifacts/unified-verification-report.json \
+            --output-dir runtime-evidence/api-football
 
-      - name: Upload runtime evidence
+      - name: Upload sanitized summary evidence
+        if: always() && steps.evidence.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-football-runtime-summary-v0.1
+          path: runtime-evidence/api-football/
+          if-no-files-found: error
+
+      - name: Upload detailed successful runtime evidence
+        if: steps.provider_fetch.outcome == 'success' && steps.artifact_verify.outcome == 'success' && steps.unified.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: api-football-real-runtime-v0.1
           path: |
             artifacts/api-football-real-runtime-v0.1.json
-            artifacts/api-football-real-runtime-attestation-v0.1.json
             artifacts/unified-verification-report.json
             artifacts/unified-verification.log
           if-no-files-found: error
+
+      - name: Persist sanitized summary to canonical repository
+        if: always() && steps.evidence.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add runtime-evidence/api-football/
+          git commit -m "Record API-Football runtime evidence ${GITHUB_RUN_ID}"
+          git reset --hard HEAD
+          git clean -fd artifacts/ || true
+          git fetch origin "$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin HEAD:"$GITHUB_REF_NAME"
+
+      - name: Enforce successful authenticated runtime gate
+        if: always() && steps.evidence.outcome == 'success'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          evidence=json.loads(Path('runtime-evidence/api-football/latest.json').read_text())
+          allowed={
+            'VERIFIED_AUTHENTICATED_PROVIDER_RUNTIME_ZERO_LIVE',
+            'VERIFIED_AUTHENTICATED_PROVIDER_RUNTIME_WITH_LIVE_CAPTURE',
+          }
+          print(json.dumps({
+            'state':evidence['state'],
+            'failure_class':evidence['failure_class'],
+            'live_match_captured':evidence['provider_evidence']['live_match_captured'],
+            'capital_assurance':evidence['assurance']['capital_assurance'],
+          },indent=2))
+          if evidence['state'] not in allowed:
+            raise SystemExit(1)
+          if evidence['assurance']['capital_assurance'] != 'LOCKED':
+            raise SystemExit(1)
+          PY
