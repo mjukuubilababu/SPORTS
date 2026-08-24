@@ -1,16 +1,19 @@
 {
   "capability":"prediction-http-api",
   "version":"v0.1",
-  "status":"FEATURE_BRANCH_IMPLEMENTED_TESTS_AUTHORED_CI_PENDING",
+  "status":"MERGED_CANONICAL_CI_VERIFIED",
+  "merged_via_pr":30,
+  "merge_commit":"b805b0e3b2f633290d24bffe8a258f078c41e455",
   "source_branch":"feature/prediction-http-api-v0.1",
   "package":"packages/prediction-api",
   "server":"packages/prediction-api/src/server.mjs",
   "tests":"packages/prediction-api/tests/prediction-api.test.mjs",
   "contract":"contracts/prediction-http-api-v0.1.json",
   "docs":"docs/prediction-http-api-v0.1.md",
-  "endpoint":"POST /v1/predict",
+  "endpoints":["GET /health","POST /v1/predict"],
   "delegates_to":"MODEL_PROBABILITY_ORCHESTRATOR_V0_1",
   "model_logic_duplicated":false,
+  "ci":{"workflow_run_id":32769295379,"job_id":97565775911,"conclusion":"SUCCESS","artifact_id":9535588203,"artifact_digest":"sha256:b0083c51e7784d140b99470dc7a41a72357ce3e2dded93f1361fe3bca5930c02"},
   "capital_effect":"NONE",
   "real_money":"NO"
 }
