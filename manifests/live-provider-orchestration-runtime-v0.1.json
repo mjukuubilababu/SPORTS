@@ -1,0 +1,22 @@
+{
+  "capability": "live-provider-orchestration-runtime",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_CI_PENDING",
+  "source_branch": "feature/live-provider-orchestration-runtime-v0.1",
+  "module": "packages/intelligence-engine/src/live-provider-orchestration.mjs",
+  "test": "packages/intelligence-engine/tests/live-provider-orchestration.test.mjs",
+  "runner": "scripts/run_live_provider_orchestration.mjs",
+  "command": "npm run live:orchestrate -- <provider-artifact.json> <prematch-links.json> [output.json]",
+  "contract": "contracts/live-provider-orchestration-runtime-v0.1.json",
+  "docs": "docs/live-provider-orchestration-runtime-v0.1.md",
+  "upstream_provider": "API_FOOTBALL_LIVE_PROVIDER_V0_1",
+  "downstream_model": "predictLive1X2",
+  "identity_policy": "EXPLICIT_PROVIDER_FIXTURE_TEAM_IDS_AND_KICKOFF_NO_FUZZY_MATCH",
+  "missing_identity_link": "WAIT",
+  "provider_prediction_used": false,
+  "bookmaker_odds_used_as_live_model_input": false,
+  "rate_multipliers_fixed_at_one": true,
+  "real_provider_network_runtime": "PENDING_CONFIGURED_APISPORTS_KEY_UPSTREAM",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
