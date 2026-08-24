@@ -5,10 +5,27 @@
   "competitions":["EPL","LA_LIGA","SERIE_A","BUNDESLIGA","LIGUE_1"],
   "states":["SCHEDULED","SETTLED"],
   "live_in_play_supported":false,
-  "source_snapshot_semantics":"POLLABLE_PUBLIC_CSV_NOT_LIVE_SCORE_FEED",
+  "primary_source":{
+    "provider":"FOOTBALL_DATA_CO_UK",
+    "semantics":"POLLABLE_PUBLIC_CSV_NOT_LIVE_SCORE_FEED",
+    "strict_gate1_eligible":true
+  },
+  "secondary_source":{
+    "provider":"ESPN_SITE_SCOREBOARD",
+    "source_class":"PUBLIC_UNOFFICIAL_SCOREBOARD",
+    "use":"DISCOVERY_ONLY_WHEN_PRIMARY_UNAVAILABLE_OR_UNPARSABLE",
+    "window":{"lookback_days":7,"lookahead_days":14},
+    "strict_gate1_eligible":false,
+    "live_events":"SKIP_TO_DEDICATED_LIVE_PROVIDER_PIPELINE",
+    "provider_prediction_used":false,
+    "bookmaker_data_used":false
+  },
   "required_identity":["competition_id","season","date","home","away"],
-  "provenance":{"source_url_required":true,"source_row_sha256_required":true,"observed_at_timezone_required":true},
-  "guards":{"partial_final_score_rejected":true,"division_mismatch_rejected":true,"duplicate_fixture_rejected":true,"bookmaker_data_used":false},
-  "availability_policy":"DISCOVER_AND_REPORT_UNAVAILABLE; DO_NOT_FABRICATE_ROWS",
+  "secondary_identity":["provider_fixture_id","competition_id","kickoff_utc","home_team_id","away_team_id"],
+  "provenance":{"source_url_required":true,"sha256_required":true,"observed_at_timezone_required":true},
+  "guards":{"partial_final_score_rejected":true,"division_mismatch_rejected":true,"duplicate_fixture_rejected":true,"unknown_secondary_status_rejected":true,"bookmaker_data_used":false,"provider_prediction_used":false},
+  "availability_policy":"PRIMARY_FIRST; SECONDARY_DISCOVERY_IF_PRIMARY_UNAVAILABLE; REPORT_FAILURES; DO_NOT_FABRICATE_ROWS",
+  "truth_policy":"SECONDARY_DISCOVERY_ROWS_DO_NOT_BECOME_STRICT_GATE1_TRUTH_WITHOUT_SEPARATE_VERIFICATION",
+  "complete_strict_truth_coverage_claimed":false,
   "capital_effect":"NONE"
 }
