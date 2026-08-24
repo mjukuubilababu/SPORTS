@@ -11,6 +11,7 @@ export * from './model-probability-orchestrator.mjs';
 export * from './governed-learning-loop.mjs';
 export * from './outcome-1x2.mjs';
 export * from './live-outcome.mjs';
+export * from './live-provider-orchestration.mjs';
 export * from './outcome-settlement.mjs';
 export * from './outcome-evaluation.mjs';
 export * from './bookmaker-registry.mjs';
