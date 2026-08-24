@@ -15,7 +15,8 @@ on:
       - 'runtime-triggers/api-football/**'
 
 permissions:
-  contents: write
+  contents: read
+  issues: write
 
 concurrency:
   group: api-football-real-runtime-verification
@@ -28,8 +29,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Require canonical branch
         run: |
@@ -91,7 +90,7 @@ jobs:
         continue-on-error: true
         run: python scripts/verify_unified.py
 
-      - name: Write sanitized persistent runtime evidence
+      - name: Write sanitized runtime evidence
         id: evidence
         if: always()
         env:
@@ -124,18 +123,19 @@ jobs:
             artifacts/unified-verification.log
           if-no-files-found: error
 
-      - name: Persist sanitized summary to canonical repository
+      - name: Publish sanitized evidence to runtime ledger
         if: always() && steps.evidence.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add runtime-evidence/api-football/
-          git commit -m "Record API-Football runtime evidence ${GITHUB_RUN_ID}"
-          git reset --hard HEAD
-          git clean -fd artifacts/ || true
-          git fetch origin "$GITHUB_REF_NAME"
-          git rebase "origin/$GITHUB_REF_NAME"
-          git push origin HEAD:"$GITHUB_REF_NAME"
+          {
+            echo '```json'
+            cat runtime-evidence/api-football/latest.json
+            echo '```'
+          } > /tmp/api-football-runtime-ledger-comment.md
+          gh issue comment 44 \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file /tmp/api-football-runtime-ledger-comment.md
 
       - name: Enforce successful authenticated runtime gate
         if: always() && steps.evidence.outcome == 'success'
