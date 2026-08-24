@@ -10,23 +10,46 @@ Every primary fixture has competition-scoped identity and SHA-256 row provenance
 
 `run_current_multileague_discovery.py` probes Football-Data.co.uk first. If the 2026/27 primary file is available and parsable, it remains the current snapshot source for that competition.
 
-The August 2026 discovery showed that several top-flight 2026/27 files were not yet published by the primary source. Repeating the same missing URL cannot create real coverage, so the discovery layer now has a secondary public scoreboard fallback.
+The August 2026 discovery showed that several top-flight 2026/27 files were not yet published by the primary source. Repeating the same missing URL cannot create real coverage, so the discovery layer has a secondary public scoreboard fallback.
 
 ## Secondary discovery fallback
 
 When the primary source is unavailable or unparsable, the system queries the public ESPN site scoreboard for a bounded window of 7 days behind the observation date and 14 days ahead.
 
-This fallback is deliberately classified as `PUBLIC_UNOFFICIAL_SCOREBOARD`, `discovery_only=true`, and `strict_gate1_eligible=false`. It may discover real current fixtures/results and provider identities, but it does **not** silently become strict Gate1 truth. A separate verification step is required before those secondary rows may be treated as strict model input.
+ESPN by itself is classified as `PUBLIC_UNOFFICIAL_SCOREBOARD`, `discovery_only=true`, and `strict_gate1_eligible=false`. It may discover real current fixtures/results and provider identities, but it does **not** silently become strict Gate1 truth.
 
 The fallback stores provider event/team identity and SHA-256 event provenance. Unknown statuses, malformed identities and settled rows without complete scores fail closed. ESPN events whose state is currently in-play are counted and skipped; they belong to the dedicated authenticated live-provider pipeline and do not create a second live model path.
 
-The discovery report therefore separates:
+## Bundesliga independent cross-source verification
+
+Bundesliga secondary rows have an additional independent verification path through OpenLigaDB (`bl1`, season `2026`). OpenLigaDB is treated as a separate public community database under ODbL and as a **verification source**, not as an automatic promotion authority.
+
+The reconciliation rules are deliberately strict:
+
+- team identity uses an explicit provider-specific alias registry only;
+- fuzzy team matching is forbidden;
+- competition must be Bundesliga 2026/27;
+- kickoff UTC, canonical home-team key and canonical away-team key must match exactly;
+- scheduled/settled state must match;
+- a settled match must have the exact same final score on both sources;
+- an unfinished OpenLigaDB event whose kickoff is already in the past is skipped as ambiguous/live/delayed rather than mislabeled as scheduled;
+- each source keeps its own SHA-256 event provenance.
+
+A single reconciled row may be reported as cross-source verified, but **Bundesliga becomes league-level `strict_gate1_eligible=true` only when every ESPN row in the bounded current window reconciles exactly and the unmatched count is zero**. Partial reconciliation therefore improves evidence but does not promote the league wholesale.
+
+OpenLigaDB alone cannot make ESPN rows strict truth. The strict evidence is the exact agreement of two independent provider observations under the rules above.
+
+## Coverage semantics
+
+The discovery report separates:
 
 - primary strict current-source availability;
 - secondary discovery availability;
+- cross-source verified availability;
 - overall fixture discovery availability;
-- strict Gate1-eligible coverage.
+- strict Gate1-eligible league coverage;
+- strict Gate1-eligible row count.
 
-Unavailable sources remain explicit and never cause fabricated fixtures.
+Unavailable or mismatched sources remain explicit and never cause fabricated fixtures. EPL, Serie A and Ligue 1 remain discovery-only until they receive their own independent verification path.
 
-No bookmaker data, provider prediction output, model promotion, P002 rule, Gate4 threshold, Test B state or capital state is changed by this capability. `realMoney` remains `NO`.
+No bookmaker data, provider prediction output, model promotion, P002 rule, Gate4 threshold, Blind Test B state or capital state is changed by this capability. `realMoney` remains `NO`.
