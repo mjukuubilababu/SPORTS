@@ -20,9 +20,33 @@ ESPN by itself is classified as `PUBLIC_UNOFFICIAL_SCOREBOARD`, `discovery_only=
 
 The fallback stores provider event/team identity and SHA-256 event provenance. Unknown statuses, malformed identities and settled rows without complete scores fail closed. ESPN events whose state is currently in-play are counted and skipped; they belong to the dedicated authenticated live-provider pipeline and do not create a second live model path.
 
+## EPL official-site cross-source verification
+
+EPL secondary rows have an independent verification path against the structured match feed that powers `premierleague.com`, served by the Premier League/PulseLive SDP backend for competition `8`, season `2026`.
+
+This backend is treated conservatively as `OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA`. It is official-site data, but its JSON interface is not a published public contract and can change. Therefore it is a **verification source**, not a standalone automatic promotion authority.
+
+The EPL reconciliation rules are strict:
+
+- ESPN remains the discovery side of the pair;
+- Premier League SDP is the independent official-site verification side;
+- team identity uses an explicit provider-specific alias registry only;
+- fuzzy team matching is forbidden;
+- competition must resolve to Premier League competition `8`, season `2026` when season identity is present;
+- kickoff UTC, canonical home-team key and canonical away-team key must match exactly;
+- scheduled/settled state must match;
+- a settled match must have the exact same final score on both sources;
+- live SDP matches are excluded from this current-snapshot verifier and remain the responsibility of the dedicated live-provider pipeline;
+- a past SDP `PreMatch` row is treated as ambiguous/delayed rather than mislabeled as scheduled;
+- each source keeps independent SHA-256 event provenance.
+
+EPL becomes league-level `strict_gate1_eligible=true` only when the bounded-window counts agree exactly: **ESPN rows = SDP rows = exact reconciled rows, with unmatched ESPN rows equal to zero**. A schema change, endpoint failure, team alias mismatch, kickoff mismatch, state mismatch, score mismatch or partial reconciliation leaves EPL discovery-only.
+
+The official-site backend cannot auto-promote EPL rows by itself. The strict evidence is exact cross-source agreement under the rules above.
+
 ## Bundesliga independent cross-source verification
 
-Bundesliga secondary rows have an additional independent verification path through OpenLigaDB (`bl1`, season `2026`). OpenLigaDB is treated as a separate public community database under ODbL and as a **verification source**, not as an automatic promotion authority.
+Bundesliga secondary rows have an independent verification path through OpenLigaDB (`bl1`, season `2026`). OpenLigaDB is treated as a separate public community database under ODbL and as a **verification source**, not as an automatic promotion authority.
 
 The reconciliation rules are deliberately strict:
 
@@ -50,6 +74,6 @@ The discovery report separates:
 - strict Gate1-eligible league coverage;
 - strict Gate1-eligible row count.
 
-Unavailable or mismatched sources remain explicit and never cause fabricated fixtures. EPL, Serie A and Ligue 1 remain discovery-only until they receive their own independent verification path.
+Unavailable or mismatched sources remain explicit and never cause fabricated fixtures. Serie A and Ligue 1 remain discovery-only until they receive their own independent verification path. EPL is promoted only if its live CI reconciliation meets the exact full-window rule above.
 
 No bookmaker data, provider prediction output, model promotion, P002 rule, Gate4 threshold, Blind Test B state or capital state is changed by this capability. `realMoney` remains `NO`.
