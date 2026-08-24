@@ -1,10 +1,11 @@
 {
   "capability": "current-multileague-fixtures-results",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_SECONDARY_DISCOVERY_IMPLEMENTED_CI_PENDING",
-  "merged_via_pr": 32,
-  "merge_commit": "33eee99d40303fb21832e01bd93f777210a7c44b",
+  "status": "FEATURE_BRANCH_SECONDARY_DISCOVERY_CI_VERIFIED",
+  "original_merged_via_pr": 32,
+  "original_merge_commit": "33eee99d40303fb21832e01bd93f777210a7c44b",
   "source_branch": "feature/current-multileague-secondary-discovery-v0.1",
+  "verified_head_sha": "fa22be1dd0788af43b6cbbd7095d792ae284f421",
   "primary_core": "packages/gate1/current_multileague_fixtures_results.py",
   "primary_test": "scripts/test_current_multileague_fixtures_results.py",
   "secondary_core": "packages/gate1/espn_current_fixture_provider.py",
@@ -25,13 +26,97 @@
   "secondary_live_events_skipped_to_dedicated_live_pipeline": true,
   "bookmaker_data_used": false,
   "provider_prediction_used": false,
-  "current_coverage_claim": "DISCOVERY_COVERAGE_TO_BE_VERIFIED_BY_CI_NO_COMPLETE_STRICT_TRUTH_CLAIM",
-  "previous_verified_discovery": {
-    "available_n": 1,
-    "available_competitions": ["LA_LIGA"],
-    "unavailable_or_unparsable_competitions": ["EPL", "SERIE_A", "BUNDESLIGA", "LIGUE_1"],
+  "current_coverage_claim": "FIVE_OF_FIVE_DISCOVERY_AVAILABLE_ONE_OF_FIVE_STRICT_GATE1_ELIGIBLE_NO_COMPLETE_STRICT_TRUTH_CLAIM",
+  "verified_discovery": {
+    "workflow_run_id": 32781712659,
+    "job_id": 97605008835,
+    "available_n": 5,
+    "primary_available_n": 1,
+    "secondary_discovery_available_n": 4,
+    "strict_gate1_eligible_n": 1,
+    "total_rows_n": 112,
+    "scheduled_n": 76,
+    "settled_n": 36,
     "live_in_play_n": 0,
-    "live_feed_claimed": false
+    "strict_gate1_rows_n": 7,
+    "secondary_discovery_rows_n": 105,
+    "window_start": "20260817",
+    "window_end": "20260907",
+    "leagues": {
+      "EPL": {
+        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
+        "provider": "ESPN_SITE_SCOREBOARD",
+        "rows_n": 30,
+        "scheduled_n": 20,
+        "settled_n": 10,
+        "strict_gate1_eligible": false,
+        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
+      },
+      "LA_LIGA": {
+        "availability": "AVAILABLE_PRIMARY",
+        "provider": "FOOTBALL_DATA_CO_UK",
+        "rows_n": 7,
+        "scheduled_n": 0,
+        "settled_n": 7,
+        "strict_gate1_eligible": true,
+        "raw_sha256": "26979a9a140f51c03bbe6e40fec0ae82308476dd06958a8f1772b58726c0776f"
+      },
+      "SERIE_A": {
+        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
+        "provider": "ESPN_SITE_SCOREBOARD",
+        "rows_n": 30,
+        "scheduled_n": 20,
+        "settled_n": 10,
+        "strict_gate1_eligible": false,
+        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
+      },
+      "BUNDESLIGA": {
+        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
+        "provider": "ESPN_SITE_SCOREBOARD",
+        "rows_n": 18,
+        "scheduled_n": 18,
+        "settled_n": 0,
+        "strict_gate1_eligible": false,
+        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
+      },
+      "LIGUE_1": {
+        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
+        "provider": "ESPN_SITE_SCOREBOARD",
+        "rows_n": 27,
+        "scheduled_n": 18,
+        "settled_n": 9,
+        "strict_gate1_eligible": false,
+        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
+      }
+    }
+  },
+  "ci": {
+    "current_discovery_workflow_run_id": 32781712659,
+    "current_discovery_job_id": 97605008835,
+    "conclusion": "SUCCESS",
+    "primary_snapshot_tests": "PASS",
+    "secondary_adapter_tests": "PASS",
+    "discovery_governance": "PASS",
+    "unified_tests": "29/29 PASS",
+    "core_integrated_assurance": "PROMOTE",
+    "full_platform_assurance": "PROMOTE",
+    "capital_assurance": "LOCKED",
+    "artifact_id": 9539981085,
+    "artifact_digest": "sha256:7e657c6a79e309bd1067ef074b6d938733f08c85fff46da4ccd9578f2f3ddc2f",
+    "historical_gate4_regression_run_id": 32781712632,
+    "historical_gate4_regression_job_id": 97605008882,
+    "historical_gate4_regression": "SUCCESS"
+  },
+  "governance": {
+    "complete_strict_truth_coverage_claimed": false,
+    "secondary_source_discovery_only": true,
+    "secondary_source_not_strict_gate1_eligible": true,
+    "live_feed_claimed": false,
+    "model_parameters_changed": false,
+    "p002_rules_changed": false,
+    "gate4_thresholds_changed": false,
+    "blind_test_b_state_changed": false,
+    "automatic_capital_unlock": false
   },
   "capital_effect": "NONE",
   "real_money": "NO"
