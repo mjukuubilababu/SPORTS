@@ -1,0 +1,40 @@
+{
+  "contract": "model-probability-orchestrator",
+  "version": "v0.1",
+  "purpose": "Validate, de-correlate and reliability-weight independently generated model probabilities before delegating probability/EV calculation to probabilisticBrain().",
+  "required_target": ["eventId","market","selection","kickoffAt","offeredOdds"],
+  "required_model_fields": [
+    "modelVersion","eventId","market","selection","probability","correlationFamily",
+    "frozenAt","source","snapshotId","snapshotSha256","usesMarketOdds",
+    "baseWeight","validation","calibration","freshness","drift","availability"
+  ],
+  "invariants": {
+    "model_probability_range": "0..1",
+    "model_target_identity_exact_match": true,
+    "model_frozen_strictly_before_kickoff": true,
+    "usesMarketOdds_must_be_false": true,
+    "duplicate_model_version_forbidden": true,
+    "duplicate_snapshot_id_forbidden": true,
+    "same_correlation_family_counts_once_at_brain_level": true,
+    "zero_reliability_cannot_influence": true,
+    "offered_odds_decimal_gt_1": true
+  },
+  "family_policy": {
+    "within_family_probability": "raw reliability weighted mean of active members",
+    "family_brain_weight": "maximum active member raw effective reliability, capped at 1",
+    "reason": "Adding correlated variants must not create additive voting power"
+  },
+  "reliability": "baseWeight * validation * calibration * freshness * drift * availability",
+  "brain": "probabilisticBrain(modelProbabilities=family probabilities, weights=family weights, offeredOdds, confidence)",
+  "market_separation": {
+    "offered_odds_can_change_ev": true,
+    "offered_odds_can_change_model_probability": false,
+    "bookmaker_price_as_model_input": false
+  },
+  "governance": {
+    "automatic_retuning": false,
+    "automatic_model_promotion": false,
+    "capital_unlock": false,
+    "real_money": "NO"
+  }
+}
