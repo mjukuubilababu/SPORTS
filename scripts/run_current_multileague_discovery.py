@@ -16,6 +16,7 @@ from current_multileague_fixtures_results import SOURCES,parse_current_snapshot
 from espn_current_fixture_provider import parse_scoreboard,source_by_competition as espn_source_by_competition,source_url as espn_source_url
 from openligadb_bundesliga_verifier import SOURCE_URL as OPENLIGADB_BUNDESLIGA_URL, parse_openligadb, reconcile_espn_openligadb
 from premierleague_sdp_epl_verifier import BASE_URL as PREMIERLEAGUE_SDP_BASE_URL, MATCHES_PATH as PREMIERLEAGUE_SDP_MATCHES_PATH, parse_sdp_matches, reconcile_espn_sdp
+from premierleague_sdp_timezone_normalizer import normalize_sdp_kickoffs
 
 LOOKBACK_DAYS=7
 LOOKAHEAD_DAYS=14
@@ -117,12 +118,14 @@ def verify_epl_secondary(summary, espn_rows, observed, observed_dt):
         'status':'PENDING',
         'cross_source_agreement_required':True,
         'official_site_backend_alone_auto_promotes':False,
+        'provider_kickoff_timezone_required_for_naive_timestamp':True,
+        'naive_kickoff_assumed_utc':False,
         'fuzzy_matching':False,
         'strict_gate1_rows_n':0,
         'full_window_reconciled':False,
     }
     try:
-        payload=fetch_json(url)
+        payload=normalize_sdp_kickoffs(fetch_json(url))
         sdp_rows=parse_sdp_matches(payload,observed_at=observed,source_url=url)
         reconciliation=reconcile_espn_sdp(espn_rows,sdp_rows)
         full_window=(
@@ -264,6 +267,8 @@ def main(argv):
             'epl_cross_source_provider':'PREMIERLEAGUE_SDP',
             'epl_cross_source_source_class':'OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA',
             'epl_official_backend_alone_auto_promotes':False,
+            'epl_provider_kickoff_timezone_required_for_naive_timestamp':True,
+            'epl_naive_kickoff_assumed_utc':False,
             'epl_fuzzy_identity_matching':False,
             'bundesliga_cross_source_provider':'OPENLIGADB',
             'bundesliga_fuzzy_identity_matching':False,
