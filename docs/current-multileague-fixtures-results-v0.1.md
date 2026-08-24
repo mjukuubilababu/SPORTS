@@ -26,6 +26,8 @@ EPL secondary rows have an independent verification path against the structured 
 
 This backend is treated conservatively as `OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA`. It is official-site data, but its JSON interface is not a published public contract and can change. Therefore it is a **verification source**, not a standalone automatic promotion authority.
 
+The SDP match schema exposes `kickoff` and a separate `kickoffTimezone`. Live verification found that `kickoff` may be an ISO timestamp without an offset. The system does **not** assume such a value is UTC. `premierleague_sdp_timezone_normalizer.py` requires the provider-supplied `kickoffTimezone`, resolves it through the IANA timezone database, applies daylight-saving rules, and converts the kickoff to UTC before identity reconciliation. If the timezone field is absent or unsupported, EPL remains discovery-only. A timezone-aware kickoff or epoch-millisecond kickoff is preserved through the existing strict parser.
+
 The EPL reconciliation rules are strict:
 
 - ESPN remains the discovery side of the pair;
@@ -33,14 +35,16 @@ The EPL reconciliation rules are strict:
 - team identity uses an explicit provider-specific alias registry only;
 - fuzzy team matching is forbidden;
 - competition must resolve to Premier League competition `8`, season `2026` when season identity is present;
-- kickoff UTC, canonical home-team key and canonical away-team key must match exactly;
+- naive official-site kickoff timestamps are never assumed UTC;
+- provider `kickoffTimezone` is mandatory when the kickoff has no offset, and conversion is DST-aware;
+- normalized kickoff UTC, canonical home-team key and canonical away-team key must match exactly;
 - scheduled/settled state must match;
 - a settled match must have the exact same final score on both sources;
 - live SDP matches are excluded from this current-snapshot verifier and remain the responsibility of the dedicated live-provider pipeline;
 - a past SDP `PreMatch` row is treated as ambiguous/delayed rather than mislabeled as scheduled;
 - each source keeps independent SHA-256 event provenance.
 
-EPL becomes league-level `strict_gate1_eligible=true` only when the bounded-window counts agree exactly: **ESPN rows = SDP rows = exact reconciled rows, with unmatched ESPN rows equal to zero**. A schema change, endpoint failure, team alias mismatch, kickoff mismatch, state mismatch, score mismatch or partial reconciliation leaves EPL discovery-only.
+EPL becomes league-level `strict_gate1_eligible=true` only when the bounded-window counts agree exactly: **ESPN rows = SDP rows = exact reconciled rows, with unmatched ESPN rows equal to zero**. A schema change, endpoint failure, timezone failure, team alias mismatch, kickoff mismatch, state mismatch, score mismatch or partial reconciliation leaves EPL discovery-only.
 
 The official-site backend cannot auto-promote EPL rows by itself. The strict evidence is exact cross-source agreement under the rules above.
 
