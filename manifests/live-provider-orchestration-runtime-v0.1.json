@@ -1,7 +1,7 @@
 {
   "capability": "live-provider-orchestration-runtime",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_IMPLEMENTED_TEST_AUTHORED_CI_PENDING",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_CI_VERIFIED",
   "source_branch": "feature/live-provider-orchestration-runtime-v0.1",
   "module": "packages/intelligence-engine/src/live-provider-orchestration.mjs",
   "test": "packages/intelligence-engine/tests/live-provider-orchestration.test.mjs",
@@ -17,6 +17,26 @@
   "bookmaker_odds_used_as_live_model_input": false,
   "rate_multipliers_fixed_at_one": true,
   "real_provider_network_runtime": "PENDING_CONFIGURED_APISPORTS_KEY_UPSTREAM",
+  "ci": {
+    "workflow_run_id": 32778859947,
+    "job_id": 97596142322,
+    "conclusion": "SUCCESS",
+    "provider_unit": "PASS",
+    "current_snapshot_regression": "PASS",
+    "orchestration_tests": "8/8 PASS",
+    "live_outcome_regression": "7/7 PASS",
+    "unified_tests": "29/29 PASS",
+    "full_platform_assurance": "PROMOTE",
+    "capital_assurance": "LOCKED",
+    "model_orchestrator_regression_run_id": 32778860002,
+    "model_orchestrator_regression": "SUCCESS",
+    "historical_gate4_regression_run_id": 32778859971,
+    "historical_gate4_regression": "SUCCESS",
+    "transfer_regression_run_id": 32778859987,
+    "transfer_regression": "SUCCESS",
+    "player_profile_regression_run_id": 32778859952,
+    "player_profile_regression": "SUCCESS"
+  },
   "capital_effect": "NONE",
   "real_money": "NO"
 }
