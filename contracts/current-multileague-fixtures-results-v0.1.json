@@ -20,6 +20,24 @@
     "provider_prediction_used":false,
     "bookmaker_data_used":false
   },
+  "epl_independent_verifier":{
+    "provider":"PREMIERLEAGUE_SDP",
+    "base_url":"https://sdp-prem-prod.premier-league-prod.pulselive.com",
+    "endpoint":"/api/v2/matches?competition=8&season=2026",
+    "source_class":"OFFICIAL_WEBSITE_BACKEND_UNDOCUMENTED_NO_SLA",
+    "authentication_required":false,
+    "strict_truth_role":"OFFICIAL_SITE_CROSS_SOURCE_VERIFIER_NOT_STANDALONE_AUTO_PROMOTION_SOURCE",
+    "identity":"EXACT_KICKOFF_UTC_HOME_CANONICAL_KEY_AWAY_CANONICAL_KEY",
+    "team_mapping":"EXPLICIT_PROVIDER_ALIAS_REGISTRY_ONLY",
+    "fuzzy_matching":false,
+    "settled_match":"EXACT_STATE_AND_FINAL_SCORE_REQUIRED",
+    "window":"MATCH_ESPN_7_DAY_LOOKBACK_AND_14_DAY_LOOKAHEAD_WINDOW",
+    "league_level_strict_gate1":"ONLY_IF_ESPN_ROWS_EQUAL_SDP_ROWS_EQUAL_EXACT_RECONCILED_ROWS_AND_UNMATCHED_N_IS_ZERO",
+    "partial_reconciliation":"REPORT_VERIFIED_ROWS_BUT_KEEP_LEAGUE_DISCOVERY_ONLY",
+    "official_backend_alone_auto_promotes":false,
+    "schema_change":"FAIL_CLOSED_AND_KEEP_EPL_DISCOVERY_ONLY",
+    "past_prematch":"SKIP_AS_AMBIGUOUS_OR_DELAYED_NOT_SCHEDULED"
+  },
   "bundesliga_independent_verifier":{
     "provider":"OPENLIGADB",
     "endpoint":"https://api.openligadb.de/getmatchdata/bl1/2026",
@@ -46,11 +64,12 @@
     "cross_source_identity_mismatch_fails_closed":true,
     "cross_source_state_mismatch_fails_closed":true,
     "cross_source_final_score_mismatch_fails_closed":true,
+    "official_backend_schema_mismatch_fails_closed":true,
     "bookmaker_data_used":false,
     "provider_prediction_used":false
   },
-  "availability_policy":"PRIMARY_FIRST; SECONDARY_DISCOVERY_IF_PRIMARY_UNAVAILABLE; BUNDESLIGA_INDEPENDENT_RECONCILIATION_WHEN_SECONDARY_ROWS_EXIST; REPORT_FAILURES; DO_NOT_FABRICATE_ROWS",
-  "truth_policy":"SECONDARY_DISCOVERY_ROWS_REQUIRE_EXACT_INDEPENDENT_CROSS_SOURCE_RECONCILIATION_BEFORE_STRICT_GATE1; OPENLIGADB_ALONE_DOES_NOT_AUTO_PROMOTE",
+  "availability_policy":"PRIMARY_FIRST; SECONDARY_DISCOVERY_IF_PRIMARY_UNAVAILABLE; EPL_AND_BUNDESLIGA_INDEPENDENT_RECONCILIATION_WHEN_SECONDARY_ROWS_EXIST; REPORT_FAILURES; DO_NOT_FABRICATE_ROWS",
+  "truth_policy":"SECONDARY_DISCOVERY_ROWS_REQUIRE_EXACT_INDEPENDENT_CROSS_SOURCE_RECONCILIATION_BEFORE_STRICT_GATE1; NO_VERIFICATION_SOURCE_ALONE_AUTO_PROMOTES",
   "complete_strict_truth_coverage_claimed":false,
   "capital_effect":"NONE"
 }
