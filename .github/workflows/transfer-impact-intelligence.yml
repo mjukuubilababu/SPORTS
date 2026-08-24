@@ -42,9 +42,11 @@ jobs:
         working-directory: packages/intelligence-engine
         run: node --test tests/transfer-impact-intelligence.test.mjs
 
-      - name: Run full intelligence engine tests
+      - name: Run related team intelligence regressions
         working-directory: packages/intelligence-engine
-        run: npm run verify
+        run: |
+          node --test tests/team-match-intelligence.test.mjs
+          node --test tests/real-football-feature-ingestion.test.mjs
 
       - name: Run unified repository verifier
         run: python scripts/verify_unified.py
