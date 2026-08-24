@@ -1,0 +1,16 @@
+{
+  "capability":"prediction-http-api",
+  "version":"v0.1",
+  "transport":"HTTP_JSON",
+  "endpoints":[
+    {"method":"GET","path":"/health","purpose":"service health and governance state"},
+    {"method":"POST","path":"/v1/predict","purpose":"invoke canonical multi-model probability orchestrator"}
+  ],
+  "predict_required_fields":["eventId","market","selection","kickoffAt","models","offeredOdds","confidence"],
+  "model_logic_duplicated_in_api":false,
+  "market_to_model_circularity_forbidden":true,
+  "max_body_bytes":1048576,
+  "cache_control":"no-store",
+  "capital_state":"LOCKED",
+  "real_money":"NO"
+}
