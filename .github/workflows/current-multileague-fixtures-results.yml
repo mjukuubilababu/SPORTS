@@ -1,0 +1,77 @@
+name: Current Multi-League Fixtures Results
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/gate1/current_multileague_fixtures_results.py'
+      - 'scripts/test_current_multileague_fixtures_results.py'
+      - 'scripts/run_current_multileague_discovery.py'
+      - 'scripts/verify_unified.py'
+      - 'contracts/current-multileague-fixtures-results-v0.1.json'
+      - 'docs/current-multileague-fixtures-results-v0.1.md'
+      - 'manifests/current-multileague-fixtures-results-v0.1.json'
+      - '.github/workflows/current-multileague-fixtures-results.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-current-snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run snapshot tests
+        run: python scripts/test_current_multileague_fixtures_results.py
+      - name: Discover current 2026/27 sources
+        run: python scripts/run_current_multileague_discovery.py artifacts/current-multileague-discovery-v0.1.json
+      - name: Assert discovery governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/current-multileague-discovery-v0.1.json').read_text())
+          assert set(report['leagues']) == {'EPL','LA_LIGA','SERIE_A','BUNDESLIGA','LIGUE_1'}
+          assert report['governance']['live_in_play_claimed'] is False
+          assert report['governance']['bookmaker_data_used'] is False
+          for league,row in report['leagues'].items():
+              assert row['availability'] in {'AVAILABLE','UNAVAILABLE_OR_UNPARSABLE'}
+              assert row['live_in_play_supported'] is False
+              assert row['live_in_play_n'] == 0
+              if row['availability']=='AVAILABLE':
+                  assert row['rows_n'] > 0
+                  assert len(row['raw_sha256']) == 64
+          print(json.dumps({'available_n':report['available_n'],'availability':{k:v['availability'] for k,v in report['leagues'].items()}},indent=2))
+          PY
+      - name: Run unified verifier
+        run: python scripts/verify_unified.py
+      - name: Assert unified assurance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          assert report['core_integrated_assurance']=='PROMOTE'
+          assert report['tests_total']==report['tests_passed']
+          assert report['capital_assurance']=='LOCKED'
+          print(json.dumps({'tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance']},indent=2))
+          PY
+      - name: Upload discovery evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-multileague-fixtures-results-v0.1
+          path: |
+            artifacts/current-multileague-discovery-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+            manifests/current-multileague-fixtures-results-v0.1.json
+            contracts/current-multileague-fixtures-results-v0.1.json
+          if-no-files-found: error
