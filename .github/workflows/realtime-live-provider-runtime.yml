@@ -1,0 +1,105 @@
+name: API-Football Real Runtime Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      competitions:
+        description: 'Canonical competitions, comma-separated'
+        required: true
+        default: 'EPL,LA_LIGA,SERIE_A,BUNDESLIGA,LIGUE_1'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify-authenticated-provider-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require canonical branch
+        run: |
+          if [ "$GITHUB_REF_NAME" != "import/decision-intelligence-v0.5-qualified-set" ]; then
+            echo "::error::Run this verification from the canonical branch only."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Require APISPORTS_KEY secret
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+        run: |
+          if [ -z "$APISPORTS_KEY" ]; then
+            echo "::error::APISPORTS_KEY GitHub Actions secret is not configured."
+            exit 1
+          fi
+
+      - name: Fetch authenticated provider response
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+          COMPETITIONS: ${{ inputs.competitions }}
+        run: |
+          python scripts/run_api_football_live_ingestion.py \
+            artifacts/api-football-real-runtime-v0.1.json \
+            --competitions "$COMPETITIONS"
+
+      - name: Verify sanitized provider artifact
+        run: python scripts/verify_api_football_runtime_artifact.py artifacts/api-football-real-runtime-v0.1.json
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Write runtime attestation
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          source=json.loads(Path('artifacts/api-football-real-runtime-v0.1.json').read_text())
+          unified=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          attestation={
+            'capability':'API_FOOTBALL_REAL_RUNTIME_ACTIVATION_V0_1',
+            'provider':'API_FOOTBALL',
+            'workflow_run_id':os.environ['GITHUB_RUN_ID'],
+            'workflow_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+            'repository':os.environ['GITHUB_REPOSITORY'],
+            'ref_name':os.environ['GITHUB_REF_NAME'],
+            'commit_sha':os.environ['GITHUB_SHA'],
+            'provider_response_observed_at':source['observed_at'],
+            'authenticated_provider_response':'VERIFIED_BY_SUCCESSFUL_DOCUMENTED_API_CALL',
+            'rows_n':source['rows_n'],
+            'live_in_play_n':source['live_in_play_n'],
+            'live_match_captured':source['live_in_play_n'] > 0,
+            'zero_live_rows_semantics':'VALID_RUNTIME_RESPONSE_NOT_A_LIVE_MATCH_CAPTURE',
+            'api_key_persisted':False,
+            'provider_prediction_used':False,
+            'bookmaker_data_used_as_model_input':False,
+            'core_integrated_assurance':unified['core_integrated_assurance'],
+            'full_platform_assurance':unified['full_platform_assurance'],
+            'capital_assurance':unified['capital_assurance'],
+            'real_money':'NO'
+          }
+          assert attestation['ref_name']=='import/decision-intelligence-v0.5-qualified-set'
+          assert attestation['core_integrated_assurance']=='PROMOTE'
+          assert unified['tests_total']==unified['tests_passed']
+          assert attestation['capital_assurance']=='LOCKED'
+          Path('artifacts/api-football-real-runtime-attestation-v0.1.json').write_text(json.dumps(attestation,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'authenticated_provider_response':attestation['authenticated_provider_response'],'rows_n':attestation['rows_n'],'live_in_play_n':attestation['live_in_play_n'],'live_match_captured':attestation['live_match_captured'],'capital':attestation['capital_assurance']},indent=2))
+          PY
+
+      - name: Upload runtime evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-football-real-runtime-v0.1
+          path: |
+            artifacts/api-football-real-runtime-v0.1.json
+            artifacts/api-football-real-runtime-attestation-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+          if-no-files-found: error
