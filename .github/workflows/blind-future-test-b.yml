@@ -7,6 +7,8 @@ on:
     paths:
       - 'packages/gate4/blind_test_set.py'
       - 'packages/gate4/data/mls-2026-future-test-b-state-v0.1.json'
+      - 'packages/gate4/data/mls-2026-test-b-candidate-*.json'
+      - 'packages/gate4/data/mls-2026-test-b-settlement-*.json'
       - 'scripts/run_blind_future_test_b.py'
       - 'scripts/test_blind_future_test_b.py'
       - 'scripts/verify_blind_future_test_b_state.py'
@@ -51,24 +53,27 @@ jobs:
 
           state=json.loads(Path('packages/gate4/data/mls-2026-future-test-b-state-v0.1.json').read_text())
           report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          test_set=state['test_set']
 
-          assert state['state'] == 'BLIND_ACCUMULATING'
-          assert state['test_set']['target_n'] == 100
-          assert state['test_set']['promotion_eligible_n'] == 0
-          assert state['test_set']['remaining_to_target'] == 100
-          assert state['test_set']['interim_metrics_exposed'] is False
-          assert state['test_set']['evaluation_performed'] is False
-          assert state['test_set']['performance_claim'] == 'NONE_BLIND_ACCUMULATION'
+          assert state['state'] in {'BLIND_ACCUMULATING','READY_TO_FREEZE'}
+          assert test_set['target_n'] == 100
+          assert test_set['promotion_eligible_n'] == test_set['received_n'] - test_set['rejected_n']
+          assert test_set['remaining_to_target'] == max(0, 100 - test_set['promotion_eligible_n'])
+          assert test_set['interim_metrics_exposed'] is False
+          assert test_set['evaluation_performed'] is False
+          assert test_set['performance_claim'] == 'NONE_BLIND_ACCUMULATION'
           assert report['core_integrated_assurance'] == 'PROMOTE'
           assert report['tests_total'] == report['tests_passed']
 
           print(json.dumps({
               'test_b_state': state['state'],
-              'target_n': state['test_set']['target_n'],
-              'promotion_eligible_n': state['test_set']['promotion_eligible_n'],
-              'remaining_to_target': state['test_set']['remaining_to_target'],
-              'interim_metrics_exposed': state['test_set']['interim_metrics_exposed'],
-              'evaluation_performed': state['test_set']['evaluation_performed'],
+              'target_n': test_set['target_n'],
+              'received_n': test_set['received_n'],
+              'promotion_eligible_n': test_set['promotion_eligible_n'],
+              'remaining_to_target': test_set['remaining_to_target'],
+              'rejected_n': test_set['rejected_n'],
+              'interim_metrics_exposed': test_set['interim_metrics_exposed'],
+              'evaluation_performed': test_set['evaluation_performed'],
               'core_integrated_assurance': report['core_integrated_assurance'],
               'tests_total': report['tests_total'],
               'tests_passed': report['tests_passed'],

@@ -1,7 +1,7 @@
 {
   "capability": "blind-future-test-set-b-accumulator",
   "version": "v0.1",
-  "status": "MERGED_CANONICAL_CI_VERIFIED_BLIND_ACCUMULATING",
+  "status": "MERGED_CANONICAL_CI_VERIFIED_BLIND_ACCUMULATING_WITH_1_ELIGIBLE_PENDING_PR_VERIFICATION",
   "merged_via_pr": 22,
   "merge_commit": "aca16490ed0e19aa9329f612b55bbaf021a67c92",
   "source_branch": "feature/blind-future-test-b-v0.1",
@@ -10,6 +10,7 @@
   "runner": "scripts/run_blind_future_test_b.py",
   "unit_test": "scripts/test_blind_future_test_b.py",
   "state_verifier": "scripts/verify_blind_future_test_b_state.py",
+  "settlement_verifier": "scripts/verify_atlanta_test_b_settlement.py",
   "unified_verifier": "scripts/verify_unified.py",
   "workflow": ".github/workflows/blind-future-test-b.yml",
   "contract": "contracts/blind-future-test-b-v0.1.json",
@@ -23,12 +24,25 @@
   "test_set_id": "MLS-2026-FUTURE-TEST-B-V0.1",
   "target_n": 100,
   "current_state": "BLIND_ACCUMULATING",
-  "promotion_eligible_n": 0,
-  "remaining_to_target": 100,
+  "received_n": 1,
+  "promotion_eligible_n": 1,
+  "remaining_to_target": 99,
+  "rejected_n": 0,
+  "latest_eligible_match": {
+    "match_id": "MLS-2026-2026-08-23-974daa85d59a",
+    "fixture": "Atlanta United vs Sporting Kansas City",
+    "settlement_artifact": "packages/gate4/data/mls-2026-test-b-settlement-atlanta-skc-2026-08-24.json",
+    "candidate_file": "packages/gate4/data/mls-2026-test-b-candidate-atlanta-skc-2026-08-23.json",
+    "state": "SETTLED_ELIGIBLE",
+    "final_score": "2-1",
+    "settlement_source": "Sporting Kansas City official match recap",
+    "settlement_verified_at": "2026-08-24T17:52:06Z",
+    "settled_record_sha256": "0dd085d3bcdcb12130584b8e9b41f781fa7a0ac267658165727cbbbfa69c0940"
+  },
   "interim_metrics_exposed": false,
   "evaluation_performed": false,
   "performance_claim": "NONE_BLIND_ACCUMULATION",
-  "ci": {
+  "prior_ci": {
     "workflow_run_id": 32643940508,
     "workflow_job_id": 97205169322,
     "conclusion": "SUCCESS",
@@ -39,12 +53,6 @@
     "capital_assurance": "LOCKED",
     "artifact_id": 9494343817,
     "artifact_digest": "sha256:65fa31e54a5bf21bf7843e6706177ce30a7f7360330cbac08fdf5fbe45d54c0c"
-  },
-  "regression_ci": {
-    "workflow": "Real Historical Research",
-    "workflow_run_id": 32643940627,
-    "workflow_job_id": 97205169603,
-    "conclusion": "SUCCESS"
   },
   "holdout_a_reuse": "FORBIDDEN_DATASET_AND_MATCH_LEVEL",
   "snapshot_requirements": "IMMUTABLE_PREMATCH_PREDICTION_MARKET_REGIME_IDS_AND_SHA256",

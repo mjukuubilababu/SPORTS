@@ -11,9 +11,9 @@
   "test_set": {
     "evaluation_set_id": "MLS-2026-FUTURE-TEST-B-V0.1",
     "target_n": 100,
-    "promotion_eligible_n": 0,
-    "remaining_to_target": 100,
-    "received_n": 0,
+    "promotion_eligible_n": 1,
+    "remaining_to_target": 99,
+    "received_n": 1,
     "rejected_n": 0,
     "interim_metrics_exposed": false,
     "evaluation_performed": false,
