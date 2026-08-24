@@ -1,0 +1,21 @@
+{
+  "contract": "real-player-profile-ingestion",
+  "version": "v0.1",
+  "purpose": "Convert verified raw player statistics into competition-adjusted role-specific profiles directly consumable by Player Matchup Intelligence.",
+  "minimum_player_sample": 8,
+  "minimum_role_cohort": 5,
+  "normalization": "EMPIRICAL_SAME_ROLE_PERCENTILE_WITH_COMPETITION_FACTOR",
+  "roles": ["ATTACK","MIDFIELD","DEFENCE","GOALKEEPER"],
+  "required_governance": {
+    "verified_source": true,
+    "observed_at_or_before_asOf": true,
+    "competition_strength_factor_required": true,
+    "prior_team_minutes_share_required": true,
+    "bookmaker_odds_forbidden": true,
+    "reputation_score_forbidden": true,
+    "transfer_fee_forbidden": true
+  },
+  "output": "playerProfiles map compatible with buildConfirmedLineupPlayerIntelligence()",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
