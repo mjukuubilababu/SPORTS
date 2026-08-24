@@ -1,11 +1,13 @@
 {
   "capability": "current-multileague-fixtures-results",
   "version": "v0.1",
-  "status": "FEATURE_BRANCH_SECONDARY_DISCOVERY_CI_VERIFIED",
+  "status": "MERGED_CANONICAL_CI_VERIFIED_FIVE_OF_FIVE_DISCOVERY_ONE_OF_FIVE_STRICT_GATE1",
   "original_merged_via_pr": 32,
   "original_merge_commit": "33eee99d40303fb21832e01bd93f777210a7c44b",
+  "secondary_discovery_merged_via_pr": 48,
+  "secondary_discovery_merge_commit": "1a3e9695bc953b7371f19c91a00b4e02e9c8d29f",
   "source_branch": "feature/current-multileague-secondary-discovery-v0.1",
-  "verified_head_sha": "fa22be1dd0788af43b6cbbd7095d792ae284f421",
+  "verified_head_sha": "e71c3eefca4a7f9c8fc78e84baf559273a934bcf",
   "primary_core": "packages/gate1/current_multileague_fixtures_results.py",
   "primary_test": "scripts/test_current_multileague_fixtures_results.py",
   "secondary_core": "packages/gate1/espn_current_fixture_provider.py",
@@ -28,8 +30,8 @@
   "provider_prediction_used": false,
   "current_coverage_claim": "FIVE_OF_FIVE_DISCOVERY_AVAILABLE_ONE_OF_FIVE_STRICT_GATE1_ELIGIBLE_NO_COMPLETE_STRICT_TRUTH_CLAIM",
   "verified_discovery": {
-    "workflow_run_id": 32781712659,
-    "job_id": 97605008835,
+    "workflow_run_id": 32782586440,
+    "job_id": 97607635984,
     "available_n": 5,
     "primary_available_n": 1,
     "secondary_discovery_available_n": 4,
@@ -43,56 +45,16 @@
     "window_start": "20260817",
     "window_end": "20260907",
     "leagues": {
-      "EPL": {
-        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
-        "provider": "ESPN_SITE_SCOREBOARD",
-        "rows_n": 30,
-        "scheduled_n": 20,
-        "settled_n": 10,
-        "strict_gate1_eligible": false,
-        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
-      },
-      "LA_LIGA": {
-        "availability": "AVAILABLE_PRIMARY",
-        "provider": "FOOTBALL_DATA_CO_UK",
-        "rows_n": 7,
-        "scheduled_n": 0,
-        "settled_n": 7,
-        "strict_gate1_eligible": true,
-        "raw_sha256": "26979a9a140f51c03bbe6e40fec0ae82308476dd06958a8f1772b58726c0776f"
-      },
-      "SERIE_A": {
-        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
-        "provider": "ESPN_SITE_SCOREBOARD",
-        "rows_n": 30,
-        "scheduled_n": 20,
-        "settled_n": 10,
-        "strict_gate1_eligible": false,
-        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
-      },
-      "BUNDESLIGA": {
-        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
-        "provider": "ESPN_SITE_SCOREBOARD",
-        "rows_n": 18,
-        "scheduled_n": 18,
-        "settled_n": 0,
-        "strict_gate1_eligible": false,
-        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
-      },
-      "LIGUE_1": {
-        "availability": "AVAILABLE_SECONDARY_DISCOVERY",
-        "provider": "ESPN_SITE_SCOREBOARD",
-        "rows_n": 27,
-        "scheduled_n": 18,
-        "settled_n": 9,
-        "strict_gate1_eligible": false,
-        "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"
-      }
+      "EPL": {"availability": "AVAILABLE_SECONDARY_DISCOVERY", "provider": "ESPN_SITE_SCOREBOARD", "rows_n": 30, "scheduled_n": 20, "settled_n": 10, "strict_gate1_eligible": false, "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"},
+      "LA_LIGA": {"availability": "AVAILABLE_PRIMARY", "provider": "FOOTBALL_DATA_CO_UK", "rows_n": 7, "scheduled_n": 0, "settled_n": 7, "strict_gate1_eligible": true, "raw_sha256": "26979a9a140f51c03bbe6e40fec0ae82308476dd06958a8f1772b58726c0776f"},
+      "SERIE_A": {"availability": "AVAILABLE_SECONDARY_DISCOVERY", "provider": "ESPN_SITE_SCOREBOARD", "rows_n": 30, "scheduled_n": 20, "settled_n": 10, "strict_gate1_eligible": false, "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"},
+      "BUNDESLIGA": {"availability": "AVAILABLE_SECONDARY_DISCOVERY", "provider": "ESPN_SITE_SCOREBOARD", "rows_n": 18, "scheduled_n": 18, "settled_n": 0, "strict_gate1_eligible": false, "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"},
+      "LIGUE_1": {"availability": "AVAILABLE_SECONDARY_DISCOVERY", "provider": "ESPN_SITE_SCOREBOARD", "rows_n": 27, "scheduled_n": 18, "settled_n": 9, "strict_gate1_eligible": false, "primary_failure": "HTTPError:HTTP Error 300: Multiple Choices"}
     }
   },
   "ci": {
-    "current_discovery_workflow_run_id": 32781712659,
-    "current_discovery_job_id": 97605008835,
+    "current_discovery_workflow_run_id": 32782586440,
+    "current_discovery_job_id": 97607635984,
     "conclusion": "SUCCESS",
     "primary_snapshot_tests": "PASS",
     "secondary_adapter_tests": "PASS",
@@ -101,10 +63,9 @@
     "core_integrated_assurance": "PROMOTE",
     "full_platform_assurance": "PROMOTE",
     "capital_assurance": "LOCKED",
-    "artifact_id": 9539981085,
-    "artifact_digest": "sha256:7e657c6a79e309bd1067ef074b6d938733f08c85fff46da4ccd9578f2f3ddc2f",
-    "historical_gate4_regression_run_id": 32781712632,
-    "historical_gate4_regression_job_id": 97605008882,
+    "artifact_id": 9540286555,
+    "artifact_digest": "sha256:894233e6f7567c758434aac55701a1f8d4cd0f6a9788129ebdc5c15cf5764487",
+    "historical_gate4_regression_run_id": 32782586446,
     "historical_gate4_regression": "SUCCESS"
   },
   "governance": {

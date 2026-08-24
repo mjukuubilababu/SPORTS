@@ -2,8 +2,8 @@
   "system": "Decision Intelligence & Evidence-Gated Prediction System",
   "status_version": "v0.1",
   "canonical_branch": "import/decision-intelligence-v0.5-qualified-set",
-  "canonical_head_after_pr_46": "7a0306374577c1f91e43985c0fab613e8438e15b",
-  "generated_from_repo_state_after_pr": 46,
+  "canonical_head_after_pr_48": "1a3e9695bc953b7371f19c91a00b4e02e9c8d29f",
+  "generated_from_repo_state_after_pr": 48,
   "engineering_assurance": "PROMOTE",
   "full_platform_assurance": "PROMOTE",
   "capital_state": "LOCKED",
@@ -34,6 +34,7 @@
     "PREDICTION_HTTP_API_V0_1",
     "GLOBAL_MULTI_LEAGUE_HISTORICAL_REAL_DATA_V0_1",
     "CURRENT_MULTI_LEAGUE_FIXTURES_RESULTS_SNAPSHOT_V0_1",
+    "SECONDARY_CURRENT_MULTI_LEAGUE_DISCOVERY_V0_1",
     "REALTIME_LIVE_FOOTBALL_PROVIDER_BOUNDARY_V0_1",
     "PREDICTION_LIVE_HTTP_API_V0_1",
     "LIVE_PROVIDER_ORCHESTRATION_RUNTIME_V0_1",
@@ -42,13 +43,14 @@
   ],
   "remaining_engineering_gaps": [
     "FRONTEND_UI",
-    "COMPLETE_CURRENT_MULTI_LEAGUE_REAL_DATA_COVERAGE",
+    "STRICT_CURRENT_MULTI_LEAGUE_GATE1_VERIFICATION_FOR_EPL_SERIE_A_BUNDESLIGA_LIGUE_1",
     "CANONICAL_TO_MAIN_RELEASE_SYNC"
   ],
   "remaining_evidence_gaps": [
     "BLIND_TEST_B_99_MORE_ELIGIBLE_MATCHES",
     "CONFIGURE_APISPORTS_KEY_AND_RERUN_AUTHENTICATED_RUNTIME",
     "REAL_LIVE_MATCH_CAPTURE_EVIDENCE",
+    "STRICT_CURRENT_FIXTURE_TRUTH_EVIDENCE_FOR_4_OF_5_LEAGUES",
     "REAL_VERIFIED_PLAYER_PROVIDER_DATASETS",
     "REAL_COMPLETE_TRANSFER_AUDITS",
     "GATE3_GATE4_FORWARD_EMPIRICAL_PROOF",
@@ -64,7 +66,15 @@
   },
   "data_coverage": {
     "historical_multileague": "MERGED_REAL_RESEARCH_BACKFILL_FIVE_LEAGUES",
-    "current_multileague": "MERGED_POLLABLE_SNAPSHOT_PARTIAL_SOURCE_AVAILABILITY",
+    "current_multileague_discovery": "MERGED_CANONICAL_CI_VERIFIED_FIVE_OF_FIVE_AVAILABLE",
+    "current_multileague_strict_gate1": "ONE_OF_FIVE_ELIGIBLE_LA_LIGA_ONLY",
+    "current_primary_provider_available_n": 1,
+    "current_secondary_discovery_available_n": 4,
+    "current_strict_gate1_rows_n": 7,
+    "current_secondary_discovery_rows_n": 105,
+    "current_total_discovery_rows_n": 112,
+    "current_total_scheduled_n": 76,
+    "current_total_settled_n": 36,
     "live_in_play_provider_boundary": "MERGED_CANONICAL_CI_VERIFIED",
     "live_prediction_http_api": "MERGED_CANONICAL_CI_VERIFIED",
     "live_provider_orchestration_runtime": "MERGED_CANONICAL_CI_VERIFIED",
@@ -81,6 +91,35 @@
     "provider_prediction_used": false,
     "bookmaker_data_used_as_live_model_input": false
   },
+  "current_multileague_discovery_evidence": {
+    "workflow_run_id": 32782586440,
+    "job_id": 97607635984,
+    "verified_head_sha": "e71c3eefca4a7f9c8fc78e84baf559273a934bcf",
+    "artifact_id": 9540286555,
+    "artifact_digest": "sha256:894233e6f7567c758434aac55701a1f8d4cd0f6a9788129ebdc5c15cf5764487",
+    "available_n": 5,
+    "primary_available_n": 1,
+    "secondary_discovery_available_n": 4,
+    "strict_gate1_eligible_n": 1,
+    "availability": {
+      "EPL": "AVAILABLE_SECONDARY_DISCOVERY",
+      "LA_LIGA": "AVAILABLE_PRIMARY",
+      "SERIE_A": "AVAILABLE_SECONDARY_DISCOVERY",
+      "BUNDESLIGA": "AVAILABLE_SECONDARY_DISCOVERY",
+      "LIGUE_1": "AVAILABLE_SECONDARY_DISCOVERY"
+    },
+    "secondary_source_class": "PUBLIC_UNOFFICIAL_SCOREBOARD",
+    "secondary_discovery_only": true,
+    "secondary_strict_gate1_eligible": false,
+    "complete_strict_truth_coverage_claimed": false,
+    "live_in_play_n": 0,
+    "current_snapshot_is_live_feed": false,
+    "unified_tests": "29/29 PASS",
+    "full_platform_assurance": "PROMOTE",
+    "capital_assurance": "LOCKED",
+    "historical_gate4_regression_run_id": 32782586446,
+    "historical_gate4_regression": "SUCCESS"
+  },
   "postgres_runtime": {
     "status": "VERIFIED",
     "pr": 29,
@@ -90,16 +129,6 @@
   },
   "latest_canonical_merges": [
     {
-      "pr": 42,
-      "capability": "CONTROLLED_CANONICAL_RUNTIME_TRIGGER_V0_1",
-      "merge_commit": "2db11137534d1d5730a2e0006afd8f399a84ac97"
-    },
-    {
-      "pr": 43,
-      "capability": "API_FOOTBALL_RUNTIME_TRIGGER_001",
-      "merge_commit": "0df93b5ccc84fe6d9294e742559778ca990aefc7"
-    },
-    {
       "pr": 45,
       "capability": "OBSERVABLE_API_FOOTBALL_RUNTIME_EVIDENCE_V0_1",
       "merge_commit": "908e5de97f615b4d38d17620f0a7bae19aeb14a2"
@@ -108,6 +137,16 @@
       "pr": 46,
       "capability": "API_FOOTBALL_RUNTIME_TRIGGER_002",
       "merge_commit": "7a0306374577c1f91e43985c0fab613e8438e15b"
+    },
+    {
+      "pr": 47,
+      "capability": "API_FOOTBALL_CREDENTIAL_BLOCKER_STATUS_SYNC",
+      "merge_commit": "ed463fdbe91ded9358e86e12df654f769a27fe63"
+    },
+    {
+      "pr": 48,
+      "capability": "SECONDARY_CURRENT_MULTI_LEAGUE_DISCOVERY_V0_1",
+      "merge_commit": "1a3e9695bc953b7371f19c91a00b4e02e9c8d29f"
     }
   ],
   "runtime_evidence": {
@@ -143,6 +182,8 @@
     "api_secret_persistence_allowed": false,
     "runtime_evidence_contains_api_key": false,
     "runtime_evidence_contains_raw_provider_payload": false,
+    "secondary_current_discovery_is_strict_gate1_truth": false,
+    "complete_current_strict_truth_coverage_claimed": false,
     "real_runtime_zero_live_response_is_live_capture": false,
     "p002_frozen_rules_changed_by_status_update": false,
     "gate4_thresholds_changed_by_status_update": false,
