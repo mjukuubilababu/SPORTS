@@ -30,6 +30,7 @@ for name,script in [
     ('atlanta_test_b_settlement','verify_atlanta_test_b_settlement.py'),
 ]: results.append(run(name,[sys.executable,script],ROOT/'scripts'))
 results.append(run('transfer_impact_intelligence',['node','--test','tests/transfer-impact-intelligence.test.mjs'],ROOT/'packages/intelligence-engine'))
+results.append(run('real_player_profile_ingestion',['node','--test','tests/real-player-profile-ingestion.test.mjs'],ROOT/'packages/intelligence-engine'))
 results.append(run('reference_e2e_verify',['npm','run','verify'],ROOT/'packages/reference-e2e'))
 
 required=[
@@ -43,7 +44,9 @@ required=[
     ROOT/'packages/gate4/data/mls-2026-test-b-settlement-atlanta-skc-2026-08-24.json',
     ROOT/'packages/gate4/data/mls-2026-test-b-candidate-atlanta-skc-2026-08-23.json',
     ROOT/'contracts/transfer-impact-intelligence-v0.1.json', ROOT/'manifests/transfer-impact-intelligence-v0.1.json',
-    ROOT/'packages/intelligence-engine/src/transfer-impact-intelligence.mjs'
+    ROOT/'packages/intelligence-engine/src/transfer-impact-intelligence.mjs',
+    ROOT/'contracts/real-player-profile-ingestion-v0.1.json', ROOT/'manifests/real-player-profile-ingestion-v0.1.json',
+    ROOT/'packages/intelligence-engine/src/real-player-profile-ingestion.mjs'
 ]
 struct_ok=all(p.exists() and p.stat().st_size>0 for p in required)
 results.append({'name':'unified_structure','command':[],'cwd':'.','returncode':0 if struct_ok else 1,'passed':struct_ok,'stdout':f'required_files={len(required)}','stderr':''})

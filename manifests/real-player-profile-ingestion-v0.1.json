@@ -1,0 +1,22 @@
+{
+  "capability": "real-player-profile-ingestion",
+  "version": "v0.1",
+  "status": "FEATURE_BRANCH_IMPLEMENTED_TESTS_AUTHORED_CI_PENDING",
+  "source_branch": "feature/real-player-profile-ingestion-v0.1",
+  "core": "packages/intelligence-engine/src/real-player-profile-ingestion.mjs",
+  "test": "packages/intelligence-engine/tests/real-player-profile-ingestion.test.mjs",
+  "runner": "scripts/run_real_player_profile_ingestion.mjs",
+  "contract": "contracts/real-player-profile-ingestion-v0.1.json",
+  "docs": "docs/real-player-profile-ingestion-v0.1.md",
+  "command": "npm run player:profiles -- <input.json> [output.json]",
+  "integration": "DIRECT_OUTPUT_TO_PLAYER_MATCHUP_INTELLIGENCE",
+  "minimum_player_sample": 8,
+  "minimum_role_cohort": 5,
+  "normalization": "EMPIRICAL_SAME_ROLE_PERCENTILE_WITH_COMPETITION_FACTOR",
+  "bookmaker_odds_used": false,
+  "reputation_scores_used": false,
+  "transfer_fees_used": false,
+  "real_dataset_status": "VERIFIED_PROVIDER_DATASET_NOT_YET_POPULATED",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}

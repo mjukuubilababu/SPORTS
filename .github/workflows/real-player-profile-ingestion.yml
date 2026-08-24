@@ -1,0 +1,74 @@
+name: Real Player Profile Ingestion
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/intelligence-engine/src/real-player-profile-ingestion.mjs'
+      - 'packages/intelligence-engine/src/player-matchup-intelligence.mjs'
+      - 'packages/intelligence-engine/src/index.mjs'
+      - 'packages/intelligence-engine/tests/real-player-profile-ingestion.test.mjs'
+      - 'packages/intelligence-engine/package.json'
+      - 'scripts/run_real_player_profile_ingestion.mjs'
+      - 'scripts/verify_unified.py'
+      - 'contracts/real-player-profile-ingestion-v0.1.json'
+      - 'docs/real-player-profile-ingestion-v0.1.md'
+      - 'manifests/real-player-profile-ingestion-v0.1.json'
+      - '.github/workflows/real-player-profile-ingestion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-player-profiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run profile ingestion tests
+        working-directory: packages/intelligence-engine
+        run: node --test tests/real-player-profile-ingestion.test.mjs
+      - name: Run player-matchup regression
+        working-directory: packages/intelligence-engine
+        run: node --test tests/player-matchup-intelligence.test.mjs
+      - name: Run real-football ingestion regression
+        working-directory: packages/intelligence-engine
+        run: node --test tests/real-football-feature-ingestion.test.mjs
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+      - name: Assert governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest=json.loads(Path('manifests/real-player-profile-ingestion-v0.1.json').read_text())
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          assert manifest['bookmaker_odds_used'] is False
+          assert manifest['reputation_scores_used'] is False
+          assert manifest['transfer_fees_used'] is False
+          assert report['core_integrated_assurance'] == 'PROMOTE'
+          assert report['tests_total'] == report['tests_passed']
+          assert report['capital_assurance'] == 'LOCKED'
+          print(json.dumps({'capability':manifest['capability'],'unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital_assurance':report['capital_assurance']},indent=2))
+          PY
+      - name: Upload verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-player-profile-ingestion-v0.1
+          path: |
+            manifests/real-player-profile-ingestion-v0.1.json
+            contracts/real-player-profile-ingestion-v0.1.json
+            artifacts/unified-verification-report.json
+            artifacts/unified-verification.log
+          if-no-files-found: error
