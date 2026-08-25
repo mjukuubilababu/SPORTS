@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass
@@ -10,6 +11,7 @@ from typing import Iterable, List, Optional, Sequence
 
 
 VERSION = "API_FOOTBALL_LIVE_PROVIDER_V0_1"
+EVENT_OBSERVATION_VERSION = "API_FOOTBALL_GAME_EVENT_OBSERVATION_V0_1"
 BASE_URL = "https://v3.football.api-sports.io/fixtures"
 
 
@@ -72,6 +74,42 @@ class LiveFixtureSnapshot:
     provider_prediction_used: bool
 
 
+@dataclass(frozen=True)
+class ApiFootballGameEventObservation:
+    observation_version: str
+    event_observation_id: str
+    fixture_id: str
+    provider_fixture_id: int
+    competition_id: str
+    provider_event_index: int
+    elapsed_minute: Optional[int]
+    extra_minute: Optional[int]
+    provider_team_id: Optional[int]
+    provider_team_name: Optional[str]
+    side: str
+    event_type: str
+    event_detail: str
+    raw_type: str
+    raw_detail: str
+    player_id: Optional[int]
+    player_name: Optional[str]
+    assist_player_id: Optional[int]
+    assist_player_name: Optional[str]
+    comments: Optional[str]
+    goal_effect: str
+    card_effect: str
+    observed_at: str
+    provider: str
+    source_url: str
+    source_fixture_sha256: str
+    source_event_sha256: str
+    provider_observation_verified: bool
+    timeline_eligible: bool
+    reasons: tuple[str, ...]
+    bookmaker_data_used: bool
+    provider_prediction_used: bool
+
+
 def _utc(value: str, *, field: str) -> str:
     try:
         parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
@@ -107,6 +145,44 @@ def _state(status_short: str) -> str:
     if code in NON_PLAYING_STATUS:
         return NON_PLAYING_STATUS[code]
     raise ValueError(f"API_FOOTBALL_STATUS_UNSUPPORTED_{code or 'EMPTY'}")
+
+
+def _canonical_token(value: object) -> str:
+    token = re.sub(r"[^A-Za-z0-9]+", "_", str(value or "").strip()).strip("_").upper()
+    return token or "UNKNOWN"
+
+
+def _canonical_event_type(value: object) -> str:
+    token = _canonical_token(value)
+    if token == "GOAL":
+        return "GOAL"
+    if token == "CARD":
+        return "CARD"
+    if token in {"SUBST", "SUBSTITUTION"}:
+        return "SUBSTITUTION"
+    if token == "VAR":
+        return "VAR"
+    return "OTHER"
+
+
+def _goal_effect(event_type: str, detail: str) -> str:
+    if event_type != "GOAL":
+        return "NOT_APPLICABLE"
+    if detail in {"NORMAL_GOAL", "OWN_GOAL", "PENALTY"}:
+        return "SCORE"
+    if detail == "MISSED_PENALTY":
+        return "NO_SCORE"
+    return "UNKNOWN"
+
+
+def _card_effect(event_type: str, detail: str) -> str:
+    if event_type != "CARD":
+        return "NOT_APPLICABLE"
+    if detail in {"RED_CARD", "YELLOW_RED_CARD"}:
+        return "DISMISSAL"
+    if detail == "YELLOW_CARD":
+        return "CAUTION"
+    return "UNKNOWN"
 
 
 def competition_by_id(competition_id: str) -> ApiFootballCompetition:
@@ -199,6 +275,115 @@ def parse_fixture(item: dict, *, observed_at: str, source_url: str = BASE_URL) -
     )
 
 
+def parse_fixture_events(item: dict, *, snapshot: LiveFixtureSnapshot) -> List[ApiFootballGameEventObservation]:
+    events = item.get("events")
+    if events is None:
+        return []
+    if not isinstance(events, list):
+        raise ValueError("API_FOOTBALL_EVENTS_ARRAY_REQUIRED")
+
+    rows: List[ApiFootballGameEventObservation] = []
+    for index, raw_event in enumerate(events):
+        if not isinstance(raw_event, dict):
+            raise ValueError("API_FOOTBALL_EVENT_OBJECT_REQUIRED")
+        time = raw_event.get("time") or {}
+        team = raw_event.get("team") or {}
+        player = raw_event.get("player") or {}
+        assist = raw_event.get("assist") or {}
+
+        elapsed = _integer(time.get("elapsed"))
+        extra = _integer(time.get("extra"))
+        team_id = _integer(team.get("id"))
+        team_name = str(team.get("name") or "").strip() or None
+        player_id = _integer(player.get("id"))
+        player_name = str(player.get("name") or "").strip() or None
+        assist_id = _integer(assist.get("id"))
+        assist_name = str(assist.get("name") or "").strip() or None
+        comments = str(raw_event.get("comments") or "").strip() or None
+        raw_type = str(raw_event.get("type") or "").strip()
+        raw_detail = str(raw_event.get("detail") or "").strip()
+        event_type = _canonical_event_type(raw_type)
+        event_detail = _canonical_token(raw_detail)
+
+        reasons: List[str] = []
+        if team_id == snapshot.home_team_id:
+            side = "HOME"
+        elif team_id == snapshot.away_team_id:
+            side = "AWAY"
+        elif team_id is None:
+            side = "UNKNOWN"
+            reasons.append("EVENT_TEAM_ID_MISSING")
+        else:
+            side = "UNKNOWN"
+            reasons.append("EVENT_TEAM_ID_MISMATCH")
+
+        if elapsed is None:
+            reasons.append("EVENT_ELAPSED_MISSING")
+        elif not (0 <= elapsed <= 130):
+            reasons.append("EVENT_ELAPSED_OUT_OF_RANGE")
+        if extra is not None and not (0 <= extra <= 30):
+            reasons.append("EVENT_EXTRA_MINUTE_OUT_OF_RANGE")
+        if event_type == "OTHER":
+            reasons.append("EVENT_TYPE_UNMAPPED")
+
+        goal_effect = _goal_effect(event_type, event_detail)
+        card_effect = _card_effect(event_type, event_detail)
+        if goal_effect == "UNKNOWN":
+            reasons.append("GOAL_EFFECT_UNKNOWN")
+
+        raw = json.dumps(raw_event, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        event_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        timeline_eligible = not any(
+            reason in {
+                "EVENT_TEAM_ID_MISSING",
+                "EVENT_TEAM_ID_MISMATCH",
+                "EVENT_ELAPSED_MISSING",
+                "EVENT_ELAPSED_OUT_OF_RANGE",
+                "EVENT_EXTRA_MINUTE_OUT_OF_RANGE",
+                "EVENT_TYPE_UNMAPPED",
+                "GOAL_EFFECT_UNKNOWN",
+            }
+            for reason in reasons
+        )
+        rows.append(
+            ApiFootballGameEventObservation(
+                observation_version=EVENT_OBSERVATION_VERSION,
+                event_observation_id=f"API_FOOTBALL-EVENT-{snapshot.provider_fixture_id}-{index}-{event_hash[:16]}",
+                fixture_id=snapshot.fixture_id,
+                provider_fixture_id=snapshot.provider_fixture_id,
+                competition_id=snapshot.competition_id,
+                provider_event_index=index,
+                elapsed_minute=elapsed,
+                extra_minute=extra,
+                provider_team_id=team_id,
+                provider_team_name=team_name,
+                side=side,
+                event_type=event_type,
+                event_detail=event_detail,
+                raw_type=raw_type,
+                raw_detail=raw_detail,
+                player_id=player_id,
+                player_name=player_name,
+                assist_player_id=assist_id,
+                assist_player_name=assist_name,
+                comments=comments,
+                goal_effect=goal_effect,
+                card_effect=card_effect,
+                observed_at=snapshot.observed_at,
+                provider="API_FOOTBALL",
+                source_url=snapshot.source_url,
+                source_fixture_sha256=snapshot.source_fixture_sha256,
+                source_event_sha256=event_hash,
+                provider_observation_verified=True,
+                timeline_eligible=timeline_eligible,
+                reasons=tuple(sorted(set(reasons))),
+                bookmaker_data_used=False,
+                provider_prediction_used=False,
+            )
+        )
+    return rows
+
+
 def parse_response(payload: dict, *, observed_at: str, source_url: str = BASE_URL) -> List[LiveFixtureSnapshot]:
     if not isinstance(payload, dict):
         raise ValueError("API_FOOTBALL_RESPONSE_OBJECT_REQUIRED")
@@ -213,6 +398,27 @@ def parse_response(payload: dict, *, observed_at: str, source_url: str = BASE_UR
     if len(ids) != len(set(ids)):
         raise ValueError("API_FOOTBALL_DUPLICATE_FIXTURE_ID")
     return rows
+
+
+def parse_response_with_events(
+    payload: dict,
+    *,
+    observed_at: str,
+    source_url: str = BASE_URL,
+) -> tuple[List[LiveFixtureSnapshot], List[ApiFootballGameEventObservation]]:
+    snapshots = parse_response(payload, observed_at=observed_at, source_url=source_url)
+    response = payload.get("response") or []
+    by_fixture = {row.provider_fixture_id: row for row in snapshots}
+    events: List[ApiFootballGameEventObservation] = []
+    for item in response:
+        fixture = item.get("fixture") or {}
+        provider_fixture_id = _integer(fixture.get("id"), allow_none=False)
+        snapshot = by_fixture[provider_fixture_id]
+        events.extend(parse_fixture_events(item, snapshot=snapshot))
+    event_ids = [row.event_observation_id for row in events]
+    if len(event_ids) != len(set(event_ids)):
+        raise ValueError("API_FOOTBALL_DUPLICATE_EVENT_OBSERVATION_ID")
+    return snapshots, events
 
 
 def live_model_input(snapshot: LiveFixtureSnapshot) -> dict:
@@ -240,7 +446,7 @@ def live_model_input(snapshot: LiveFixtureSnapshot) -> dict:
     }
 
 
-def fetch_live(*, api_key: str, competition_ids: Iterable[str], timeout: int = 20) -> tuple[List[LiveFixtureSnapshot], str]:
+def _fetch_payload(*, api_key: str, competition_ids: Iterable[str], timeout: int = 20) -> tuple[dict, str, str]:
     key = str(api_key or "").strip()
     if not key:
         raise ValueError("APISPORTS_KEY_REQUIRED")
@@ -256,17 +462,39 @@ def fetch_live(*, api_key: str, competition_ids: Iterable[str], timeout: int = 2
     with urllib.request.urlopen(request, timeout=timeout) as response:
         body = response.read().decode("utf-8")
     observed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    payload = json.loads(body)
+    return json.loads(body), observed_at, url
+
+
+def fetch_live(*, api_key: str, competition_ids: Iterable[str], timeout: int = 20) -> tuple[List[LiveFixtureSnapshot], str]:
+    payload, observed_at, url = _fetch_payload(api_key=api_key, competition_ids=competition_ids, timeout=timeout)
     return parse_response(payload, observed_at=observed_at, source_url=url), observed_at
+
+
+def fetch_live_with_events(
+    *,
+    api_key: str,
+    competition_ids: Iterable[str],
+    timeout: int = 20,
+) -> tuple[List[LiveFixtureSnapshot], List[ApiFootballGameEventObservation], str]:
+    payload, observed_at, url = _fetch_payload(api_key=api_key, competition_ids=competition_ids, timeout=timeout)
+    snapshots, events = parse_response_with_events(payload, observed_at=observed_at, source_url=url)
+    return snapshots, events, observed_at
 
 
 def snapshot_to_dict(snapshot: LiveFixtureSnapshot) -> dict:
     return asdict(snapshot)
 
 
+def event_to_dict(event: ApiFootballGameEventObservation) -> dict:
+    row = asdict(event)
+    row["reasons"] = list(event.reasons)
+    return row
+
+
 def provider_manifest() -> dict:
     return {
         "version": VERSION,
+        "event_observation_version": EVENT_OBSERVATION_VERSION,
         "provider": "API_FOOTBALL",
         "base_url": BASE_URL,
         "competitions": [asdict(row) for row in COMPETITIONS],
@@ -274,6 +502,9 @@ def provider_manifest() -> dict:
             "documented_provider_api_only": True,
             "api_key_from_environment_only": True,
             "live_score_and_time_are_truth_inputs": True,
+            "game_events_retained_from_same_authenticated_fixture_response": True,
+            "unmapped_events_retained_not_dropped": True,
+            "event_effects_do_not_silently_change_model_rates": True,
             "bookmaker_data_used": False,
             "provider_prediction_used": False,
             "silent_rate_multiplier_derivation": False,
