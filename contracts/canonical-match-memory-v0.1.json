@@ -1,0 +1,96 @@
+{
+  "contract_id": "CANONICAL_MATCH_MEMORY_V0_1",
+  "version": "v0.1",
+  "status": "STEP_1_IMPLEMENTED",
+  "scope": "GLOBAL_FOOTBALL_LEAGUE_AGNOSTIC",
+  "purpose": "Materialize a governed, immutable per-match memory envelope from existing canonical truth and related evidence without replacing Gate1 truth ownership or introducing hindsight.",
+  "depends_on": {
+    "pattern_intelligence_contract": "PATTERN_INTELLIGENCE_CONTRACT_V0_1",
+    "canonical_truth_store": "CANONICAL_HISTORICAL_TRUTH_STORE_V0_1",
+    "p002": "FROZEN_RESEARCH_RULE",
+    "truth_owner": "GATE1_EXISTING_OWNER",
+    "reasoning_owner": "packages/intelligence-engine"
+  },
+  "construction_policy": {
+    "preserve_existing_system": true,
+    "delete_existing_artifact_without_explicit_user_approval": false,
+    "replace_existing_artifact_without_explicit_user_approval": false,
+    "conflict_requires_explicit_user_decision": true,
+    "step_1_additive_only": true
+  },
+  "memory_semantics": {
+    "authoritative_truth_owner": "GATE1",
+    "match_memory_is_derived_materialized_view": true,
+    "match_memory_may_not_rewrite_truth": true,
+    "one_memory_identity_per_canonical_match_id": true,
+    "all_outcome_classes_retained": ["HOME_WIN", "DRAW", "AWAY_WIN"],
+    "correct_predictions_retained": true,
+    "incorrect_predictions_retained": true,
+    "unverified_or_quarantined_truth_may_be_retained_as_memory_but_not_pattern_truth": true,
+    "outcome_based_deletion_forbidden": true,
+    "missing_timestamp_guessing_forbidden": true,
+    "missing_provenance_guessing_forbidden": true
+  },
+  "required_sections": ["identity", "truth", "evidence", "learning", "timeline", "governance", "memory_fingerprint"],
+  "identity_required_fields": ["match_id", "canonical_match_date", "season", "league", "home_team", "away_team"],
+  "truth_required_fields": ["status", "verified", "final_score", "actual_outcome", "total_goals", "both_teams_scored", "home_team_scored", "away_team_scored", "result_provenance", "truth_fingerprint"],
+  "evidence_sections": ["observations", "market_snapshots", "prediction_settlements"],
+  "observation_policy": {
+    "required_fields_when_present": ["observation_id", "event_id", "entity_type", "entity_id", "observation_type", "value", "observed_at", "available_at", "source", "source_type", "is_verified", "provenance_id"],
+    "pre_match_influence_requires_available_at_not_after_cutoff": true,
+    "post_match_observation_retained": true,
+    "post_match_observation_cannot_rewrite_same_match_prediction": true,
+    "duplicate_observation_id_forbidden": true
+  },
+  "prediction_settlement_policy": {
+    "retain_correct": true,
+    "retain_incorrect": true,
+    "retain_market_win_loss_when_supplied": true,
+    "settlement_event_id_must_match_memory_event_id": true,
+    "settlement_cannot_rewrite_source_prediction": true,
+    "prediction_error_is_learning_evidence_not_bad_data": true
+  },
+  "pattern_eligibility": {
+    "verified_truth_required": true,
+    "accepted_truth_required": true,
+    "pre_match_pattern_inputs_require_cutoff_eligibility": true,
+    "quarantined_truth_decision_weight": 0,
+    "unverified_truth_decision_weight": 0,
+    "market_to_model_circularity_forbidden": true
+  },
+  "timeline_boundary": {
+    "step_1_timeline_state": "STEP_2_PENDING",
+    "minute_by_minute_goal_card_substitution_modeling_in_step_1": false,
+    "step_2_owner": "GAME_STATE_TIMELINE_FUTURE_STAGE",
+    "reason": "Step 1 establishes durable match memory identity and evidence retention; chronological game-state event modeling belongs to Step 2."
+  },
+  "immutability": {
+    "memory_object_immutable_after_materialization": true,
+    "truth_fingerprint_required": true,
+    "memory_fingerprint_required": true,
+    "fingerprints_use_deterministic_canonical_serialization": true,
+    "settlement_append_requires_new_memory_version_or_append_only_store": true
+  },
+  "governance": {
+    "prediction_validation_execution_are_separate": true,
+    "no_hindsight": true,
+    "automatic_retuning": false,
+    "automatic_pattern_promotion": false,
+    "automatic_production_self_modification": false,
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "definition_of_done": {
+    "win_draw_loss_same_schema": true,
+    "truth_provenance_preserved": true,
+    "observation_timestamps_preserved": true,
+    "correct_and_incorrect_prediction_memory_supported": true,
+    "unverified_truth_retained_but_not_pattern_eligible": true,
+    "memory_deterministically_fingerprinted": true,
+    "game_state_timeline_deferred_to_step_2": true,
+    "existing_artifacts_deleted": 0
+  },
+  "next_stage": "STEP_2_GAME_STATE_TIMELINE"
+}
