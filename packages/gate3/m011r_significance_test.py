@@ -4,7 +4,8 @@ from math import isfinite, log
 from random import Random
 from typing import Dict, List, Sequence, Tuple
 
-from m011r_bayesian_calibrator import EPS, MODEL_ID, MODEL_VERSION
+from gate3_engine import EPS as GATE3_EPS
+from m011r_bayesian_calibrator import MODEL_ID, MODEL_VERSION
 
 
 SIGNIFICANCE_TEST_VERSION = "M011R_PAIRED_BOOTSTRAP_SIGNIFICANCE_V0_1"
@@ -18,8 +19,8 @@ def _finite_probability(value: object) -> bool:
     return isinstance(value, (int, float)) and isfinite(float(value)) and 0.0 < float(value) < 1.0
 
 
-def _clip(p: float) -> float:
-    return min(max(float(p), EPS), 1.0 - EPS)
+def _clip_for_gate3_loss(p: float) -> float:
+    return min(max(float(p), GATE3_EPS), 1.0 - GATE3_EPS)
 
 
 def _quantile(sorted_values: Sequence[float], q: float) -> float:
@@ -66,8 +67,10 @@ def _paired_loss_differences(predictions: Sequence[Dict]) -> Tuple[List[float], 
         market_brier = (kp - y) ** 2
         brier_diffs.append(market_brier - model_brier)
 
-        model_logloss = -(y * log(_clip(mp)) + (1 - y) * log(1.0 - _clip(mp)))
-        market_logloss = -(y * log(_clip(kp)) + (1 - y) * log(1.0 - _clip(kp)))
+        model_p_loss = _clip_for_gate3_loss(mp)
+        market_p_loss = _clip_for_gate3_loss(kp)
+        model_logloss = -(y * log(model_p_loss) + (1 - y) * log(1.0 - model_p_loss))
+        market_logloss = -(y * log(market_p_loss) + (1 - y) * log(1.0 - market_p_loss))
         logloss_diffs.append(market_logloss - model_logloss)
         match_ids.append(match_id)
 
@@ -78,18 +81,31 @@ def _paired_loss_differences(predictions: Sequence[Dict]) -> Tuple[List[float], 
     return brier_diffs, logloss_diffs, match_ids
 
 
-def _bootstrap_mean_distribution(values: Sequence[float], reps: int, rng: Random) -> List[float]:
+def _paired_bootstrap_distributions(
+    brier_values: Sequence[float],
+    logloss_values: Sequence[float],
+    reps: int,
+    rng: Random,
+) -> Tuple[List[float], List[float]]:
     if reps < 1000:
         raise ValueError("M011R_BOOTSTRAP_REPS_MUST_BE_AT_LEAST_1000")
-    n = len(values)
-    out: List[float] = []
+    if len(brier_values) != len(logloss_values):
+        raise ValueError("M011R_BOOTSTRAP_METRIC_PAIR_LENGTH_MISMATCH")
+    n = len(brier_values)
+    brier_out: List[float] = []
+    logloss_out: List[float] = []
     for _ in range(reps):
-        total = 0.0
+        brier_total = 0.0
+        logloss_total = 0.0
         for _ in range(n):
-            total += values[rng.randrange(n)]
-        out.append(total / n)
-    out.sort()
-    return out
+            idx = rng.randrange(n)
+            brier_total += brier_values[idx]
+            logloss_total += logloss_values[idx]
+        brier_out.append(brier_total / n)
+        logloss_out.append(logloss_total / n)
+    brier_out.sort()
+    logloss_out.sort()
+    return brier_out, logloss_out
 
 
 def _metric_summary(values: Sequence[float], distribution: Sequence[float], confidence: float) -> Dict:
@@ -99,7 +115,7 @@ def _metric_summary(values: Sequence[float], distribution: Sequence[float], conf
     observed = sum(values) / len(values)
     gt_zero = sum(1 for value in distribution if value > 0.0) / len(distribution)
     lt_zero = sum(1 for value in distribution if value < 0.0) / len(distribution)
-    eq_zero = 1.0 - gt_zero - lt_zero
+    eq_zero = max(0.0, 1.0 - gt_zero - lt_zero)
     return {
         "observed_delta": observed,
         "ci_lower": lower,
@@ -140,16 +156,21 @@ def paired_bootstrap_significance(
         raise ValueError("M011R_BOOTSTRAP_MARKET_EVALUABLE_N_MISMATCH")
 
     rng = Random(seed)
-    brier_distribution = _bootstrap_mean_distribution(brier_diffs, reps, rng)
-    logloss_distribution = _bootstrap_mean_distribution(logloss_diffs, reps, rng)
+    brier_distribution, logloss_distribution = _paired_bootstrap_distributions(
+        brier_diffs,
+        logloss_diffs,
+        reps,
+        rng,
+    )
 
-    result = {
+    return {
         "test_version": SIGNIFICANCE_TEST_VERSION,
         "model_id": MODEL_ID,
         "model_version": MODEL_VERSION,
         "evaluation_classification": EVALUATION_CLASSIFICATION,
         "resampling_method": "PAIRED_NONPARAMETRIC_BOOTSTRAP_PERCENTILE_CI",
         "resampling_unit": "MARKET_EVALUABLE_MATCH_PAIR",
+        "joint_metric_resampling": True,
         "delta_definition": "MARKET_LOSS_MINUS_M011R_LOSS_POSITIVE_MEANS_M011R_BETTER",
         "bootstrap_reps": reps,
         "seed": seed,
@@ -173,4 +194,3 @@ def paired_bootstrap_significance(
             "real_money": "NO",
         },
     }
-    return result
