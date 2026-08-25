@@ -35,6 +35,7 @@ jobs:
           python scripts/test_m013_negative_binomial.py
           python scripts/test_m014_hierarchical_attack_defence.py
           python scripts/test_m015_regularized_poisson_glm.py
+          python scripts/test_m015_forward_validation.py
 
       - name: Run real historical research runtime
         run: python scripts/run_real_2026_historical_research.py --bootstrap-reps 2000
@@ -50,6 +51,9 @@ jobs:
 
       - name: Run M015 regularized Poisson GLM walk-forward diagnostic
         run: python scripts/run_m015_walkforward.py
+
+      - name: Verify M015 preregistered forward validation state
+        run: python scripts/run_m015_forward_validation.py
 
       - name: Run Gate4 real robustness adapter
         run: |
@@ -72,6 +76,8 @@ jobs:
           e014=json.loads(Path('artifacts/m014/TEST_EVIDENCE.json').read_text())
           m015=json.loads(Path('artifacts/m015-walkforward-report-v0.1.json').read_text())
           e015=json.loads(Path('artifacts/m015/TEST_EVIDENCE.json').read_text())
+          f015=json.loads(Path('artifacts/m015-forward-validation-report-v0.1.json').read_text())
+          ef015=json.loads(Path('artifacts/m015-forward/TEST_EVIDENCE.json').read_text())
           print('GATE3')
           print(json.dumps(g3['headline'], indent=2))
           print('M011R')
@@ -113,6 +119,16 @@ jobs:
               'metrics':m015['walk_forward']['metrics'],
               'test_pass':e015['overall']['TEST_PASS'],
           }, indent=2))
+          print('M015_FORWARD')
+          print(json.dumps({
+              'registration_state':f015['registration']['state'],
+              'summary':f015['forward_validation']['summary'],
+              'gate_results':f015['forward_validation']['gate_results'],
+              'validation_state':f015['forward_validation']['validation_state'],
+              'model_state':f015['forward_validation']['model_state'],
+              'decision_weight':f015['forward_validation']['decision_weight'],
+              'test_waiting':ef015['overall']['TEST_WAITING'],
+          }, indent=2))
           print('GATE4')
           print(json.dumps({
               'n':g4['n'],
@@ -139,5 +155,7 @@ jobs:
             artifacts/m014/TEST_EVIDENCE.json
             artifacts/m015-walkforward-report-v0.1.json
             artifacts/m015/TEST_EVIDENCE.json
+            artifacts/m015-forward-validation-report-v0.1.json
+            artifacts/m015-forward/TEST_EVIDENCE.json
             artifacts/real-gate4-robustness-report.json
           if-no-files-found: error
