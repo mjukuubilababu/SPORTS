@@ -1,0 +1,149 @@
+{
+  "contract_id": "BEHAVIORAL_STATE_FEATURES_V0_1",
+  "version": "v0.1",
+  "status": "STEP_3_IMPLEMENTED",
+  "purpose": "Convert many settled, verified Canonical Match Memory + Game-State Timeline pairs into auditable team behavioral observations and descriptive feature profiles with explicit opportunities, sample sizes, venue/opponent context, and uncertainty, without assigning predictive impact.",
+  "scope": "GLOBAL_FOOTBALL_LEAGUE_AGNOSTIC",
+  "depends_on": {
+    "pattern_intelligence_contract": "PATTERN_INTELLIGENCE_CONTRACT_V0_1",
+    "canonical_match_memory": "CANONICAL_MATCH_MEMORY_V0_1",
+    "game_state_timeline": "GAME_STATE_TIMELINE_V0_1"
+  },
+  "input_pair_requirements": {
+    "settled_verified_match_memory_required": true,
+    "timeline_fingerprint_valid_required": true,
+    "memory_fingerprint_valid_required": true,
+    "same_canonical_match_id_required": true,
+    "timeline_expected_score_source": "CANONICAL_MATCH_MEMORY_TRUTH",
+    "timeline_score_consistency": "VERIFIED",
+    "timeline_pattern_truth_eligible": true,
+    "memory_pattern_truth_eligible": true,
+    "duplicate_match_pair_forbidden": true
+  },
+  "retention_policy": {
+    "eligible_match_pairs_materialized": true,
+    "ineligible_but_structurally_valid_pairs_retained_with_reasons": true,
+    "tampered_or_cross_match_pairs_fail_closed": true,
+    "win_draw_loss_all_retained": true,
+    "outcome_based_deletion_forbidden": true,
+    "opponent_context_retained_per_match": true,
+    "home_away_context_retained_per_match": true
+  },
+  "match_observation_fields": [
+    "canonical_match_id",
+    "canonical_match_date",
+    "season",
+    "league",
+    "subject_team",
+    "opponent_team",
+    "venue_side",
+    "final_result",
+    "final_score_for",
+    "final_score_against",
+    "led_at_any_time",
+    "first_lead_minute",
+    "lead_surrendered",
+    "lead_surrendered_then_recovered_win",
+    "points_dropped_after_leading",
+    "trailed_at_any_time",
+    "first_trailing_minute",
+    "equalized_after_trailing",
+    "comeback_go_ahead",
+    "recovered_nonloss_after_trailing",
+    "recovered_win_after_trailing",
+    "opening_goal_scored",
+    "opening_goal_conceded",
+    "late_goal_scored_n",
+    "late_goal_conceded_n",
+    "dismissal_for_n",
+    "dismissal_against_n",
+    "goals_scored_after_own_first_dismissal_n",
+    "goals_conceded_after_own_first_dismissal_n",
+    "substitution_n",
+    "first_substitution_minute",
+    "goals_scored_by_period",
+    "goals_conceded_by_period"
+  ],
+  "period_bins": [
+    "0_15",
+    "16_30",
+    "31_45_PLUS",
+    "46_60",
+    "61_75",
+    "76_90_PLUS"
+  ],
+  "late_goal_definition": {
+    "elapsed_minute_gte": 76,
+    "extra_time_after_90_remains_in_76_90_PLUS": true
+  },
+  "aggregation_rules": {
+    "binary_metrics_use_explicit_opportunity_denominator": true,
+    "zero_opportunity_rate": null,
+    "proportion_uncertainty": "WILSON_95",
+    "goal_counts_report_counts_and_per_match_rates": true,
+    "home_and_away_splits_preserved": true,
+    "opponent_rows_preserved_for_later_stratification": true,
+    "small_samples_are_exposed_not_hidden": true,
+    "discovery_min_n_from_frozen_p002": 30,
+    "match_n_below_discovery_min_n": "DESCRIPTIVE_ONLY_INSUFFICIENT_FOR_PATTERN_DISCOVERY"
+  },
+  "feature_groups": {
+    "outcome_distribution": ["win_rate", "draw_rate", "loss_rate"],
+    "lead_behavior": [
+      "led_match_rate",
+      "uninterrupted_lead_win_rate",
+      "lead_surrender_rate",
+      "points_dropped_after_leading_rate",
+      "lead_surrender_recovery_win_rate"
+    ],
+    "trailing_response": [
+      "trailed_match_rate",
+      "equalize_after_trailing_rate",
+      "nonloss_after_trailing_rate",
+      "win_after_trailing_rate",
+      "comeback_go_ahead_rate"
+    ],
+    "temporal_behavior": [
+      "late_goal_scored_match_rate",
+      "late_goal_conceded_match_rate",
+      "goals_scored_by_period_per_match",
+      "goals_conceded_by_period_per_match"
+    ],
+    "dismissal_context": [
+      "own_dismissal_match_rate",
+      "opponent_dismissal_match_rate",
+      "goals_scored_after_own_first_dismissal_per_opportunity",
+      "goals_conceded_after_own_first_dismissal_per_opportunity"
+    ]
+  },
+  "existing_intelligence_bridge": {
+    "target_existing_domain": "TEMPORAL_SCORING_DEFENDING",
+    "automatic_injection": false,
+    "automatic_impact_assignment": false,
+    "decision_weight": 0,
+    "reason": "STEP_3_FEATURES_ARE_DESCRIPTIVE_UNTIL_LATER_PATTERN_DISCOVERY_AND_OUT_OF_SAMPLE_VALIDATION"
+  },
+  "psychology_boundary": {
+    "psychology_label_is_feature": false,
+    "observable_state_response_is_feature": true,
+    "behavioral_feature_is_not_causal_psychology_claim": true
+  },
+  "integrity": {
+    "per_match_observation_fingerprint_required": true,
+    "profile_fingerprint_required": true,
+    "tamper_detection_required": true,
+    "source_timeline_and_memory_fingerprints_retained": true
+  },
+  "next_stage": "STEP_4_PATTERN_DISCOVERY_CANDIDATES",
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "market_data_used": false,
+    "bookmaker_data_used_as_feature_truth": false,
+    "automatic_model_retuning": false,
+    "automatic_pattern_promotion": false,
+    "predictive_weight_assigned": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
