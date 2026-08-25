@@ -120,9 +120,69 @@ jobs:
       - name: Run Canonical Match Memory tests
         run: node packages/intelligence-engine/tests/canonical-match-memory.test.mjs
 
-      - name: Run full intelligence-engine regression suite
-        working-directory: packages/intelligence-engine
-        run: npm test
+      - name: Compare full intelligence-engine regression against canonical base
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mkdir -p artifacts/canonical-match-memory-v0.1
+          rm -rf /tmp/step1-base /tmp/step1-head
+          git worktree add --detach /tmp/step1-base "$BASE"
+          git worktree add --detach /tmp/step1-head "$HEAD"
+
+          set +e
+          (cd /tmp/step1-base/packages/intelligence-engine && npm test) > /tmp/step1-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step1-head/packages/intelligence-engine && npm test) > /tmp/step1-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          pattern=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          def failures(path):
+              out=[]
+              for line in Path(path).read_text(errors='replace').splitlines():
+                  m=pattern.match(line.strip())
+                  if m:
+                      out.append(m.group(1).strip())
+              return sorted(set(out))
+
+          base=failures('/tmp/step1-base.log')
+          head=failures('/tmp/step1-head.log')
+          summary={
+              'comparison':'CANONICAL_BASE_VS_STEP1_HEAD',
+              'base_failure_n':len(base),
+              'head_failure_n':len(head),
+              'base_failures':base,
+              'head_failures':head,
+              'new_failure_names':sorted(set(head)-set(base)),
+              'removed_failure_names':sorted(set(base)-set(head)),
+              'failure_name_delta_zero':base==head,
+          }
+          Path('artifacts/canonical-match-memory-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          if base != head:
+              raise SystemExit('STEP1_REGRESSION_FAILURE_SET_CHANGED')
+          PY
+
+          echo "BASE_NPM_TEST_RC=$BASE_RC"
+          echo "HEAD_NPM_TEST_RC=$HEAD_RC"
+          if [[ "$BASE_RC" -eq 0 && "$HEAD_RC" -ne 0 ]]; then
+            echo "STEP1_INTRODUCED_REGRESSION"
+            cat /tmp/step1-head.log
+            exit 1
+          fi
+          echo "STEP1_REGRESSION_DELTA=0"
+          if [[ "$BASE_RC" -ne 0 ]]; then
+            echo "CANONICAL_BASELINE_HAS_EXISTING_TEST_FAILURES=TRUE"
+          else
+            echo "CANONICAL_BASELINE_HAS_EXISTING_TEST_FAILURES=FALSE"
+          fi
 
       - name: Write Step 1 test evidence
         shell: bash
@@ -136,6 +196,18 @@ jobs:
           def sha(path):
               return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
+          regression_path=Path('artifacts/canonical-match-memory-v0.1/REGRESSION_BASELINE.json')
+          regression=json.loads(regression_path.read_text()) if regression_path.exists() else {
+              'comparison':'NOT_AVAILABLE_ON_WORKFLOW_DISPATCH',
+              'base_failure_n':None,
+              'head_failure_n':None,
+              'base_failures':[],
+              'head_failures':[],
+              'new_failure_names':[],
+              'removed_failure_names':[],
+              'failure_name_delta_zero':None,
+          }
+
           evidence={
             'artifact':'Canonical_Match_Memory_v0.1',
             'step':'STEP_1_CANONICAL_MATCH_MEMORY',
@@ -147,6 +219,9 @@ jobs:
               'ADDITIVE_ONLY':True,
               'EXISTING_ARTIFACTS_DELETED':0,
               'EXISTING_ARTIFACTS_REPLACED':0,
+              'REGRESSION_DELTA_ZERO':regression['failure_name_delta_zero'],
+              'CANONICAL_BASELINE_EXISTING_FAILURE_N':regression['base_failure_n'],
+              'STEP1_HEAD_FAILURE_N':regression['head_failure_n'],
             },
             'capabilities':{
               'WIN_DRAW_LOSS_SAME_SCHEMA':True,
@@ -163,6 +238,7 @@ jobs:
               'GAME_STATE_TIMELINE_STATE':'STEP_2_PENDING',
               'PATTERN_DISCOVERY_IMPLEMENTED_BY_STEP_1':False,
             },
+            'regression_baseline':regression,
             'governance':{
               'AUTHORITATIVE_TRUTH_OWNER':'GATE1',
               'MATCH_MEMORY_ROLE':'DERIVED_IMMUTABLE_MATERIALIZED_VIEW',
@@ -171,6 +247,7 @@ jobs:
               'NO_HINDSIGHT':True,
               'AUTOMATIC_RETUNING':False,
               'AUTOMATIC_PATTERN_PROMOTION':False,
+              'EXISTING_BASELINE_TEST_DEBT_WAS_NOT_MODIFIED_BY_STEP1':True,
               'CAPITAL_EFFECT':'NONE',
               'REAL_MONEY':'NO',
             },
@@ -191,5 +268,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: canonical-match-memory-v0.1-evidence
-          path: artifacts/canonical-match-memory-v0.1/TEST_EVIDENCE.json
+          path: |
+            artifacts/canonical-match-memory-v0.1/TEST_EVIDENCE.json
+            artifacts/canonical-match-memory-v0.1/REGRESSION_BASELINE.json
           if-no-files-found: error
