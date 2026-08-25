@@ -26,6 +26,8 @@ from run_real_2026_historical_research import _request
 REGISTRATION = ROOT / "packages" / "gate4" / "data" / "m015-forward-registration-v0.1.json"
 HOLDOUT = ROOT / "packages" / "gate4" / "data" / "mls-2026-evaluation-holdout-a-v0.1.json"
 LEDGER = ROOT / "packages" / "gate4" / "data" / "m015-forward-evidence-ledger-v0.1.json"
+TARGET_REGISTRATION = ROOT / "packages" / "gate4" / "data" / "m015-first-real-target-registration-v0.1.json"
+PERSISTED_CANDIDATE = ROOT / "packages" / "gate4" / "data" / "m015-first-real-forward-target-candidate-v0.1.json"
 
 CAPTURED_AT = "2026-08-25T00:42:00Z"
 EXPECTED_SOURCE_ROW_ID = "322"
@@ -45,6 +47,8 @@ def main() -> int:
     registration = json.loads(REGISTRATION.read_text(encoding="utf-8"))
     holdout = json.loads(HOLDOUT.read_text(encoding="utf-8"))
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
+    target_registration = json.loads(TARGET_REGISTRATION.read_text(encoding="utf-8"))
+    persisted_candidate = json.loads(PERSISTED_CANDIDATE.read_text(encoding="utf-8"))
 
     ledger_report = validate_ledger(
         ledger,
@@ -94,13 +98,25 @@ def main() -> int:
     if candidate["market_probability"] is not None or candidate["market_snapshot"] is not None:
         raise RuntimeError("M015_FIRST_TARGET_MARKET_MUST_REMAIN_PENDING")
 
+    if not verify_candidate(persisted_candidate):
+        raise RuntimeError("M015_FIRST_TARGET_PERSISTED_CANDIDATE_INVALID")
+    if persisted_candidate != candidate:
+        raise RuntimeError("M015_FIRST_TARGET_PERSISTED_CANDIDATE_REGENERATION_MISMATCH")
+    if target_registration.get("candidate_fingerprint_sha256") != candidate["candidate_fingerprint_sha256"]:
+        raise RuntimeError("M015_FIRST_TARGET_REGISTRATION_FINGERPRINT_MISMATCH")
+    if target_registration.get("match_id") != candidate["match_id"]:
+        raise RuntimeError("M015_FIRST_TARGET_REGISTRATION_MATCH_ID_MISMATCH")
+    if target_registration.get("state") != "MODEL_CANDIDATE_CAPTURED_MARKET_PENDING":
+        raise RuntimeError("M015_FIRST_TARGET_REGISTRATION_STATE_INVALID")
+
     report = {
         "report_version": "M015_FIRST_REAL_FORWARD_TARGET_CAPTURE_V0_1",
         "capture_classification": "PROSPECTIVE_REAL_PRE_KICKOFF_MODEL_CANDIDATE",
         "fixture_source": {
             "provider": "FixtureDownload",
             "url": FIXTUREDOWNLOAD_UTC_CSV,
-            "sha256": fixture_sha256,
+            "sha256_at_runtime": fixture_sha256,
+            "sha256_at_initial_capture": target_registration["target_source_sha256"],
             "source_row_id": target.source_row_id,
         },
         "target": {
@@ -123,6 +139,7 @@ def main() -> int:
             "real_fixture": True,
             "fixture_selected_as_earliest_post_registration_mls_fixture": True,
             "prediction_created_pre_kickoff": True,
+            "persisted_candidate_regenerated_exactly": True,
             "market_not_used_as_model_input": True,
             "market_state": "PENDING",
             "not_appended_to_forward_ledger_without_market": True,
@@ -137,6 +154,7 @@ def main() -> int:
             "TEST_EXECUTED": True,
             "TARGET_CAPTURED": True,
             "CANDIDATE_FINGERPRINT_VALID": True,
+            "PERSISTED_CANDIDATE_MATCH": True,
             "MARKET_PENDING": True,
             "LEDGER_UNCHANGED": True,
             "INDEPENDENT_N": 0,
@@ -170,6 +188,7 @@ def main() -> int:
         "model_probability": candidate["model_probability"],
         "candidate_fingerprint_sha256": candidate["candidate_fingerprint_sha256"],
         "training_state_fingerprint": candidate["training_state_fingerprint"],
+        "persisted_candidate_match": True,
         "ledger_independent_n": 0,
     }, indent=2))
     return 0
