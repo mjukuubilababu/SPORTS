@@ -36,6 +36,7 @@ jobs:
           python scripts/test_m014_hierarchical_attack_defence.py
           python scripts/test_m015_regularized_poisson_glm.py
           python scripts/test_m015_forward_validation.py
+          python scripts/test_m015_forward_evidence_ledger.py
 
       - name: Run real historical research runtime
         run: python scripts/run_real_2026_historical_research.py --bootstrap-reps 2000
@@ -54,6 +55,9 @@ jobs:
 
       - name: Verify M015 preregistered forward validation state
         run: python scripts/run_m015_forward_validation.py
+
+      - name: Verify M015 append-only forward evidence ledger
+        run: python scripts/run_m015_forward_evidence_ledger.py
 
       - name: Run Gate4 real robustness adapter
         run: |
@@ -78,6 +82,8 @@ jobs:
           e015=json.loads(Path('artifacts/m015/TEST_EVIDENCE.json').read_text())
           f015=json.loads(Path('artifacts/m015-forward-validation-report-v0.1.json').read_text())
           ef015=json.loads(Path('artifacts/m015-forward/TEST_EVIDENCE.json').read_text())
+          l015=json.loads(Path('artifacts/m015-forward-evidence-ledger-report-v0.1.json').read_text())
+          el015=json.loads(Path('artifacts/m015-forward-ledger/TEST_EVIDENCE.json').read_text())
           print('GATE3')
           print(json.dumps(g3['headline'], indent=2))
           print('M011R')
@@ -129,6 +135,17 @@ jobs:
               'decision_weight':f015['forward_validation']['decision_weight'],
               'test_waiting':ef015['overall']['TEST_WAITING'],
           }, indent=2))
+          print('M015_FORWARD_LEDGER')
+          print(json.dumps({
+              'ledger_valid':l015['ledger_verification']['ledger_valid'],
+              'entry_n':l015['ledger_verification']['entry_n'],
+              'pending_n':l015['ledger_verification']['pending_n'],
+              'settled_n':l015['ledger_verification']['settled_n'],
+              'current_forward_state':l015['current_forward_state'],
+              'infrastructure_test_pass':el015['overall']['INFRASTRUCTURE_TEST_PASS'],
+              'model_validation_pass':el015['overall']['MODEL_VALIDATION_PASS'],
+              'model_validation_waiting':el015['overall']['MODEL_VALIDATION_WAITING'],
+          }, indent=2))
           print('GATE4')
           print(json.dumps({
               'n':g4['n'],
@@ -157,5 +174,7 @@ jobs:
             artifacts/m015/TEST_EVIDENCE.json
             artifacts/m015-forward-validation-report-v0.1.json
             artifacts/m015-forward/TEST_EVIDENCE.json
+            artifacts/m015-forward-evidence-ledger-report-v0.1.json
+            artifacts/m015-forward-ledger/TEST_EVIDENCE.json
             artifacts/real-gate4-robustness-report.json
           if-no-files-found: error
