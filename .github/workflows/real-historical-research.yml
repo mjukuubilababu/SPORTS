@@ -34,6 +34,7 @@ jobs:
           python scripts/test_m011r_bayesian_calibrator.py
           python scripts/test_m013_negative_binomial.py
           python scripts/test_m014_hierarchical_attack_defence.py
+          python scripts/test_m015_regularized_poisson_glm.py
 
       - name: Run real historical research runtime
         run: python scripts/run_real_2026_historical_research.py --bootstrap-reps 2000
@@ -46,6 +47,9 @@ jobs:
 
       - name: Run M014 hierarchical attack-defence walk-forward diagnostic
         run: python scripts/run_m014_walkforward.py
+
+      - name: Run M015 regularized Poisson GLM walk-forward diagnostic
+        run: python scripts/run_m015_walkforward.py
 
       - name: Run Gate4 real robustness adapter
         run: |
@@ -66,6 +70,8 @@ jobs:
           e013=json.loads(Path('artifacts/m013/TEST_EVIDENCE.json').read_text())
           m014=json.loads(Path('artifacts/m014-walkforward-report-v0.1.json').read_text())
           e014=json.loads(Path('artifacts/m014/TEST_EVIDENCE.json').read_text())
+          m015=json.loads(Path('artifacts/m015-walkforward-report-v0.1.json').read_text())
+          e015=json.loads(Path('artifacts/m015/TEST_EVIDENCE.json').read_text())
           print('GATE3')
           print(json.dumps(g3['headline'], indent=2))
           print('M011R')
@@ -97,6 +103,16 @@ jobs:
               'metrics':m014['walk_forward']['metrics'],
               'test_pass':e014['overall']['TEST_PASS'],
           }, indent=2))
+          print('M015')
+          print(json.dumps({
+              'gate_results':m015['gate_results'],
+              'model_state':m015['model_state'],
+              'decision_weight':m015['decision_weight'],
+              'evaluation_classification':m015['walk_forward']['evaluation_classification'],
+              'summary':m015['walk_forward']['summary'],
+              'metrics':m015['walk_forward']['metrics'],
+              'test_pass':e015['overall']['TEST_PASS'],
+          }, indent=2))
           print('GATE4')
           print(json.dumps({
               'n':g4['n'],
@@ -121,5 +137,7 @@ jobs:
             artifacts/m013/TEST_EVIDENCE.json
             artifacts/m014-walkforward-report-v0.1.json
             artifacts/m014/TEST_EVIDENCE.json
+            artifacts/m015-walkforward-report-v0.1.json
+            artifacts/m015/TEST_EVIDENCE.json
             artifacts/real-gate4-robustness-report.json
           if-no-files-found: error
