@@ -2,8 +2,7 @@
   "system": "Decision Intelligence & Evidence-Gated Prediction System",
   "status_version": "v0.1",
   "canonical_branch": "import/decision-intelligence-v0.5-qualified-set",
-  "canonical_head_after_pr_50": "bcf6db77807cbee51afd4d29e0696e5610555a9d",
-  "generated_from_repo_state_after_pr": 50,
+  "generated_from_repo_state_after_pr": 62,
   "engineering_assurance": "PROMOTE",
   "full_platform_assurance": "PROMOTE",
   "capital_state": "LOCKED",
@@ -40,7 +39,14 @@
     "PREDICTION_LIVE_HTTP_API_V0_1",
     "LIVE_PROVIDER_ORCHESTRATION_RUNTIME_V0_1",
     "REALTIME_LIVE_PROVIDER_RUNTIME_ACTIVATION_V0_1",
-    "OBSERVABLE_API_FOOTBALL_RUNTIME_EVIDENCE_V0_1"
+    "OBSERVABLE_API_FOOTBALL_RUNTIME_EVIDENCE_V0_1",
+    "M015_REGULARIZED_POISSON_GLM_V0_1",
+    "M015_FORWARD_VALIDATION_FREEZE_V0_1",
+    "M015_FORWARD_EVIDENCE_LEDGER_V0_1",
+    "M015_PROSPECTIVE_TARGET_CAPTURE_V0_1",
+    "M015_FIRST_REAL_FORWARD_TARGET_V0_1",
+    "M015_MARKET_EVIDENCE_QUALITY_GATE_V0_1",
+    "M015_DIRECT_MARKET_VERIFICATION_AUDIT_V0_1"
   ],
   "remaining_engineering_gaps": [
     "FRONTEND_UI",
@@ -55,7 +61,9 @@
     "REAL_VERIFIED_PLAYER_PROVIDER_DATASETS",
     "REAL_COMPLETE_TRANSFER_AUDITS",
     "GATE3_GATE4_FORWARD_EMPIRICAL_PROOF",
-    "GATE5_FORWARD_SETTLED_CORPUS"
+    "GATE5_FORWARD_SETTLED_CORPUS",
+    "M015_DIRECT_SAME_PROVIDER_SEATTLE_CHICAGO_MARKET_CAPTURE",
+    "M015_FORWARD_INDEPENDENT_VALIDATION_30_MATCHES"
   ],
   "prediction_evidence_state": {
     "gate4_promotion_state": "BLOCK_PROMOTION",
@@ -63,7 +71,23 @@
     "market_incumbent": true,
     "poisson_promoted": false,
     "predictive_edge_proven": false,
-    "negative_binomial_state": "PREREGISTERED_FORWARD_CHALLENGER"
+    "negative_binomial_state": "PREREGISTERED_FORWARD_CHALLENGER",
+    "m015_forward": {
+      "state": "MODEL_READY_MARKET_PENDING",
+      "match_id": "MLS-2026-2026-08-29-089a841f1890",
+      "fixture": "Seattle Sounders vs Chicago Fire",
+      "kickoff_utc": "2026-08-29T20:30:00Z",
+      "model_family": "REGULARIZED_POISSON_GLM_V0_1",
+      "model_lambda": 2.98184972274305,
+      "under_3_5_probability": 0.6512982350607462,
+      "market_state": "PENDING",
+      "direct_market_verification_state": "BLOCKED_PROVIDER_ACCESS",
+      "forward_ledger_entries_n": 0,
+      "independent_validation_n": 0,
+      "independent_validation_target_n": 30,
+      "decision_weight": 0,
+      "automatic_promotion": false
+    }
   },
   "data_coverage": {
     "historical_multileague": "MERGED_REAL_RESEARCH_BACKFILL_FIVE_LEAGUES",
@@ -114,8 +138,15 @@
       "BUNDESLIGA": "AVAILABLE_CROSS_SOURCE_VERIFIED",
       "LIGUE_1": "AVAILABLE_SECONDARY_DISCOVERY"
     },
-    "strict_leagues": ["LA_LIGA", "BUNDESLIGA"],
-    "discovery_only_leagues": ["EPL", "SERIE_A", "LIGUE_1"],
+    "strict_leagues": [
+      "LA_LIGA",
+      "BUNDESLIGA"
+    ],
+    "discovery_only_leagues": [
+      "EPL",
+      "SERIE_A",
+      "LIGUE_1"
+    ],
     "bundesliga_cross_source": {
       "discovery_provider": "ESPN_SITE_SCOREBOARD",
       "verification_provider": "OPENLIGADB",
@@ -148,24 +179,19 @@
   },
   "latest_canonical_merges": [
     {
-      "pr": 47,
-      "capability": "API_FOOTBALL_CREDENTIAL_BLOCKER_STATUS_SYNC",
-      "merge_commit": "ed463fdbe91ded9358e86e12df654f769a27fe63"
+      "pr": 60,
+      "capability": "M015_FIRST_REAL_FORWARD_TARGET_V0_1",
+      "merge_commit": "f4303a57c80c2ae601f19b78fe033d5b667b1764"
     },
     {
-      "pr": 48,
-      "capability": "SECONDARY_CURRENT_MULTI_LEAGUE_DISCOVERY_V0_1",
-      "merge_commit": "1a3e9695bc953b7371f19c91a00b4e02e9c8d29f"
+      "pr": 61,
+      "capability": "M015_MARKET_EVIDENCE_QUALITY_GATE_V0_1",
+      "merge_commit": "889e42451fda376fa5bb1d480c1451791cdfb1b3"
     },
     {
-      "pr": 49,
-      "capability": "SECONDARY_CURRENT_MULTI_LEAGUE_STATUS_SYNC",
-      "merge_commit": "b8ed9d55e784cc26cc70441370eceee4b206c26d"
-    },
-    {
-      "pr": 50,
-      "capability": "BUNDESLIGA_CURRENT_CROSS_SOURCE_VERIFICATION_V0_1",
-      "merge_commit": "bcf6db77807cbee51afd4d29e0696e5610555a9d"
+      "pr": 62,
+      "capability": "M015_DIRECT_MARKET_VERIFICATION_AUDIT_V0_1",
+      "merge_commit": "7062b83f290b3f86fcee2bde4b89296f3a1ff412"
     }
   ],
   "runtime_evidence": {
@@ -209,6 +235,12 @@
     "p002_frozen_rules_changed_by_status_update": false,
     "gate4_thresholds_changed_by_status_update": false,
     "test_b_state_changed_by_status_update": false,
-    "model_parameters_changed_by_status_update": false
-  }
+    "model_parameters_changed_by_status_update": false,
+    "m015_market_pair_same_provider_required": true,
+    "m015_direct_provider_observation_required": true,
+    "m015_preliminary_search_index_observation_freeze_eligible": false,
+    "m015_candidate_changed_by_status_update": false,
+    "m015_ledger_changed_by_status_update": false
+  },
+  "canonical_head": "7062b83f290b3f86fcee2bde4b89296f3a1ff412"
 }
