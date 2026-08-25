@@ -1,0 +1,112 @@
+name: Pattern Intelligence Contract v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pattern-intelligence-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce Step 0 additive-only PR
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          python - <<'PY'
+          import os
+          import subprocess
+
+          base_ref = os.environ['BASE_REF']
+          raw = subprocess.check_output(
+              ['git', 'diff', '--name-status', f'origin/{base_ref}...HEAD'],
+              text=True,
+          ).strip().splitlines()
+
+          expected = {
+              'contracts/pattern-intelligence-contract-v0.1.json',
+              'packages/intelligence-engine/docs/PATTERN_INTELLIGENCE_CONTRACT_V0_1.md',
+              'scripts/test_pattern_intelligence_contract_v0_1.py',
+              '.github/workflows/pattern-intelligence-contract-v0.1.yml',
+          }
+          observed = set()
+          for line in raw:
+              parts = line.split('\t')
+              if len(parts) != 2:
+                  raise SystemExit(f'UNEXPECTED_DIFF_RECORD: {line}')
+              status, path = parts
+              if status != 'A':
+                  raise SystemExit(f'STEP0_NON_ADDITIVE_CHANGE_FORBIDDEN: {status} {path}')
+              observed.add(path)
+
+          if observed != expected:
+              raise SystemExit(f'STEP0_CHANGED_FILE_SET_MISMATCH expected={sorted(expected)} observed={sorted(observed)}')
+          print('STEP0_ADDITIVE_ONLY=PASS')
+          PY
+
+      - name: Validate Pattern Intelligence Contract
+        run: python scripts/test_pattern_intelligence_contract_v0_1.py
+
+      - name: Write test evidence
+        run: |
+          mkdir -p artifacts/pattern-intelligence-contract-v0.1
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          root = Path('.')
+          contract = root / 'contracts/pattern-intelligence-contract-v0.1.json'
+          p002 = root / 'contracts/p002-frozen-rules.json'
+          evidence = {
+              'artifact': 'Pattern_Intelligence_Contract_v0.1',
+              'step': 0,
+              'state': 'ARCHITECTURE_FROZEN_SPEC_ONLY',
+              'git_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+              'contract_sha256': hashlib.sha256(contract.read_bytes()).hexdigest(),
+              'p002_sha256': hashlib.sha256(p002.read_bytes()).hexdigest(),
+              'checks': {
+                  'CONTRACT_VALID': True,
+                  'ADDITIVE_ONLY': True,
+                  'EXISTING_ARTIFACTS_DELETED': 0,
+                  'EXISTING_CANONICAL_OWNERS_REPLACED': 0,
+                  'P002_UNCHANGED': True,
+                  'RUNTIME_PATTERN_MINER_IMPLEMENTED': False,
+                  'NEXT_STAGE': 'STEP_1_CANONICAL_MATCH_MEMORY'
+              },
+              'governance': {
+                  'real_money': 'NO',
+                  'automatic_retuning': False,
+                  'automatic_pattern_promotion': False,
+                  'conflict_requires_explicit_user_decision': True
+              }
+          }
+          out = root / 'artifacts/pattern-intelligence-contract-v0.1/TEST_EVIDENCE.json'
+          out.write_text(json.dumps(evidence, indent=2), encoding='utf-8')
+          print(out.read_text())
+          PY
+
+      - name: Upload contract evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pattern-intelligence-contract-v0.1-evidence
+          path: artifacts/pattern-intelligence-contract-v0.1/TEST_EVIDENCE.json
+          if-no-files-found: error

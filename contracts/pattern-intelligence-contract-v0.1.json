@@ -1,0 +1,280 @@
+{
+  "contract_id": "PATTERN_INTELLIGENCE_CONTRACT_V0_1",
+  "version": "v0.1",
+  "status": "ARCHITECTURE_FROZEN_SPEC_ONLY",
+  "scope": "GLOBAL_FOOTBALL_LEAGUE_AGNOSTIC",
+  "purpose": "Define the governed language, lifecycle, provenance, anti-hindsight rules, and integration boundaries for learning behavioral patterns from all verified football outcomes and prediction errors without replacing the existing canonical Decision Intelligence system.",
+  "construction_policy": {
+    "additive_only_for_step_0": true,
+    "preserve_existing_system": true,
+    "delete_existing_artifact_without_explicit_user_approval": false,
+    "replace_existing_artifact_without_explicit_user_approval": false,
+    "conflict_requires_explicit_user_decision": true,
+    "silent_conflict_resolution": false
+  },
+  "canonical_ownership": {
+    "truth_and_provenance": "GATE1_EXISTING_OWNER",
+    "features_and_model_backfill": "GATE2_EXISTING_OWNER",
+    "statistical_validation": "GATE3_EXISTING_OWNER",
+    "robustness_champion_challenger": "GATE4_EXISTING_OWNER",
+    "immutable_signal_freeze_and_forward_settlement": "GATE5_EXISTING_OWNER",
+    "capital_and_execution_risk": "GATE6_EXISTING_OWNER",
+    "reusable_reasoning_and_governed_learning": "packages/intelligence-engine",
+    "p002_frozen_rules": "contracts/p002-frozen-rules.json"
+  },
+  "existing_intelligence_capabilities_to_reuse": [
+    "evidence_graph",
+    "error_taxonomy",
+    "confidence_budget",
+    "champion_challenger",
+    "governed_learning_loop",
+    "bidirectional_match_reasoning",
+    "bookmaker_comparison",
+    "bookmaker_learning",
+    "calibrated_intelligence_adjustment"
+  ],
+  "constitutional_invariants": {
+    "prediction_validation_execution_are_separate": true,
+    "all_verified_outcomes_are_retained": true,
+    "wins_draws_losses_have_equal_truth_status": true,
+    "correct_and_incorrect_predictions_are_retained": true,
+    "loss_is_not_bad_data": true,
+    "outcome_based_row_deletion_for_pattern_improvement_forbidden": true,
+    "no_hindsight": true,
+    "pre_match_influence_requires_available_at_not_after_prediction_cutoff": true,
+    "frozen_predictions_are_immutable": true,
+    "settlement_is_separate_from_prediction": true,
+    "market_to_model_circularity_forbidden": true,
+    "missing_data_guessing_forbidden": true,
+    "one_match_retuning_forbidden": true,
+    "automatic_production_self_modification_forbidden": true,
+    "pattern_discovery_is_not_pattern_validation": true,
+    "pattern_validation_is_not_execution_approval": true,
+    "evidence_maturity_is_not_probability": true,
+    "abstention_is_valid_output": true,
+    "p002_rules_unchanged_by_pattern_intelligence": true,
+    "real_money_unlocked_by_pattern_intelligence": false
+  },
+  "observation_contract": {
+    "principle": "Every retained observation may contribute evidence, but observations do not have equal reliability or decision weight.",
+    "required_fields": [
+      "observation_id",
+      "event_id",
+      "entity_type",
+      "entity_id",
+      "observation_type",
+      "value",
+      "observed_at",
+      "available_at",
+      "source",
+      "source_type",
+      "is_verified",
+      "provenance_id"
+    ],
+    "optional_context_fields": [
+      "unit",
+      "period",
+      "match_clock",
+      "score_state",
+      "home_away_role",
+      "competition_id",
+      "season_id",
+      "opponent_id",
+      "lineup_id",
+      "player_id",
+      "environment_id",
+      "market_snapshot_id",
+      "confidence",
+      "source_reliability",
+      "freshness_seconds"
+    ],
+    "entity_types": [
+      "MATCH",
+      "TEAM",
+      "PLAYER",
+      "LINEUP",
+      "COACH",
+      "COMPETITION",
+      "ENVIRONMENT",
+      "MARKET",
+      "SYSTEM_PREDICTION"
+    ],
+    "truth_retention_rule": "Do not discard an observation because the team lost, drew, won, or because the system prediction was correct or incorrect.",
+    "pre_match_eligibility_rule": "available_at must be less than or equal to the prediction cutoff for any pre-match feature or pattern influence.",
+    "post_match_rule": "Post-match observations may train/evaluate future states only and can never rewrite the frozen state of the match that produced them."
+  },
+  "evidence_weight_dimensions": [
+    "verification",
+    "provenance_quality",
+    "source_reliability",
+    "recency",
+    "context_relevance",
+    "opponent_relevance",
+    "sample_maturity",
+    "temporal_stability",
+    "cross_league_stability",
+    "measurement_uncertainty"
+  ],
+  "pattern_classes": [
+    "TEAM_BEHAVIOR",
+    "PLAYER_BEHAVIOR",
+    "LINEUP_COMBINATION",
+    "OPPONENT_INTERACTION",
+    "GAME_STATE",
+    "TIME_SEGMENT",
+    "TACTICAL_MATCHUP",
+    "ENVIRONMENT_CONTEXT",
+    "SIMILARITY_CLUSTER",
+    "SYSTEM_ERROR",
+    "MARKET_DISAGREEMENT",
+    "CROSS_MARKET_DEPENDENCY"
+  ],
+  "pattern_contract": {
+    "required_fields": [
+      "pattern_id",
+      "pattern_version",
+      "pattern_class",
+      "hypothesis",
+      "target_definition",
+      "feature_definition",
+      "scope",
+      "discovered_at",
+      "training_cutoff",
+      "sample_n",
+      "source_lineage",
+      "state"
+    ],
+    "required_evaluation_fields_before_validation": [
+      "effect_estimate",
+      "uncertainty",
+      "baseline_comparison",
+      "out_of_sample_result",
+      "forward_result",
+      "temporal_stability",
+      "failure_modes"
+    ],
+    "decision_influence_rule": "A discovered or candidate pattern has decision weight 0. A pattern may influence prediction only after independent validation and separate governed approval under the existing gate architecture.",
+    "market_pattern_boundary": "Market-derived patterns may be used for benchmark, disagreement, calibration research, closing-line context, and governed portfolio context. They may not silently become independent model truth or leak bookmaker information into a model whose contract excludes market inputs."
+  },
+  "pattern_lifecycle": {
+    "states": [
+      "DISCOVERED",
+      "CANDIDATE",
+      "MIN_N_MET",
+      "OUT_OF_SAMPLE_TESTED",
+      "FORWARD_TESTING",
+      "STABLE",
+      "VALIDATED",
+      "REJECTED",
+      "RETIRED"
+    ],
+    "allowed_forward_path": [
+      "DISCOVERED->CANDIDATE",
+      "CANDIDATE->MIN_N_MET",
+      "MIN_N_MET->OUT_OF_SAMPLE_TESTED",
+      "OUT_OF_SAMPLE_TESTED->FORWARD_TESTING",
+      "FORWARD_TESTING->STABLE",
+      "STABLE->VALIDATED"
+    ],
+    "allowed_failure_paths": [
+      "DISCOVERED->REJECTED",
+      "CANDIDATE->REJECTED",
+      "MIN_N_MET->REJECTED",
+      "OUT_OF_SAMPLE_TESTED->REJECTED",
+      "FORWARD_TESTING->REJECTED",
+      "STABLE->REJECTED",
+      "VALIDATED->RETIRED"
+    ],
+    "forbidden_transitions": [
+      "DISCOVERED->VALIDATED",
+      "CANDIDATE->VALIDATED",
+      "MIN_N_MET->VALIDATED",
+      "REJECTED->VALIDATED",
+      "RETIRED->VALIDATED"
+    ],
+    "minimum_n_source": "Use frozen governing thresholds where applicable; pattern-specific thresholds may only be introduced prospectively and may not weaken existing P002 or Gate4 requirements."
+  },
+  "behavioral_fingerprint_contract": {
+    "future_stage": "STEP_3",
+    "dimensions_reserved": [
+      "attack",
+      "defence",
+      "tempo",
+      "home",
+      "away",
+      "first_half",
+      "second_half",
+      "when_leading",
+      "when_trailing",
+      "lead_protection",
+      "comeback",
+      "scoring_timing",
+      "conceding_timing",
+      "shot_quality",
+      "chance_creation",
+      "transition_behavior",
+      "rest_and_fatigue",
+      "travel",
+      "lineup_strength",
+      "late_game_volatility"
+    ],
+    "time_awareness_required": true,
+    "opponent_context_required": true,
+    "future_information_forbidden": true
+  },
+  "system_error_memory_contract": {
+    "future_stage": "STEP_9",
+    "required_links": [
+      "prediction_snapshot_id",
+      "model_version",
+      "feature_version",
+      "pattern_versions_used",
+      "expected_probability",
+      "actual_outcome",
+      "settlement_id",
+      "error_measure",
+      "error_category"
+    ],
+    "single_error_may_trigger_retuning": false,
+    "recurring_error_pattern_requires_validation": true,
+    "error_analysis_may_rewrite_original_prediction": false
+  },
+  "cross_market_and_bundle_boundary": {
+    "future_stages": ["STEP_10", "STEP_11", "STEP_12"],
+    "supported_market_families_reserved": [
+      "1X2",
+      "BTTS",
+      "TOTALS",
+      "TEAM_TOTALS",
+      "DRAW_NO_BET",
+      "DOUBLE_CHANCE",
+      "FIRST_HALF_RESULT",
+      "FIRST_TEAM_TO_SCORE"
+    ],
+    "dependency_adjustment_required_before_bundle_claims": true,
+    "correlated_legs_must_not_be_counted_as_independent_evidence": true,
+    "bundle_constructor_may_not_bypass_individual_market_validation": true,
+    "paper_only_until_separately_governed": true
+  },
+  "anti_pattern_hallucination": {
+    "multiple_testing_risk_must_be_recorded": true,
+    "data_snooping_must_be_recorded": true,
+    "feature_definition_must_be_frozen_before_confirmatory_test": true,
+    "discovery_and_confirmatory_samples_must_be_separated": true,
+    "effect_size_and_uncertainty_required": true,
+    "sample_n_required": true,
+    "forward_test_required_before_validated_state": true,
+    "failed_patterns_are_retained_for_learning": true,
+    "manual_storytelling_without_evidence_cannot_promote_pattern": true
+  },
+  "step_0_definition_of_done": {
+    "contract_is_machine_readable": true,
+    "architecture_note_exists": true,
+    "contract_validator_exists": true,
+    "dedicated_ci_exists": true,
+    "existing_artifacts_deleted": 0,
+    "existing_canonical_owners_replaced": 0,
+    "runtime_pattern_mining_implemented": false,
+    "next_stage_after_step_0": "STEP_1_CANONICAL_MATCH_MEMORY"
+  }
+}
