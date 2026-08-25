@@ -1,0 +1,31 @@
+{
+  "observation_version": "M015_PRELIMINARY_MARKET_OBSERVATION_V0_1",
+  "state": "CAPTURED_NOT_VERIFIED_FOR_FREEZE",
+  "match_id": "MLS-2026-2026-08-29-089a841f1890",
+  "home_team": "seattle sounders",
+  "away_team": "chicago fire",
+  "kickoff_at": "2026-08-29T20:30:00Z",
+  "observed_at": "2026-08-25T01:14:43Z",
+  "provider": "FanDuel",
+  "provider_event_id": "35971988",
+  "market": "O3.5/U3.5",
+  "o35_american": 132,
+  "u35_american": -170,
+  "o35_decimal": 2.32,
+  "u35_decimal": 1.5882352941176472,
+  "source_reference": "https://sportsbook.fanduel.com/soccer/us-mls/seattle-sounders-v-chicago-fire-35971988?tab=goals",
+  "source_type": "PRIMARY_PROVIDER_PAGE_SEARCH_INDEX_OBSERVATION",
+  "pair_same_provider": true,
+  "direct_provider_observation": false,
+  "is_verified": false,
+  "freeze_eligible": false,
+  "freeze_blocker": "DIRECT_PROVIDER_MARKET_CONTENT_NOT_OBSERVED_BY_CAPTURE_RUNTIME",
+  "governance": {
+    "market_used_as_model_input": false,
+    "candidate_modified": false,
+    "forward_ledger_modified": false,
+    "independent_n_incremented": false,
+    "decision_weight": 0.0,
+    "automatic_promotion": false
+  }
+}
