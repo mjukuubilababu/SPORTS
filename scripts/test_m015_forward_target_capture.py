@@ -217,12 +217,12 @@ def main() -> int:
     assert first["match_id"] in later["training_state"]["forward_training_match_ids"]
     assert later["training_state"]["training_n"] == first["training_state"]["training_n"] + 1
 
-    # Same-date outcomes remain excluded by the preregistered date-batched semantics.
+    # Same-date outcome remains excluded, but the target itself must have a distinct identity.
     same_date_fixture = fixture(
         row_id="FWD-003",
         kickoff="2026-09-02T01:30:00Z",
-        home="atlanta united",
-        away="chicago fire",
+        home="columbus crew",
+        away="inter miami",
     )
     same_date = prepare_target_candidate(
         registration=registration,
@@ -233,6 +233,7 @@ def main() -> int:
         prepared_at="2026-09-02T00:30:00Z",
         forbidden_match_ids=forbidden,
     )
+    assert same_date["match_id"] != first["match_id"]
     assert first["match_id"] not in same_date["training_state"]["forward_training_match_ids"]
     assert same_date["training_state"]["training_n"] == first["training_state"]["training_n"]
 
