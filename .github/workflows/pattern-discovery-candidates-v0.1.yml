@@ -1,0 +1,319 @@
+name: Pattern Discovery Candidates v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pattern-discovery-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce Step 4 introduction scope or protect Step 4 artifacts
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          printf '%s\n' "${rows[@]}"
+
+          owned=(
+            "contracts/pattern-discovery-candidates-v0.1.json"
+            "packages/intelligence-engine/src/pattern-discovery-candidates.mjs"
+            "packages/intelligence-engine/tests/pattern-discovery-candidates.test.mjs"
+            "packages/intelligence-engine/docs/PATTERN_DISCOVERY_CANDIDATES_V0_1.md"
+            ".github/workflows/pattern-discovery-candidates-v0.1.yml"
+          )
+
+          if ! git cat-file -e "$BASE:contracts/pattern-discovery-candidates-v0.1.json" 2>/dev/null; then
+            declare -A seen=()
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"
+              path="${row#*$'\t'}"
+              matched=false
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" == "A" ]] || { echo "STEP4_INTRODUCTION_FILE_MUST_BE_ADDED: $row"; exit 1; }
+                  seen["$path"]=1
+                  matched=true
+                  break
+                fi
+              done
+              [[ "$matched" == true ]] || { echo "STEP4_UNEXPECTED_INTRODUCTION_CHANGE: $row"; exit 1; }
+            done
+            [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP4_EXPECTED_EXACTLY_5_ADDITIONS"; exit 1; }
+            [[ "${#seen[@]}" -eq 5 ]] || { echo "STEP4_INTRODUCTION_FILE_SET_INCOMPLETE"; exit 1; }
+            echo "STEP4_INTRODUCTION_SCOPE=PASS"
+            echo "STEP4_ADDITIONS=5"
+            echo "STEP4_MODIFICATIONS=0"
+            echo "STEP4_DELETIONS=0"
+          else
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"
+              path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  case "$status" in
+                    D|R*) echo "STEP4_OWNED_ARTIFACT_DELETION_OR_RENAME_FORBIDDEN: $row"; exit 1 ;;
+                  esac
+                fi
+              done
+            done
+            echo "STEP4_FORWARD_COMPATIBILITY_PROTECTOR=PASS"
+          fi
+
+      - name: Validate Step 0-4 contracts and frozen governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          pattern=json.loads(Path('contracts/pattern-intelligence-contract-v0.1.json').read_text())
+          features=json.loads(Path('contracts/behavioral-state-features-v0.1.json').read_text())
+          discovery=json.loads(Path('contracts/pattern-discovery-candidates-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+
+          assert pattern['contract_id']=='PATTERN_INTELLIGENCE_CONTRACT_V0_1'
+          assert pattern['status']=='ARCHITECTURE_FROZEN_SPEC_ONLY'
+          assert features['contract_id']=='BEHAVIORAL_STATE_FEATURES_V0_1'
+          assert features['status']=='STEP_3_IMPLEMENTED'
+          assert features['next_stage']=='STEP_4_PATTERN_DISCOVERY_CANDIDATES'
+          assert discovery['contract_id']=='PATTERN_DISCOVERY_CANDIDATES_V0_1'
+          assert discovery['status']=='STEP_4_IMPLEMENTED'
+          assert discovery['depends_on']['pattern_intelligence_contract']==pattern['contract_id']
+          assert discovery['depends_on']['behavioral_state_features']==features['contract_id']
+          assert discovery['discovery_language']['finite_and_predeclared'] is True
+          assert discovery['discovery_language']['candidate_family_n']==8
+          assert discovery['discovery_language']['context_scopes']==['ALL','HOME','AWAY']
+          assert discovery['sample_governance']['frozen_p002_discovery_min_n']==30
+          assert discovery['sample_governance']['subject_match_n_min']==30
+          assert discovery['sample_governance']['subject_metric_opportunity_n_min']==30
+          assert discovery['sample_governance']['reference_metric_opportunity_n_min']==30
+          assert discovery['effect_screen']['absolute_effect_floor']==0.10
+          assert discovery['effect_screen']['candidate_requires_difference_interval_excludes_zero'] is True
+          assert discovery['multiple_testing']['confirmatory_alpha_spent_in_step_4'] is False
+          assert discovery['multiple_testing']['selected_discovery_rows_may_be_reused_as_confirmatory_evidence'] is False
+          assert discovery['pattern_candidate_contract']['decision_weight']==0
+          assert discovery['pattern_candidate_contract']['out_of_sample_result_in_step_4']=='NOT_RUN_STEP_4'
+          assert discovery['pattern_candidate_contract']['forward_result_in_step_4']=='NOT_RUN_STEP_4'
+          assert discovery['existing_intelligence_bridge']['evidence_graph_decision_eligible'] is False
+          assert discovery['governance']['pattern_validation_performed'] is False
+          assert discovery['governance']['predictive_weight_assigned'] is False
+          assert discovery['governance']['p002_changed'] is False
+          assert discovery['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert discovery['governance']['real_money']=='NO'
+
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['o25_max']==1.60
+          assert p002['u35_min']==1.55
+          assert p002['u35_max']==1.75
+          assert p002['lambda_min']==2.70
+          assert p002['lambda_max']==3.10
+          assert p002['raw_model_edge_pp_min']==5.0
+          assert p002['discovery_min_n']==30
+          assert p002['independent_validation_min_n']==30
+          assert p002['model_mls_prior_weights']==[0.5,0.5]
+          assert p002['prior_equivalent_sample_size']==5
+          assert p002['lineup_lambda_adjustment']==0.10
+          assert p002['capital_effect']=='NONE_UNTIL_GOVERNED_EVIDENCE'
+
+          for path in [
+            'packages/intelligence-engine/src/evidence-graph.mjs',
+            'packages/intelligence-engine/src/governed-learning-loop.mjs',
+            'packages/intelligence-engine/src/team-match-intelligence.mjs',
+            'packages/intelligence-engine/src/behavioral-state-features.mjs',
+          ]:
+            assert Path(path).exists(), path
+
+          print('STEP0_TO_STEP4_CONTRACT_CHAIN=PASS')
+          print('FINITE_DISCOVERY_LANGUAGE=PASS')
+          print('OPPORTUNITY_SPECIFIC_MIN_N=PASS')
+          print('CONFIRMATORY_ALPHA_NOT_SPENT=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run Step 3 Behavioral State Features regression
+        run: node --test packages/intelligence-engine/tests/behavioral-state-features.test.mjs
+
+      - name: Run Step 4 Pattern Discovery Candidates tests
+        run: node --test packages/intelligence-engine/tests/pattern-discovery-candidates.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mkdir -p artifacts/pattern-discovery-candidates-v0.1
+          rm -rf /tmp/step4-base /tmp/step4-head
+          git worktree add --detach /tmp/step4-base "$BASE"
+          git worktree add --detach /tmp/step4-head "$HEAD"
+
+          set +e
+          (cd /tmp/step4-base/packages/intelligence-engine && npm test) > /tmp/step4-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step4-head/packages/intelligence-engine && npm test) > /tmp/step4-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s\n' "$BASE_RC" > /tmp/step4-base.rc
+          printf '%s\n' "$HEAD_RC" > /tmp/step4-head.rc
+
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          tap_pattern=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          glyph_pattern=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          def failures(path):
+            out=[]
+            for line in Path(path).read_text(errors='replace').splitlines():
+              text=line.strip()
+              m=tap_pattern.match(text) or glyph_pattern.match(text)
+              if m: out.append(m.group(1).strip())
+            return sorted(set(out))
+
+          base_rc=int(Path('/tmp/step4-base.rc').read_text().strip())
+          head_rc=int(Path('/tmp/step4-head.rc').read_text().strip())
+          base=failures('/tmp/step4-base.log')
+          head=failures('/tmp/step4-head.log')
+
+          if base_rc != 0 and not base:
+            raise SystemExit('STEP4_UNPARSED_CANONICAL_BASE_TEST_FAILURE_DEBT')
+          if head_rc != 0 and not head:
+            raise SystemExit('STEP4_UNPARSED_HEAD_TEST_FAILURE_DEBT')
+          if base_rc != head_rc:
+            raise SystemExit('STEP4_NPM_TEST_EXIT_CODE_CHANGED')
+          if base != head:
+            raise SystemExit('STEP4_REGRESSION_FAILURE_SET_CHANGED')
+
+          summary={
+            'comparison':'CANONICAL_BASE_VS_STEP4_HEAD',
+            'node_version':'20',
+            'base_npm_test_rc':base_rc,
+            'head_npm_test_rc':head_rc,
+            'npm_test_rc_parity':base_rc==head_rc,
+            'base_failure_n':len(base),
+            'head_failure_n':len(head),
+            'base_failures':base,
+            'head_failures':head,
+            'new_failure_names':sorted(set(head)-set(base)),
+            'removed_failure_names':sorted(set(base)-set(head)),
+            'failure_name_delta_zero':base==head,
+            'canonical_baseline_has_existing_failures':base_rc != 0,
+          }
+          Path('artifacts/pattern-discovery-candidates-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+          echo "BASE_NPM_TEST_RC=$BASE_RC"
+          echo "HEAD_NPM_TEST_RC=$HEAD_RC"
+          if [[ "$BASE_RC" -ne 0 ]]; then
+            echo "CANONICAL_BASELINE_HAS_EXISTING_TEST_FAILURES=TRUE"
+          else
+            echo "CANONICAL_BASELINE_HAS_EXISTING_TEST_FAILURES=FALSE"
+          fi
+          echo "STEP4_REGRESSION_DELTA=0"
+
+      - name: Write Step 4 test evidence
+        run: |
+          mkdir -p artifacts/pattern-discovery-candidates-v0.1
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          regression_path=Path('artifacts/pattern-discovery-candidates-v0.1/REGRESSION_BASELINE.json')
+          regression=json.loads(regression_path.read_text()) if regression_path.exists() else None
+          evidence={
+            'artifact':'Pattern_Discovery_Candidates_v0.1',
+            'step':'STEP_4_PATTERN_DISCOVERY_CANDIDATES',
+            'overall':{
+              'TEST_AUTHORED':True,
+              'TEST_EXECUTED':True,
+              'TEST_PASS':True,
+              'STEP_4_COMPLETE':True,
+              'ADDED_FILES':5,
+              'MODIFIED_EXISTING_FILES':0,
+              'DELETED_EXISTING_FILES':0,
+              'REGRESSION_DELTA_ZERO':None if regression is None else regression['failure_name_delta_zero'],
+              'CANONICAL_BASE_NPM_TEST_RC':None if regression is None else regression['base_npm_test_rc'],
+              'STEP4_HEAD_NPM_TEST_RC':None if regression is None else regression['head_npm_test_rc'],
+              'CANONICAL_BASELINE_EXISTING_FAILURE_N':None if regression is None else regression['base_failure_n'],
+              'STEP4_HEAD_FAILURE_N':None if regression is None else regression['head_failure_n'],
+              'NPM_TEST_RC_PARITY':None if regression is None else regression['npm_test_rc_parity'],
+              'CANONICAL_BASELINE_HAS_EXISTING_TEST_FAILURES':None if regression is None else regression['canonical_baseline_has_existing_failures'],
+            },
+            'capabilities':{
+              'FINITE_PREDECLARED_CANDIDATE_LANGUAGE':True,
+              'CANDIDATE_FAMILY_N':8,
+              'CONTEXTS':['ALL','HOME','AWAY'],
+              'SUBJECT_MATCH_MIN_N':30,
+              'SUBJECT_OPPORTUNITY_MIN_N':30,
+              'REFERENCE_OPPORTUNITY_MIN_N':30,
+              'DIRECT_SUBJECT_MATCHES_EXCLUDED_FROM_REFERENCE':True,
+              'ABSOLUTE_EFFECT_FLOOR':0.10,
+              'WILSON_NEWCOMBE_UNCERTAINTY':True,
+              'POST_CUTOFF_ROWS_EXCLUDED':True,
+              'MULTIPLE_TESTING_LEDGER':True,
+              'CONFIRMATORY_ALPHA_SPENT':False,
+              'EVIDENCE_GRAPH_BRIDGE_DECISION_ELIGIBLE':False,
+              'OUT_OF_SAMPLE_RESULT_RUN':False,
+              'FORWARD_RESULT_RUN':False,
+              'PREDICTIVE_WEIGHT':0,
+            },
+            'regression_baseline':regression,
+            'governance':{
+              'PATTERN_DISCOVERY_PERFORMED':True,
+              'PATTERN_VALIDATION_PERFORMED':False,
+              'DISCOVERY_IS_VALIDATION':False,
+              'MARKET_DATA_USED':False,
+              'P002_UNCHANGED':True,
+              'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,
+              'AUTOMATIC_RETUNING':False,
+              'AUTOMATIC_PATTERN_PROMOTION':False,
+              'CAPITAL_EFFECT':'NONE',
+              'REAL_MONEY':'NO'
+            },
+            'hashes':{
+              'contract_sha256':sha('contracts/pattern-discovery-candidates-v0.1.json'),
+              'runtime_sha256':sha('packages/intelligence-engine/src/pattern-discovery-candidates.mjs'),
+              'test_sha256':sha('packages/intelligence-engine/tests/pattern-discovery-candidates.test.mjs'),
+              'docs_sha256':sha('packages/intelligence-engine/docs/PATTERN_DISCOVERY_CANDIDATES_V0_1.md'),
+              'p002_sha256':sha('contracts/p002-frozen-rules.json')
+            },
+            'next_stage':'STEP_5_PATTERN_CANDIDATE_CONFIRMATORY_FREEZE'
+          }
+          Path('artifacts/pattern-discovery-candidates-v0.1/TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 4 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pattern-discovery-candidates-v0.1-evidence
+          path: |
+            artifacts/pattern-discovery-candidates-v0.1/TEST_EVIDENCE.json
+            artifacts/pattern-discovery-candidates-v0.1/REGRESSION_BASELINE.json
+          if-no-files-found: error

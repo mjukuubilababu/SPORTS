@@ -1,0 +1,171 @@
+{
+  "contract_id": "PATTERN_DISCOVERY_CANDIDATES_V0_1",
+  "version": "v0.1",
+  "status": "STEP_4_IMPLEMENTED",
+  "purpose": "Discover auditable behavioral pattern candidates from the verified Step 3 corpus using a finite preregistered candidate language, independent same-context reference baselines, explicit opportunity sample sizes, effect estimates and uncertainty, while keeping every discovered pattern at decision weight 0 until separate confirmatory validation.",
+  "scope": "GLOBAL_FOOTBALL_LEAGUE_AGNOSTIC",
+  "depends_on": {
+    "pattern_intelligence_contract": "PATTERN_INTELLIGENCE_CONTRACT_V0_1",
+    "behavioral_state_features": "BEHAVIORAL_STATE_FEATURES_V0_1",
+    "evidence_graph": "packages/intelligence-engine/src/evidence-graph.mjs",
+    "governed_learning_loop": "packages/intelligence-engine/src/governed-learning-loop.mjs"
+  },
+  "discovery_language": {
+    "finite_and_predeclared": true,
+    "candidate_family_n": 8,
+    "candidate_families": [
+      "LEAD_SURRENDER_RATE",
+      "POINTS_DROPPED_AFTER_LEADING_RATE",
+      "EQUALIZE_AFTER_TRAILING_RATE",
+      "WIN_AFTER_TRAILING_RATE",
+      "COMEBACK_GO_AHEAD_RATE",
+      "LATE_GOAL_SCORED_MATCH_RATE",
+      "LATE_GOAL_CONCEDED_MATCH_RATE",
+      "OPENING_GOAL_SCORED_SHARE"
+    ],
+    "context_scopes": ["ALL", "HOME", "AWAY"],
+    "arbitrary_post_hoc_feature_combination_generation": false,
+    "manual_storytelling_may_create_candidate": false
+  },
+  "source_requirements": {
+    "verified_behavioral_state_feature_corpus_required": true,
+    "both_team_sides_per_eligible_match_required": true,
+    "source_observation_descriptive_only_required": true,
+    "source_observation_predictive_weight_required": 0,
+    "market_data_used_as_behavioral_truth": false,
+    "bookmaker_data_used_as_behavioral_truth": false
+  },
+  "anti_hindsight": {
+    "training_cutoff_required": true,
+    "discovered_at_required": true,
+    "discovered_at_must_follow_corpus_materialization": true,
+    "discovered_at_must_follow_training_cutoff": true,
+    "post_cutoff_observations_retained_but_excluded_from_discovery": true,
+    "future_confirmatory_sample_must_be_disjoint": true,
+    "candidate_definition_must_freeze_before_confirmatory_test": true
+  },
+  "reference_baseline": {
+    "definition": "SAME_LEAGUE_SAME_VENUE_CONTEXT_OTHER_TEAMS_EXCLUDING_ALL_DIRECT_SUBJECT_MATCHES",
+    "same_league_required": true,
+    "same_venue_context_required": true,
+    "subject_team_excluded": true,
+    "all_match_ids_involving_subject_excluded_from_reference": true,
+    "direct_match_overlap_allowed": false,
+    "reference_is_market_baseline": false
+  },
+  "sample_governance": {
+    "frozen_p002_discovery_min_n": 30,
+    "subject_match_n_min": 30,
+    "subject_metric_opportunity_n_min": 30,
+    "reference_metric_opportunity_n_min": 30,
+    "opportunity_specific_denominator_required": true,
+    "zero_opportunity_candidate_allowed": false,
+    "small_sample_candidate_promotion_allowed": false,
+    "meeting_min_n_is_not_validation": true
+  },
+  "effect_screen": {
+    "measure": "ABSOLUTE_PROPORTION_DIFFERENCE",
+    "absolute_effect_floor": 0.10,
+    "effect_floor_units": "PROBABILITY",
+    "equivalent_percentage_points": 10,
+    "uncertainty_method": "NEWCOMBE_WILSON_CONSERVATIVE_DIFFERENCE_95",
+    "candidate_requires_effect_floor": true,
+    "candidate_requires_difference_interval_excludes_zero": true,
+    "screen_is_confirmatory_significance_test": false,
+    "effect_floor_is_pattern_specific_and_does_not_weaken_p002": true
+  },
+  "evaluation_statuses": [
+    "INSUFFICIENT_SUBJECT_MATCH_N",
+    "INSUFFICIENT_SUBJECT_OPPORTUNITY_N",
+    "INSUFFICIENT_REFERENCE_OPPORTUNITY_N",
+    "EFFECT_BELOW_DISCOVERY_FLOOR",
+    "UNCERTAINTY_OVERLAPS_ZERO",
+    "CANDIDATE"
+  ],
+  "pattern_candidate_contract": {
+    "required_fields": [
+      "pattern_id",
+      "pattern_version",
+      "pattern_class",
+      "hypothesis",
+      "target_definition",
+      "feature_definition",
+      "scope",
+      "discovered_at",
+      "training_cutoff",
+      "sample_n",
+      "source_lineage",
+      "state",
+      "effect_estimate",
+      "uncertainty",
+      "baseline_comparison",
+      "out_of_sample_result",
+      "forward_result",
+      "temporal_stability",
+      "failure_modes",
+      "candidate_fingerprint"
+    ],
+    "state_created_by_step_4": "CANDIDATE",
+    "decision_weight": 0,
+    "out_of_sample_result_in_step_4": "NOT_RUN_STEP_4",
+    "forward_result_in_step_4": "NOT_RUN_STEP_4",
+    "temporal_stability_in_step_4": "NOT_TESTED_STEP_4",
+    "automatic_transition_to_min_n_met": false,
+    "automatic_transition_to_validated": false
+  },
+  "multiple_testing": {
+    "risk_recorded": true,
+    "exploratory_comparison_count_recorded": true,
+    "candidate_family_count_recorded": true,
+    "context_scope_count_recorded": true,
+    "confirmatory_alpha_spent_in_step_4": false,
+    "p_values_used_as_validation_proof_in_step_4": false,
+    "correction_deferred_to_confirmatory_stage": true,
+    "selected_discovery_rows_may_be_reused_as_confirmatory_evidence": false
+  },
+  "failure_modes_required": [
+    "DISCOVERY_SELECTION_BIAS_REQUIRES_HOLDOUT",
+    "MULTIPLE_TESTING_REQUIRES_CONFIRMATORY_CONTROL",
+    "MATCH_LEVEL_CLUSTER_DEPENDENCE_NOT_CONFIRMATORY_TESTED",
+    "OPPONENT_AND_SEASON_GENERALIZATION_NOT_YET_VALIDATED",
+    "OBSERVATIONAL_PATTERN_IS_NOT_CAUSAL_CLAIM"
+  ],
+  "existing_intelligence_bridge": {
+    "evidence_graph_node_supported": true,
+    "evidence_graph_pattern_verified": false,
+    "evidence_graph_source_verified": true,
+    "evidence_graph_decision_weight": 0,
+    "evidence_graph_decision_eligible": false,
+    "target_existing_domain": "TEMPORAL_SCORING_DEFENDING",
+    "automatic_signal_injection": false,
+    "automatic_impact_assignment": false,
+    "governed_learning_auto_apply": false,
+    "governed_learning_production_mutation_allowed": false
+  },
+  "integrity": {
+    "predeclared_candidate_definitions_fingerprint_required": true,
+    "per_evaluation_fingerprint_required": true,
+    "per_candidate_fingerprint_required": true,
+    "discovery_batch_fingerprint_required": true,
+    "exact_discovery_match_ids_retained": true,
+    "exact_reference_match_ids_retained": true,
+    "subject_and_reference_observation_fingerprints_retained": true,
+    "tamper_detection_required": true
+  },
+  "next_stage": "STEP_5_PATTERN_CANDIDATE_CONFIRMATORY_FREEZE",
+  "governance": {
+    "pattern_discovery_performed": true,
+    "pattern_validation_performed": false,
+    "discovery_is_validation": false,
+    "evidence_maturity_is_probability": false,
+    "predictive_weight_assigned": false,
+    "market_data_used": false,
+    "bookmaker_data_used_as_feature_truth": false,
+    "automatic_model_retuning": false,
+    "automatic_pattern_promotion": false,
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
