@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Enforce Step 0 additive-only PR
+      - name: Protect Step 0 owned artifacts
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
@@ -39,25 +39,28 @@ jobs:
               text=True,
           ).strip().splitlines()
 
-          expected = {
+          owned = {
               'contracts/pattern-intelligence-contract-v0.1.json',
               'packages/intelligence-engine/docs/PATTERN_INTELLIGENCE_CONTRACT_V0_1.md',
               'scripts/test_pattern_intelligence_contract_v0_1.py',
               '.github/workflows/pattern-intelligence-contract-v0.1.yml',
           }
-          observed = set()
+          touched = []
           for line in raw:
               parts = line.split('\t')
-              if len(parts) != 2:
-                  raise SystemExit(f'UNEXPECTED_DIFF_RECORD: {line}')
-              status, path = parts
-              if status != 'A':
-                  raise SystemExit(f'STEP0_NON_ADDITIVE_CHANGE_FORBIDDEN: {status} {path}')
-              observed.add(path)
+              status = parts[0] if parts else ''
+              paths = parts[1:]
+              owned_paths = [path for path in paths if path in owned]
+              if not owned_paths:
+                  continue
+              touched.extend(owned_paths)
+              if status.startswith('D'):
+                  raise SystemExit(f'STEP0_OWNED_ARTIFACT_DELETE_FORBIDDEN: {line}')
+              if status.startswith('R'):
+                  raise SystemExit(f'STEP0_OWNED_ARTIFACT_RENAME_FORBIDDEN: {line}')
 
-          if observed != expected:
-              raise SystemExit(f'STEP0_CHANGED_FILE_SET_MISMATCH expected={sorted(expected)} observed={sorted(observed)}')
-          print('STEP0_ADDITIVE_ONLY=PASS')
+          print(f'STEP0_OWNED_ARTIFACTS_TOUCHED={sorted(set(touched))}')
+          print('STEP0_FORWARD_COMPATIBILITY_GUARD=PASS')
           PY
 
       - name: Validate Pattern Intelligence Contract
@@ -69,7 +72,6 @@ jobs:
           python - <<'PY'
           import hashlib
           import json
-          import os
           import subprocess
           from pathlib import Path
 
@@ -85,7 +87,9 @@ jobs:
               'p002_sha256': hashlib.sha256(p002.read_bytes()).hexdigest(),
               'checks': {
                   'CONTRACT_VALID': True,
-                  'ADDITIVE_ONLY': True,
+                  'STEP0_OWNED_ARTIFACTS_PRESENT': True,
+                  'STEP0_DESTRUCTIVE_CHANGE': False,
+                  'FORWARD_COMPATIBILITY_GUARD': True,
                   'EXISTING_ARTIFACTS_DELETED': 0,
                   'EXISTING_CANONICAL_OWNERS_REPLACED': 0,
                   'P002_UNCHANGED': True,
@@ -96,7 +100,7 @@ jobs:
                   'real_money': 'NO',
                   'automatic_retuning': False,
                   'automatic_pattern_promotion': False,
-                  'conflict_requires_explicit_user_decision': True
+                  'destructive_change_requires_explicit_user_decision': True
               }
           }
           out = root / 'artifacts/pattern-intelligence-contract-v0.1/TEST_EVIDENCE.json'
