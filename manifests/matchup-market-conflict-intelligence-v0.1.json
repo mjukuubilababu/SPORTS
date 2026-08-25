@@ -1,0 +1,17 @@
+{
+  "capability": "matchup-market-conflict-intelligence",
+  "version": "v0.1",
+  "status": "IMPLEMENTED_TESTS_AUTHORED_PENDING_CANONICAL_CI",
+  "source_branch": "feature/matchup-market-conflict-intelligence-v0.1",
+  "implementation": "packages/intelligence-engine/src/matchup-market-conflict-intelligence.mjs",
+  "contract": "contracts/matchup-market-conflict-intelligence-v0.1.json",
+  "docs": "docs/matchup-market-conflict-intelligence-v0.1.md",
+  "runner": "scripts/run_matchup_market_conflict_intelligence.mjs",
+  "tests": "10 AUTHORED",
+  "decision_weight": 0,
+  "capital_effect": "NONE",
+  "frozen_rules_changed": false,
+  "model_parameters_changed": false,
+  "m015_candidate_changed": false,
+  "m015_ledger_changed": false
+}

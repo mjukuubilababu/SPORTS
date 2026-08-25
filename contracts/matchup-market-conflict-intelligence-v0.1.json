@@ -1,0 +1,11 @@
+{
+  "contract": "MATCHUP_MARKET_CONFLICT_INTELLIGENCE_V0_1",
+  "purpose": "Detect evidence-backed opponent-specific matchup risk and model-market disagreement without treating either odds or aggregate statistics as ground truth.",
+  "position_in_flow": "AFTER_INDEPENDENT_MODEL_AND_TEAM_MATCH_INTELLIGENCE_BEFORE_SIGNAL_FREEZE",
+  "required_inputs": ["eventId", "marketKey", "selection", "asOf", "kickoffAt", "verifiedIndependentModel", "verifiedDirectSameProviderMarketPair", "teamMatchIntelligence", "statisticsQuality", "contextChecks"],
+  "statistics_quality_checks": ["verified", "opponentAdjusted", "venueSplitVerified", "currentSquadRelevant", "nonPenaltyAndGameStateControlled", "scheduleStrengthVerified", "sampleSize"],
+  "states": ["ALIGNED_OR_WITHIN_TOLERANCE", "MARKET_MODEL_CONFLICT", "MATCHUP_RISK", "INSUFFICIENT_EVIDENCE"],
+  "decisions": ["PROCEED_TO_EXISTING_CANONICAL_GATES", "WATCH_REVERIFY", "ABSTAIN"],
+  "default_thresholds": {"conflict_probability_points": 0.10, "severe_conflict_probability_points": 0.15, "minimum_statistics_maturity": 0.60, "minimum_matchup_reliability": 0.55},
+  "governance": {"trap_or_match_fixing_claim": "FORBIDDEN", "market_as_model_feature": "FORBIDDEN", "automatic_probability_rewrite": false, "automatic_retuning": false, "automatic_signal_freeze": false, "missing_evidence": "ABSTAIN", "decision_weight": 0, "capital_effect": "NONE", "existing_canonical_gates_remain_required": true}
+}

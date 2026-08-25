@@ -17,6 +17,7 @@
     "real:half-pricing": "node ../../scripts/run_real_half_market_pricing.mjs data/real-model-market-output-reference-2026-08-23.json data/real-half-profiles-epl-2025-26.json data/real-half-market-betpawa-indexed-2026-08-23.json",
     "real:half-pricing:write": "node ../../scripts/run_real_half_market_pricing.mjs data/real-model-market-output-reference-2026-08-23.json data/real-half-profiles-epl-2025-26.json data/real-half-market-betpawa-indexed-2026-08-23.json data/real-half-market-pricing-output-2026-08-23.json",
     "team:match": "node ../../scripts/run_team_match_intelligence.mjs",
+    "matchup:market-conflict": "node ../../scripts/run_matchup_market_conflict_intelligence.mjs",
     "real:football-features": "node ../../scripts/run_real_football_feature_ingestion.mjs data/real-football-features-epl-2025-26-to-2026-08-23.json",
     "real:football-features:write": "node ../../scripts/run_real_football_feature_ingestion.mjs data/real-football-features-epl-2025-26-to-2026-08-23.json data/real-football-feature-output-2026-08-23.json",
     "player:profiles": "node ../../scripts/run_real_player_profile_ingestion.mjs",

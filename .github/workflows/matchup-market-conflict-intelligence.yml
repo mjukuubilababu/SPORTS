@@ -1,0 +1,32 @@
+name: Matchup Market Conflict Intelligence
+
+on:
+  pull_request:
+    paths:
+      - 'packages/intelligence-engine/src/matchup-market-conflict-intelligence.mjs'
+      - 'packages/intelligence-engine/tests/matchup-market-conflict-intelligence.test.mjs'
+      - 'contracts/matchup-market-conflict-intelligence-v0.1.json'
+      - 'manifests/matchup-market-conflict-intelligence-v0.1.json'
+      - 'scripts/run_matchup_market_conflict_intelligence.mjs'
+      - '.github/workflows/matchup-market-conflict-intelligence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run focused conflict intelligence tests
+        run: node --test packages/intelligence-engine/tests/matchup-market-conflict-intelligence.test.mjs
+      - name: Validate JSON artifacts
+        run: node -e "for (const f of process.argv.slice(1)) JSON.parse(require('fs').readFileSync(f, 'utf8'))" contracts/matchup-market-conflict-intelligence-v0.1.json manifests/matchup-market-conflict-intelligence-v0.1.json
+      - name: Reject whitespace errors
+        run: git diff --check "origin/${{ github.base_ref }}...HEAD"
