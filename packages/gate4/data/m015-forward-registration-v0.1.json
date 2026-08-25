@@ -1,0 +1,59 @@
+{
+  "registration_version": "M015_FORWARD_REGISTRATION_V0_1",
+  "challenger_id": "M015-FORWARD-CHALLENGER-V0.1",
+  "model_id": "M015",
+  "model_version": "REGULARIZED_POISSON_GLM_GATE2_COMPONENTS_V0_1",
+  "registered_at": "2026-08-25T00:06:00Z",
+  "source_canonical_head_sha": "5386fd47d07db6aa25ae54ed0fb98ef74eef10ef",
+  "source_model_path": "packages/gate3/m015_regularized_poisson_glm.py",
+  "source_model_git_blob_sha": "f02fde72d331d004bfc68b04d2a6195d9f8b0698",
+  "training_snapshot": {
+    "dataset_id": "MLS-2025-WARMUP-PLUS-2026-FOOTIQO-CLOSING-RESEARCH-V0.1",
+    "latest_match_date": "2026-02-28",
+    "gate2_feature_rows": 189,
+    "model_predictions": 138,
+    "development_market_evaluable_n": 25,
+    "development_benchmark_classification": "CONSUMED_NOT_INDEPENDENT",
+    "forbidden_evaluation_freeze_id": "MLS-2026-REAL-RESEARCH-HOLDOUT-A-V0.1"
+  },
+  "scope": {
+    "competition": "MLS",
+    "market": "U3.5",
+    "future_rows_must_have_kickoff_after_registration": true,
+    "future_predictions_must_be_frozen_pre_kickoff": true,
+    "market_benchmark_must_be_observed_pre_kickoff": true,
+    "settlement_must_be_verified_post_kickoff": true
+  },
+  "specification": {
+    "challenger_id": "M015-FORWARD-CHALLENGER-V0.1",
+    "model_id": "M015",
+    "model_version": "REGULARIZED_POISSON_GLM_GATE2_COMPONENTS_V0_1",
+    "objective": "Prospectively validate U3.5 calibration on disjoint post-registration MLS matches without retuning.",
+    "prediction_market": "U3.5",
+    "distribution": "POISSON",
+    "design": "intercept + log(venue_total) + log(last10_total) + log(last5_total)",
+    "min_train_n": 30,
+    "max_iter": 50,
+    "prior_mean": [0.0, 0.5, 0.3, 0.2],
+    "prior_precision": [4.0, 12.0, 12.0, 12.0],
+    "min_lambda": 0.2,
+    "max_lambda": 6.0,
+    "walk_forward_semantics": "DATE_BATCHED_STRICTLY_PRIOR_DATES_ONLY",
+    "same_date_outcomes_can_train_same_date_predictions": false,
+    "market_used_as_model_input": false,
+    "market_used_as_benchmark_only": true,
+    "retuning_allowed_during_forward_test": false
+  },
+  "specification_sha256": "1e0ad3f848f5409a215117c06df9349b2cedafdfccdac35eda884a12d61bc637",
+  "forward_evidence_requirements": {
+    "independent_validation_min_n": 30,
+    "gate4_min_n": 100,
+    "required_delta_brier_vs_market": ">0",
+    "required_delta_logloss_vs_market": ">0",
+    "automatic_promotion": false,
+    "decision_weight_until_existing_gates_pass": 0.0
+  },
+  "state": "PRE_REGISTERED_FORWARD_VALIDATION_WAITING",
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}
