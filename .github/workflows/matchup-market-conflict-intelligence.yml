@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -27,4 +29,4 @@ jobs:
       - name: Validate JSON artifacts
         run: node -e "for (const f of process.argv.slice(1)) JSON.parse(require('fs').readFileSync(f, 'utf8'))" contracts/matchup-market-conflict-intelligence-v0.1.json manifests/matchup-market-conflict-intelligence-v0.1.json
       - name: Reject whitespace errors
-        run: git diff --check HEAD^
+        run: git diff --check "origin/${{ github.base_ref }}...HEAD"
