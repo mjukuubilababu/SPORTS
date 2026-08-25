@@ -37,6 +37,7 @@ jobs:
           python scripts/test_m015_regularized_poisson_glm.py
           python scripts/test_m015_forward_validation.py
           python scripts/test_m015_forward_evidence_ledger.py
+          python scripts/test_m015_forward_target_capture.py
 
       - name: Run real historical research runtime
         run: python scripts/run_real_2026_historical_research.py --bootstrap-reps 2000
@@ -58,6 +59,9 @@ jobs:
 
       - name: Verify M015 append-only forward evidence ledger
         run: python scripts/run_m015_forward_evidence_ledger.py
+
+      - name: Verify M015 prospective target capture readiness
+        run: python scripts/run_m015_forward_target_capture_readiness.py
 
       - name: Run Gate4 real robustness adapter
         run: |
@@ -84,6 +88,8 @@ jobs:
           ef015=json.loads(Path('artifacts/m015-forward/TEST_EVIDENCE.json').read_text())
           l015=json.loads(Path('artifacts/m015-forward-evidence-ledger-report-v0.1.json').read_text())
           el015=json.loads(Path('artifacts/m015-forward-ledger/TEST_EVIDENCE.json').read_text())
+          t015=json.loads(Path('artifacts/m015-forward-target-capture-readiness-v0.1.json').read_text())
+          et015=json.loads(Path('artifacts/m015-forward-target/TEST_EVIDENCE.json').read_text())
           print('GATE3')
           print(json.dumps(g3['headline'], indent=2))
           print('M011R')
@@ -146,6 +152,14 @@ jobs:
               'model_validation_pass':el015['overall']['MODEL_VALIDATION_PASS'],
               'model_validation_waiting':el015['overall']['MODEL_VALIDATION_WAITING'],
           }, indent=2))
+          print('M015_FORWARD_TARGET_CAPTURE')
+          print(json.dumps({
+              'readiness_state':t015['readiness_state'],
+              'training_state':t015['training_state'],
+              'ledger':t015['ledger'],
+              'infrastructure_test_pass':et015['overall']['INFRASTRUCTURE_TEST_PASS'],
+              'target_captured_by_this_check':et015['overall']['TARGET_CAPTURED_BY_THIS_CHECK'],
+          }, indent=2))
           print('GATE4')
           print(json.dumps({
               'n':g4['n'],
@@ -176,5 +190,7 @@ jobs:
             artifacts/m015-forward/TEST_EVIDENCE.json
             artifacts/m015-forward-evidence-ledger-report-v0.1.json
             artifacts/m015-forward-ledger/TEST_EVIDENCE.json
+            artifacts/m015-forward-target-capture-readiness-v0.1.json
+            artifacts/m015-forward-target/TEST_EVIDENCE.json
             artifacts/real-gate4-robustness-report.json
           if-no-files-found: error
