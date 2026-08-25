@@ -89,6 +89,8 @@ def market(observed_at: str, *, o35: float = 1.90, u35: float = 1.90) -> dict:
         "source_type": "UNIT_TEST_FIXTURE",
         "is_verified": True,
         "is_primary": True,
+        "pair_same_provider": True,
+        "direct_provider_observation": True,
         "observed_at": observed_at,
         "o35": o35,
         "u35": u35,
@@ -163,6 +165,34 @@ def main() -> int:
 
     tampered = deepcopy(first)
     tampered["model_probability"] = 0.99
+    expect_error(
+        lambda: freeze_candidate_with_market(
+            registration=registration,
+            ledger=ledger,
+            candidate=first,
+            market_snapshot={
+                **market("2026-09-01T20:05:00Z"),
+                "pair_same_provider": False,
+            },
+            forbidden_match_ids=forbidden,
+        ),
+        "SAME_PROVIDER_MARKET_PAIR_REQUIRED",
+    )
+
+    expect_error(
+        lambda: freeze_candidate_with_market(
+            registration=registration,
+            ledger=ledger,
+            candidate=first,
+            market_snapshot={
+                **market("2026-09-01T20:05:00Z"),
+                "direct_provider_observation": False,
+            },
+            forbidden_match_ids=forbidden,
+        ),
+        "DIRECT_PROVIDER_OBSERVATION_REQUIRED",
+    )
+
     expect_error(
         lambda: freeze_candidate_with_market(
             registration=registration,
