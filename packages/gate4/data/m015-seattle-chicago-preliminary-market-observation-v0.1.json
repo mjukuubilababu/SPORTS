@@ -1,6 +1,6 @@
 {
   "observation_version": "M015_PRELIMINARY_MARKET_OBSERVATION_V0_1",
-  "state": "CAPTURED_NOT_VERIFIED_FOR_FREEZE",
+  "state": "DIRECT_VERIFICATION_BLOCKED_NOT_FREEZE_ELIGIBLE",
   "match_id": "MLS-2026-2026-08-29-089a841f1890",
   "home_team": "seattle sounders",
   "away_team": "chicago fire",
@@ -20,12 +20,27 @@
   "is_verified": false,
   "freeze_eligible": false,
   "freeze_blocker": "DIRECT_PROVIDER_MARKET_CONTENT_NOT_OBSERVED_BY_CAPTURE_RUNTIME",
+  "direct_verification_attempted_at": "2026-08-25T01:23:43Z",
+  "direct_verification_attempts": [
+    {
+      "provider": "FanDuel",
+      "provider_event_id": "35971988",
+      "result": "BLOCKED_SITE_UNAVAILABLE",
+      "market_content_observed": false
+    },
+    {
+      "provider": "Betano",
+      "provider_event_id": "87080169",
+      "result": "BLOCKED_SECURITY_AND_COMPLIANCE_RESTRICTION",
+      "market_content_observed": false
+    }
+  ],
   "governance": {
     "market_used_as_model_input": false,
     "candidate_modified": false,
     "forward_ledger_modified": false,
     "independent_n_incremented": false,
-    "decision_weight": 0.0,
+    "decision_weight": 0,
     "automatic_promotion": false
   }
 }
