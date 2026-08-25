@@ -1,0 +1,43 @@
+name: M015 Market Movement Audit
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  m015-market-movement-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify market-movement invariants
+        run: python scripts/test_m015_market_movement_audit.py
+
+      - name: Verify persisted Seattle-Chicago movement context
+        run: python scripts/run_m015_market_movement_audit.py
+
+      - name: Verify canonical forward ledger remains pending-only
+        run: python scripts/run_m015_forward_evidence_ledger.py
+
+      - name: Upload market-movement evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m015-market-movement-audit
+          path: |
+            artifacts/m015-market-movement-audit-v0.1.json
+            artifacts/m015-market-movement/TEST_EVIDENCE.json
+            artifacts/m015-forward-evidence-ledger-report-v0.1.json
+            artifacts/m015-forward-ledger/TEST_EVIDENCE.json
+          if-no-files-found: error
