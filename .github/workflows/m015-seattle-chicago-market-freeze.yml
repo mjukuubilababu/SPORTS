@@ -1,0 +1,40 @@
+name: M015 Seattle Chicago Market Freeze
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze-market-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify M015 target-capture unit tests
+        run: python scripts/test_m015_forward_target_capture.py
+
+      - name: Freeze Seattle-Chicago verified pre-kickoff market benchmark
+        run: python scripts/run_m015_seattle_chicago_market_freeze.py
+
+      - name: Upload freeze evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m015-seattle-chicago-market-freeze
+          path: |
+            artifacts/m015-seattle-chicago-market-freeze/REPORT.json
+            artifacts/m015-seattle-chicago-market-freeze/FROZEN_PREDICTION.json
+            artifacts/m015-seattle-chicago-market-freeze/LEDGER.json
+            artifacts/m015-seattle-chicago-market-freeze/TEST_EVIDENCE.json
+          if-no-files-found: error
