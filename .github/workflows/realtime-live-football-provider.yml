@@ -78,23 +78,27 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
+
           report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
           provider=json.loads(Path('manifests/realtime-live-football-provider-v0.1.json').read_text())
           orchestration=json.loads(Path('manifests/live-provider-orchestration-runtime-v0.1.json').read_text())
           activation=json.loads(Path('manifests/realtime-live-provider-runtime-activation-v0.1.json').read_text())
+
           assert report['core_integrated_assurance']=='PROMOTE'
           assert report['tests_total']==report['tests_passed']
           assert report['capital_assurance']=='LOCKED'
+
           assert provider['provider_prediction_used'] is False
           assert provider['bookmaker_data_used_as_model_input'] is False
           assert provider['silent_rate_multiplier_derivation'] is False
           assert provider['real_provider_runtime']=='PENDING_CONFIGURED_KEY'
+
           assert orchestration['provider_prediction_used'] is False
           assert orchestration['bookmaker_odds_used_as_live_model_input'] is False
           assert orchestration['rate_multipliers_fixed_at_one'] is True
           assert orchestration['missing_identity_link']=='WAIT'
+
           assert activation['credential']=='APISPORTS_KEY_GITHUB_ACTIONS_SECRET_ONLY'
-          assert activation['real_provider_execution']=='PENDING_OBSERVABLE_CONTROLLED_CANONICAL_TRIGGER'
           assert 'workflow_dispatch' in activation['activation_triggers']
           assert 'CANONICAL_PUSH_TO_runtime-triggers/api-football/**' in activation['activation_triggers']
           assert activation['pull_request_secret_execution'] is False
@@ -103,5 +107,45 @@ jobs:
           assert activation['runtime_evidence_contains_raw_provider_payload'] is False
           assert activation['provider_prediction_used'] is False
           assert activation['bookmaker_data_used_as_model_input'] is False
-          print(json.dumps({'provider_boundary':'PASS','runtime_artifact_verifier':'PASS','runtime_evidence_writer':'PASS','runtime_ledger_issue':activation['runtime_evidence_ledger_issue'],'orchestration':'PASS','unified_tests':f"{report['tests_passed']}/{report['tests_total']}",'capital':report['capital_assurance'],'real_provider_execution':activation['real_provider_execution']},indent=2))
+          assert activation['capital_effect']=='NONE'
+          assert activation['real_money']=='NO'
+
+          evidence_states=set(activation['evidence_states'])
+          runtime_state=activation['real_provider_execution']
+          allowed_runtime_states=evidence_states | {'PENDING_OBSERVABLE_CONTROLLED_CANONICAL_TRIGGER'}
+          assert runtime_state in allowed_runtime_states
+
+          last=activation.get('last_runtime_evidence')
+          if last:
+              assert last['state'] in evidence_states
+              assert runtime_state==last['state']
+              assert last['ledger_issue']==activation['runtime_evidence_ledger_issue']
+              assert last['capital_assurance']=='LOCKED'
+
+          if runtime_state=='BLOCKED_CREDENTIAL_NOT_CONFIGURED':
+              assert activation['credential_presence']=='VERIFIED_NOT_CONFIGURED_BY_CANONICAL_RUNTIME_RUN'
+              assert last is not None
+              assert last['credential_available'] is False
+              assert last['provider_fetch']=='skipped'
+              assert last['artifact_verification']=='skipped'
+          elif runtime_state in {
+              'VERIFIED_AUTHENTICATED_PROVIDER_RUNTIME_ZERO_LIVE',
+              'VERIFIED_AUTHENTICATED_PROVIDER_RUNTIME_WITH_LIVE_CAPTURE',
+          }:
+              assert last is not None
+              assert last['credential_available'] is True
+              assert last['provider_fetch']=='success'
+              assert last['artifact_verification']=='success'
+
+          print(json.dumps({
+              'provider_boundary':'PASS',
+              'runtime_artifact_verifier':'PASS',
+              'runtime_evidence_writer':'PASS',
+              'runtime_ledger_issue':activation['runtime_evidence_ledger_issue'],
+              'orchestration':'PASS',
+              'unified_tests':f"{report['tests_passed']}/{report['tests_total']}",
+              'capital':report['capital_assurance'],
+              'real_provider_execution':runtime_state,
+              'runtime_state_evidence_consistent':True,
+          },indent=2))
           PY

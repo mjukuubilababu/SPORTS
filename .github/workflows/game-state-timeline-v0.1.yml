@@ -1,0 +1,297 @@
+name: Game-State Timeline v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-game-state-timeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce Step 2 introduction scope or protect Step 2 artifacts
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          printf '%s\n' "${rows[@]}"
+
+          introduction=false
+          for row in "${rows[@]}"; do
+            if [[ "$row" == $'A\tcontracts/game-state-timeline-v0.1.json' ]]; then
+              introduction=true
+              break
+            fi
+          done
+
+          if [[ "$introduction" == true ]]; then
+            declare -A expected
+            expected["packages/gate1/api_football_live_provider.py"]="M"
+            expected["scripts/run_api_football_live_ingestion.py"]="M"
+            expected[".github/workflows/canonical-match-memory-v0.1.yml"]="M"
+            expected[".github/workflows/realtime-live-football-provider.yml"]="M"
+            expected["contracts/game-state-timeline-v0.1.json"]="A"
+            expected["packages/intelligence-engine/src/game-state-timeline.mjs"]="A"
+            expected["packages/intelligence-engine/tests/game-state-timeline.test.mjs"]="A"
+            expected["scripts/test_api_football_game_events.py"]="A"
+            expected["packages/intelligence-engine/docs/GAME_STATE_TIMELINE_V0_1.md"]="A"
+            expected[".github/workflows/game-state-timeline-v0.1.yml"]="A"
+
+            declare -A seen
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"
+              path="${row#*$'\t'}"
+              [[ -n "${expected[$path]+x}" ]] || { echo "STEP2_UNEXPECTED_CHANGE: $row"; exit 1; }
+              [[ "$status" == "${expected[$path]}" ]] || { echo "STEP2_STATUS_MISMATCH expected=${expected[$path]} observed=$row"; exit 1; }
+              seen["$path"]=1
+            done
+            [[ "${#rows[@]}" -eq 10 ]] || { echo "STEP2_EXPECTED_EXACTLY_10_INTEGRATION_FILES"; exit 1; }
+            [[ "${#seen[@]}" -eq 10 ]] || { echo "STEP2_FILE_SET_INCOMPLETE"; exit 1; }
+            echo "STEP2_INTRODUCTION_SCOPE=PASS"
+          else
+            owned=(
+              "contracts/game-state-timeline-v0.1.json"
+              "packages/intelligence-engine/src/game-state-timeline.mjs"
+              "packages/intelligence-engine/tests/game-state-timeline.test.mjs"
+              "scripts/test_api_football_game_events.py"
+              "packages/intelligence-engine/docs/GAME_STATE_TIMELINE_V0_1.md"
+              ".github/workflows/game-state-timeline-v0.1.yml"
+            )
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"
+              path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" != D* ]] || { echo "STEP2_OWNED_ARTIFACT_DELETE_FORBIDDEN: $row"; exit 1; }
+                  [[ "$status" != R* ]] || { echo "STEP2_OWNED_ARTIFACT_RENAME_FORBIDDEN: $row"; exit 1; }
+                fi
+              done
+            done
+            echo "STEP2_FORWARD_COMPATIBILITY_GUARD=PASS"
+          fi
+          echo "STEP2_FILE_DELETIONS=0"
+          echo "STEP2_FILE_RENAMES=0"
+
+      - name: Validate Step 0-2 contracts and ownership
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          pattern=json.loads(Path('contracts/pattern-intelligence-contract-v0.1.json').read_text())
+          memory=json.loads(Path('contracts/canonical-match-memory-v0.1.json').read_text())
+          timeline=json.loads(Path('contracts/game-state-timeline-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+
+          assert timeline['contract_id']=='GAME_STATE_TIMELINE_V0_1'
+          assert timeline['status']=='STEP_2_IMPLEMENTED'
+          assert timeline['depends_on']['pattern_intelligence_contract']==pattern['contract_id']
+          assert timeline['depends_on']['canonical_match_memory']==memory['contract_id']
+          assert timeline['ownership']['raw_provider_observation_owner']=='GATE1'
+          assert timeline['ownership']['canonical_final_truth_owner']=='GATE1'
+          assert timeline['ownership']['prediction_owner_changed'] is False
+          assert timeline['event_retention']['unmapped_event_policy']=='RETAIN_AS_OTHER_AND_MARK_TIMELINE_INELIGIBLE'
+          assert timeline['psychology_boundary']['psychology_is_raw_truth'] is False
+          assert timeline['psychology_boundary']['mind_reading_labels_forbidden'] is True
+          assert timeline['model_boundary']['game_events_automatically_change_live_rate_multipliers'] is False
+          assert timeline['model_boundary']['game_events_automatically_retune_model'] is False
+          assert timeline['pattern_eligibility']['pattern_discovery_performed_in_step_2'] is False
+          assert timeline['pattern_eligibility']['pattern_validation_performed_in_step_2'] is False
+          assert timeline['governance']['p002_changed'] is False
+          assert timeline['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert timeline['governance']['automatic_pattern_promotion'] is False
+          assert timeline['governance']['real_money']=='NO'
+
+          assert memory['status']=='STEP_1_IMPLEMENTED'
+          assert pattern['status']=='ARCHITECTURE_FROZEN_SPEC_ONLY'
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['o25_max']==1.60
+          assert p002['u35_min']==1.55
+          assert p002['u35_max']==1.75
+          assert p002['lambda_min']==2.70
+          assert p002['lambda_max']==3.10
+          assert p002['raw_model_edge_pp_min']==5.0
+          assert p002['discovery_min_n']==30
+          assert p002['independent_validation_min_n']==30
+          assert p002['lineup_lambda_adjustment']==0.10
+          print('STEP0_TO_STEP2_CONTRACT_CHAIN=PASS')
+          print('GATE1_TRUTH_OWNERSHIP_PRESERVED=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Compile Python integration files
+        run: |
+          python -m py_compile packages/gate1/api_football_live_provider.py
+          python -m py_compile scripts/run_api_football_live_ingestion.py
+          python -m py_compile scripts/test_api_football_game_events.py
+
+      - name: Run existing API-Football provider regression
+        run: python scripts/test_api_football_live_provider.py
+
+      - name: Run existing API-Football runtime artifact regression
+        run: python scripts/test_api_football_runtime_artifact.py
+
+      - name: Run new API-Football event observation tests
+        run: python scripts/test_api_football_game_events.py
+
+      - name: Run Step 1 Match Memory regression
+        run: node packages/intelligence-engine/tests/canonical-match-memory.test.mjs
+
+      - name: Run Game-State Timeline tests
+        run: node packages/intelligence-engine/tests/game-state-timeline.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mkdir -p artifacts/game-state-timeline-v0.1
+          rm -rf /tmp/step2-base /tmp/step2-head
+          git worktree add --detach /tmp/step2-base "$BASE"
+          git worktree add --detach /tmp/step2-head "$HEAD"
+
+          set +e
+          (cd /tmp/step2-base/packages/intelligence-engine && npm test) > /tmp/step2-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step2-head/packages/intelligence-engine && npm test) > /tmp/step2-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          pattern=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          def failures(path):
+              out=[]
+              for line in Path(path).read_text(errors='replace').splitlines():
+                  m=pattern.match(line.strip())
+                  if m: out.append(m.group(1).strip())
+              return sorted(set(out))
+          base=failures('/tmp/step2-base.log')
+          head=failures('/tmp/step2-head.log')
+          summary={
+              'comparison':'CANONICAL_BASE_VS_STEP2_HEAD',
+              'base_failure_n':len(base),
+              'head_failure_n':len(head),
+              'base_failures':base,
+              'head_failures':head,
+              'new_failure_names':sorted(set(head)-set(base)),
+              'removed_failure_names':sorted(set(base)-set(head)),
+              'failure_name_delta_zero':base==head,
+          }
+          Path('artifacts/game-state-timeline-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          if base != head:
+              raise SystemExit('STEP2_REGRESSION_FAILURE_SET_CHANGED')
+          PY
+          echo "BASE_NPM_TEST_RC=$BASE_RC"
+          echo "HEAD_NPM_TEST_RC=$HEAD_RC"
+          echo "STEP2_REGRESSION_DELTA=0"
+
+      - name: Write Step 2 test evidence
+        run: |
+          mkdir -p artifacts/game-state-timeline-v0.1
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          regression_path=Path('artifacts/game-state-timeline-v0.1/REGRESSION_BASELINE.json')
+          regression=json.loads(regression_path.read_text()) if regression_path.exists() else None
+          evidence={
+            'artifact':'Game_State_Timeline_v0.1',
+            'step':'STEP_2_GAME_STATE_TIMELINE',
+            'overall':{
+              'TEST_AUTHORED':True,
+              'TEST_EXECUTED':True,
+              'TEST_PASS':True,
+              'STEP_2_COMPLETE':True,
+              'EXISTING_ARTIFACTS_DELETED':0,
+              'EXISTING_ARTIFACTS_RENAMED':0,
+              'AUTHORIZED_INTEGRATION_MODIFICATIONS':[
+                'packages/gate1/api_football_live_provider.py',
+                'scripts/run_api_football_live_ingestion.py',
+                '.github/workflows/canonical-match-memory-v0.1.yml',
+                '.github/workflows/realtime-live-football-provider.yml'
+              ],
+              'REGRESSION_DELTA_ZERO':None if regression is None else regression['failure_name_delta_zero'],
+            },
+            'capabilities':{
+              'SAME_LIVE_HTTP_RESPONSE_REUSED_FOR_EVENTS':True,
+              'EXISTING_FETCH_LIVE_CONTRACT_PRESERVED':True,
+              'GOAL_EVENTS_RETAINED':True,
+              'CARD_EVENTS_RETAINED':True,
+              'SUBSTITUTION_EVENTS_RETAINED':True,
+              'VAR_EVENTS_RETAINED':True,
+              'UNMAPPED_EVENTS_RETAINED':True,
+              'SCORE_TRANSITIONS_DERIVED':True,
+              'SCORE_RECONCILIATION_REQUIRED':True,
+              'OBSERVED_DISMISSAL_STATE_DERIVED':True,
+              'COMEBACK_AND_EQUALIZER_FACTS_DERIVED':True,
+              'PSYCHOLOGY_FABRICATION_FORBIDDEN':True,
+              'EVENTS_AUTO_CHANGE_MODEL_RATES':False,
+              'PATTERN_DISCOVERY_PERFORMED':False,
+              'STEP2_WORKFLOW_FORWARD_COMPATIBLE':True,
+              'LIVE_RUNTIME_GOVERNANCE_EVIDENCE_CONSISTENCY_REQUIRED':True
+            },
+            'regression_baseline':regression,
+            'governance':{
+              'RAW_PROVIDER_OBSERVATION_OWNER':'GATE1',
+              'CANONICAL_FINAL_TRUTH_OWNER':'GATE1',
+              'FUZZY_TEAM_MATCHING':False,
+              'P002_UNCHANGED':True,
+              'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,
+              'AUTOMATIC_RETUNING':False,
+              'AUTOMATIC_PATTERN_PROMOTION':False,
+              'CAPITAL_EFFECT':'NONE',
+              'REAL_MONEY':'NO'
+            },
+            'hashes':{
+              'timeline_contract_sha256':sha('contracts/game-state-timeline-v0.1.json'),
+              'gate1_provider_sha256':sha('packages/gate1/api_football_live_provider.py'),
+              'runtime_ingestion_sha256':sha('scripts/run_api_football_live_ingestion.py'),
+              'timeline_runtime_sha256':sha('packages/intelligence-engine/src/game-state-timeline.mjs'),
+              'timeline_test_sha256':sha('packages/intelligence-engine/tests/game-state-timeline.test.mjs'),
+              'event_test_sha256':sha('scripts/test_api_football_game_events.py'),
+              'step1_workflow_sha256':sha('.github/workflows/canonical-match-memory-v0.1.yml'),
+              'live_provider_workflow_sha256':sha('.github/workflows/realtime-live-football-provider.yml')
+            },
+            'next_stage':'STEP_3_BEHAVIORAL_STATE_FEATURES'
+          }
+          Path('artifacts/game-state-timeline-v0.1/TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 2 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-state-timeline-v0.1-evidence
+          path: |
+            artifacts/game-state-timeline-v0.1/TEST_EVIDENCE.json
+            artifacts/game-state-timeline-v0.1/REGRESSION_BASELINE.json
+          if-no-files-found: error
