@@ -22,6 +22,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Verify first real target registration
+        run: python scripts/test_m015_first_real_target_registration.py
+
       - name: Verify target-capture unit tests
         run: python scripts/test_m015_forward_target_capture.py
 
