@@ -399,6 +399,10 @@ def freeze_candidate_with_market(
         raise ValueError("M015_TARGET_MARKET_PROVENANCE_REQUIRED")
     if market_snapshot.get("is_verified") is not True:
         raise ValueError("M015_TARGET_VERIFIED_MARKET_REQUIRED")
+    if market_snapshot.get("pair_same_provider") is not True:
+        raise ValueError("M015_TARGET_SAME_PROVIDER_MARKET_PAIR_REQUIRED")
+    if market_snapshot.get("direct_provider_observation") is not True:
+        raise ValueError("M015_TARGET_DIRECT_PROVIDER_OBSERVATION_REQUIRED")
     o35 = _positive_decimal_odds(market_snapshot.get("o35"), "M015_TARGET_O35_ODDS_INVALID")
     u35 = _positive_decimal_odds(market_snapshot.get("u35"), "M015_TARGET_U35_ODDS_INVALID")
     observed_at = str(market_snapshot.get("observed_at") or "")
@@ -431,6 +435,8 @@ def freeze_candidate_with_market(
         "source_type": source_type,
         "is_verified": True,
         "is_primary": bool(market_snapshot.get("is_primary", False)),
+        "pair_same_provider": True,
+        "direct_provider_observation": True,
         "observed_at": observed_at,
         "market": "O3.5/U3.5",
         "o35": o35,
