@@ -32,6 +32,7 @@ jobs:
           python scripts/test_gate3_gate4_real_robustness.py
           python scripts/test_evaluation_freeze_challenger_protocol.py
           python scripts/test_m011r_bayesian_calibrator.py
+          python scripts/test_m011r_significance_test.py
           python scripts/test_m013_negative_binomial.py
           python scripts/test_m014_hierarchical_attack_defence.py
           python scripts/test_m015_regularized_poisson_glm.py
@@ -44,6 +45,9 @@ jobs:
 
       - name: Run M011R real walk-forward challenger
         run: python scripts/run_m011r_walkforward.py
+
+      - name: Run M011R paired bootstrap significance analysis
+        run: python scripts/run_m011r_significance_test.py
 
       - name: Run M013 negative-binomial walk-forward diagnostic
         run: python scripts/run_m013_walkforward.py
@@ -78,6 +82,8 @@ jobs:
           g4=json.loads(Path('artifacts/real-gate4-robustness-report.json').read_text())
           m011r=json.loads(Path('artifacts/m011r-walkforward-report-v0.1.json').read_text())
           e011r=json.loads(Path('artifacts/m011r/TEST_EVIDENCE.json').read_text())
+          s011r=json.loads(Path('artifacts/m011r-significance-report-v0.1.json').read_text())
+          es011r=json.loads(Path('artifacts/m011r-significance/TEST_EVIDENCE.json').read_text())
           m013=json.loads(Path('artifacts/m013-walkforward-report-v0.1.json').read_text())
           e013=json.loads(Path('artifacts/m013/TEST_EVIDENCE.json').read_text())
           m014=json.loads(Path('artifacts/m014-walkforward-report-v0.1.json').read_text())
@@ -100,6 +106,18 @@ jobs:
               'summary':m011r['walk_forward']['summary'],
               'metrics':m011r['walk_forward']['metrics'],
               'test_pass':e011r['overall']['TEST_PASS'],
+          }, indent=2))
+          print('M011R_SIGNIFICANCE')
+          print(json.dumps({
+              'evaluation_classification':s011r['analysis']['evaluation_classification'],
+              'market_evaluable_n':s011r['analysis']['market_evaluable_n'],
+              'bootstrap_reps':s011r['analysis']['bootstrap_reps'],
+              'delta_brier_vs_market':s011r['analysis']['delta_brier_vs_market'],
+              'delta_logloss_vs_market':s011r['analysis']['delta_logloss_vs_market'],
+              'development_ci_both_positive':es011r['overall']['DEVELOPMENT_CI_BOTH_POSITIVE'],
+              'model_validation_pass':es011r['overall']['MODEL_VALIDATION_PASS'],
+              'model_state':s011r['interpretation']['model_state'],
+              'decision_weight':s011r['interpretation']['decision_weight'],
           }, indent=2))
           print('M013')
           print(json.dumps({
@@ -180,6 +198,8 @@ jobs:
             artifacts/real-2026-historical-research-report.json
             artifacts/m011r-walkforward-report-v0.1.json
             artifacts/m011r/TEST_EVIDENCE.json
+            artifacts/m011r-significance-report-v0.1.json
+            artifacts/m011r-significance/TEST_EVIDENCE.json
             artifacts/m013-walkforward-report-v0.1.json
             artifacts/m013/TEST_EVIDENCE.json
             artifacts/m014-walkforward-report-v0.1.json
