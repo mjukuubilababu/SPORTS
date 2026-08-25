@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Enforce Step 1 additive-only PR
+      - name: Enforce Step 1 scope and authorized compatibility fix
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
@@ -38,31 +38,48 @@ jobs:
           HEAD="${{ github.event.pull_request.head.sha }}"
           mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
           printf '%s\n' "${rows[@]}"
-          allowed=(
+
+          step1_added=(
             "contracts/canonical-match-memory-v0.1.json"
             "packages/intelligence-engine/src/canonical-match-memory.mjs"
             "packages/intelligence-engine/tests/canonical-match-memory.test.mjs"
             "packages/intelligence-engine/docs/CANONICAL_MATCH_MEMORY_V0_1.md"
             ".github/workflows/canonical-match-memory-v0.1.yml"
           )
+          compatibility_modified=".github/workflows/pattern-intelligence-contract-v0.1.yml"
+
+          declare -A seen_added=()
+          seen_compat=false
           for row in "${rows[@]}"; do
             status="${row%%$'\t'*}"
             path="${row#*$'\t'}"
-            if [[ "$status" != "A" ]]; then
-              echo "STEP1_NON_ADDITIVE_CHANGE_FORBIDDEN: $row"
-              exit 1
-            fi
-            found=false
-            for item in "${allowed[@]}"; do
-              if [[ "$path" == "$item" ]]; then found=true; break; fi
+            matched=false
+            for item in "${step1_added[@]}"; do
+              if [[ "$path" == "$item" ]]; then
+                [[ "$status" == "A" ]] || { echo "STEP1_EXPECTED_ADDED_FILE: $row"; exit 1; }
+                seen_added["$path"]=1
+                matched=true
+                break
+              fi
             done
-            if [[ "$found" != true ]]; then
-              echo "STEP1_UNEXPECTED_FILE: $path"
-              exit 1
+            if [[ "$matched" == true ]]; then continue; fi
+
+            if [[ "$path" == "$compatibility_modified" ]]; then
+              [[ "$status" == "M" ]] || { echo "STEP0_COMPATIBILITY_FIX_EXPECTED_MODIFICATION: $row"; exit 1; }
+              seen_compat=true
+              continue
             fi
+
+            echo "STEP1_UNEXPECTED_CHANGE: $row"
+            exit 1
           done
-          [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP1_EXPECTED_EXACTLY_5_ADDITIVE_FILES"; exit 1; }
-          echo "STEP1_ADDITIVE_ONLY=PASS"
+
+          [[ "${#rows[@]}" -eq 6 ]] || { echo "STEP1_EXPECTED_5_ADDITIONS_PLUS_1_COMPATIBILITY_MODIFICATION"; exit 1; }
+          [[ "${#seen_added[@]}" -eq 5 ]] || { echo "STEP1_ADDED_FILE_SET_INCOMPLETE"; exit 1; }
+          [[ "$seen_compat" == true ]] || { echo "STEP0_COMPATIBILITY_MODIFICATION_MISSING"; exit 1; }
+          echo "STEP1_SCOPE=PASS"
+          echo "STEP1_FILES_ADDITIVE_ONLY=PASS"
+          echo "AUTHORIZED_STEP0_COMPATIBILITY_MODIFICATION=PASS"
 
       - name: Validate contracts and preserved ownership
         run: |
@@ -110,11 +127,13 @@ jobs:
               'packages/intelligence-engine/src/evidence-graph.mjs',
               'packages/intelligence-engine/src/outcome-settlement.mjs',
               'packages/intelligence-engine/src/governed-learning-loop.mjs',
+              '.github/workflows/pattern-intelligence-contract-v0.1.yml',
           ]:
               assert Path(path).exists(), path
           print('CANONICAL_MATCH_MEMORY_CONTRACT=PASS')
           print('P002_UNCHANGED=PASS')
           print('EXISTING_OWNERS_PRESENT=PASS')
+          print('STEP0_FORWARD_COMPATIBILITY_INTEGRATED=PASS')
           PY
 
       - name: Run Canonical Match Memory tests
@@ -216,9 +235,11 @@ jobs:
               'TEST_EXECUTED':True,
               'TEST_PASS':True,
               'STEP_1_COMPLETE':True,
-              'ADDITIVE_ONLY':True,
+              'STEP1_FILES_ADDITIVE_ONLY':True,
+              'AUTHORIZED_COMPATIBILITY_MODIFICATION_N':1,
+              'AUTHORIZED_COMPATIBILITY_MODIFICATION':'.github/workflows/pattern-intelligence-contract-v0.1.yml',
               'EXISTING_ARTIFACTS_DELETED':0,
-              'EXISTING_ARTIFACTS_REPLACED':0,
+              'EXISTING_CANONICAL_OWNERS_REPLACED':0,
               'REGRESSION_DELTA_ZERO':regression['failure_name_delta_zero'],
               'CANONICAL_BASELINE_EXISTING_FAILURE_N':regression['base_failure_n'],
               'STEP1_HEAD_FAILURE_N':regression['head_failure_n'],
@@ -234,6 +255,7 @@ jobs:
               'DETERMINISTIC_TRUTH_FINGERPRINT':True,
               'DETERMINISTIC_MEMORY_FINGERPRINT':True,
               'TAMPER_DETECTION':True,
+              'STEP0_FORWARD_COMPATIBILITY_INTEGRATED':True,
               'GAME_STATE_TIMELINE_IMPLEMENTED':False,
               'GAME_STATE_TIMELINE_STATE':'STEP_2_PENDING',
               'PATTERN_DISCOVERY_IMPLEMENTED_BY_STEP_1':False,
@@ -248,6 +270,7 @@ jobs:
               'AUTOMATIC_RETUNING':False,
               'AUTOMATIC_PATTERN_PROMOTION':False,
               'EXISTING_BASELINE_TEST_DEBT_WAS_NOT_MODIFIED_BY_STEP1':True,
+              'DESTRUCTIVE_CHANGE':False,
               'CAPITAL_EFFECT':'NONE',
               'REAL_MONEY':'NO',
             },
@@ -257,6 +280,7 @@ jobs:
               'p002_sha256':sha('contracts/p002-frozen-rules.json'),
               'runtime_sha256':sha('packages/intelligence-engine/src/canonical-match-memory.mjs'),
               'test_sha256':sha('packages/intelligence-engine/tests/canonical-match-memory.test.mjs'),
+              'step0_workflow_sha256':sha('.github/workflows/pattern-intelligence-contract-v0.1.yml'),
             },
             'next_stage':'STEP_2_GAME_STATE_TIMELINE'
           }
