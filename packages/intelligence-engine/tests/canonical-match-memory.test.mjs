@@ -51,7 +51,7 @@ function gate1Truth({
     } : { status: 'MISSING' },
     gate2_backfill_eligible: verified,
     gate1_validation_n_eligible: verified && market,
-    reasons: verified ? [],
+    reasons: verified ? [] : ['RESULT_NOT_VERIFIED'],
     supporting_result_sources: verified ? ['SOURCE_A', 'SOURCE_B'] : [],
     supporting_market_sources: market ? ['TEST_SOURCE'] : [],
     duplicate_observations: 0
@@ -95,12 +95,15 @@ function settlement({ result = 'CORRECT', predictionCorrect = true, eventId = 'M
 }
 
 function build(record, overrides = {}) {
+  const predictionCutoff = Object.prototype.hasOwnProperty.call(overrides, 'predictionCutoff')
+    ? overrides.predictionCutoff
+    : '2026-08-01T16:30:00Z';
   return buildCanonicalMatchMemory({
     truthRecord: record,
     observations: overrides.observations ?? [],
     marketSnapshots: overrides.marketSnapshots ?? [],
     predictionSettlements: overrides.predictionSettlements ?? [],
-    predictionCutoff: overrides.predictionCutoff ?? '2026-08-01T16:30:00Z',
+    predictionCutoff,
     materializedAt: overrides.materializedAt ?? '2026-08-02T00:00:00Z'
   });
 }
