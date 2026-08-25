@@ -1,0 +1,22 @@
+{
+  "ledger_version": "M015_FORWARD_EVIDENCE_LEDGER_V0_1",
+  "state": "APPEND_ONLY_FORWARD_EVIDENCE",
+  "challenger_id": "M015-FORWARD-CHALLENGER-V0.1",
+  "model_id": "M015",
+  "model_version": "REGULARIZED_POISSON_GLM_GATE2_COMPONENTS_V0_1",
+  "specification_sha256": "1e0ad3f848f5409a215117c06df9349b2cedafdfccdac35eda884a12d61bc637",
+  "entries": [],
+  "summary": {
+    "frozen_pending_settlement": 0,
+    "settled_independent_n": 0
+  },
+  "governance": {
+    "append_only": true,
+    "prediction_overwrite_forbidden": true,
+    "settlement_overwrite_forbidden": true,
+    "consumed_holdout_overlap_forbidden": true,
+    "incomplete_rows_do_not_count": true,
+    "automatic_promotion": false,
+    "decision_weight": 0.0
+  }
+}
