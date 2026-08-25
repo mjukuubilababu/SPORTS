@@ -1,0 +1,112 @@
+{
+  "contract_id": "GAME_STATE_TIMELINE_V0_1",
+  "version": "v0.1",
+  "status": "STEP_2_IMPLEMENTED",
+  "purpose": "Retain and order observable match events and derive auditable game-state transitions without inventing psychology or silently changing prediction models.",
+  "depends_on": {
+    "pattern_intelligence_contract": "PATTERN_INTELLIGENCE_CONTRACT_V0_1",
+    "canonical_match_memory": "CANONICAL_MATCH_MEMORY_V0_1",
+    "api_football_live_provider": "API_FOOTBALL_LIVE_PROVIDER_V0_1",
+    "api_football_game_event_observation": "API_FOOTBALL_GAME_EVENT_OBSERVATION_V0_1"
+  },
+  "ownership": {
+    "raw_provider_observation_owner": "GATE1",
+    "provider_to_canonical_identity_owner": "EXISTING_LIVE_PROVIDER_ORCHESTRATION_LINK",
+    "timeline_materialization_owner": "INTELLIGENCE_ENGINE",
+    "canonical_final_truth_owner": "GATE1",
+    "prediction_owner_changed": false,
+    "validation_owner_changed": false,
+    "execution_owner_changed": false
+  },
+  "event_retention": {
+    "supported_canonical_types": [
+      "GOAL",
+      "CARD",
+      "SUBSTITUTION",
+      "VAR",
+      "OTHER"
+    ],
+    "unmapped_event_policy": "RETAIN_AS_OTHER_AND_MARK_TIMELINE_INELIGIBLE",
+    "missing_team_or_time_policy": "RETAIN_WITH_REASONS_AND_MARK_TIMELINE_INELIGIBLE",
+    "provider_raw_type_and_detail_preserved": true,
+    "player_and_assist_identity_preserved_when_supplied": true,
+    "provider_event_order_preserved_as_tiebreaker": true,
+    "outcome_based_event_deletion_forbidden": true
+  },
+  "goal_semantics": {
+    "score_bearing_details": [
+      "NORMAL_GOAL",
+      "OWN_GOAL",
+      "PENALTY"
+    ],
+    "non_score_details": [
+      "MISSED_PENALTY"
+    ],
+    "unknown_goal_detail_policy": "RETAIN_BUT_DO_NOT_INFER_SCORE_DELTA",
+    "score_reconciliation_required_for_pattern_truth": true
+  },
+  "derived_observable_facts": [
+    "SCORE_STATE_BEFORE_AND_AFTER_EVENT",
+    "OPENING_GOAL",
+    "EQUALIZER",
+    "GO_AHEAD_FROM_DRAW",
+    "COMEBACK_GO_AHEAD_AFTER_PREVIOUSLY_TRAILING",
+    "LEAD_EXTENSION",
+    "MISSED_PENALTY",
+    "OBSERVED_DISMISSAL_COUNT",
+    "SUBSTITUTION_COUNT",
+    "GOAL_TIMING",
+    "LEAD_STATE_DURATION_INPUTS"
+  ],
+  "psychology_boundary": {
+    "psychology_is_raw_truth": false,
+    "mind_reading_labels_forbidden": true,
+    "observable_pressure_state_proxies_allowed": true,
+    "examples_of_allowed_proxies": [
+      "TRAILING_AT_EVENT_TIME",
+      "PLAYING_AFTER_DISMISSAL",
+      "EQUALIZED_AFTER_TRAILING",
+      "GO_AHEAD_AFTER_PREVIOUSLY_TRAILING",
+      "LATE_SCORE_CHANGE"
+    ],
+    "behavioral_interpretation_requires_later_multi_match_validation": true
+  },
+  "no_hindsight": {
+    "event_observed_at_required": true,
+    "event_observed_before_kickoff_rejected": true,
+    "provider_fixture_identity_must_match_explicit_link": true,
+    "fuzzy_team_matching": false,
+    "future_event_may_not_be_inserted_into_earlier_snapshot": true
+  },
+  "model_boundary": {
+    "game_events_automatically_change_live_rate_multipliers": false,
+    "game_events_automatically_retune_model": false,
+    "event_impact_model_required_before_predictive_weight": true,
+    "bookmaker_data_is_event_truth_input": false,
+    "provider_prediction_is_event_truth_input": false
+  },
+  "pattern_eligibility": {
+    "explicit_identity_link_required": true,
+    "provider_observation_verification_required": true,
+    "score_consistency_required": true,
+    "ambiguous_score_bearing_event_allowed_for_pattern_truth": false,
+    "ineligible_events_are_retained": true,
+    "pattern_discovery_performed_in_step_2": false,
+    "pattern_validation_performed_in_step_2": false
+  },
+  "integrity": {
+    "event_source_sha256_required": true,
+    "timeline_fingerprint_required": true,
+    "tamper_detection_required": true,
+    "source_event_order_is_not_rewritten": true
+  },
+  "next_stage": "STEP_3_BEHAVIORAL_STATE_FEATURES",
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "automatic_pattern_promotion": false,
+    "automatic_retuning": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
