@@ -1,0 +1,41 @@
+{
+  "audit_version": "M015_MARKET_MOVEMENT_AUDIT_V0_1",
+  "state": "APPEND_ONLY_RESEARCH_CONTEXT",
+  "match_id": "MLS-2026-2026-08-29-089a841f1890",
+  "candidate_fingerprint_sha256": "c0a8b21c0b059faff8621843e41891afd345ed1764528923bc7c4933c9283199",
+  "frozen_prediction_fingerprint_sha256": "ac5b7f59bd9bfc1f334d1684cdfffbe63c8c31c9c721c380d82b03fcffa09dd5",
+  "evaluation_benchmark_observed_at": "2026-08-25T01:50:48Z",
+  "evaluation_benchmark_role": "IMMUTABLE_PR65_FORWARD_VALIDATION_BENCHMARK",
+  "observations": [
+    {
+      "observation_id": "CALIENTE-20260825T151145Z",
+      "match_id": "MLS-2026-2026-08-29-089a841f1890",
+      "provider": "Caliente.mx",
+      "observed_at": "2026-08-25T15:11:45Z",
+      "market": "O3.5/U3.5",
+      "o35": 2.25,
+      "u35": 1.615,
+      "fair_u35_probability": 0.5821474773609314,
+      "source_reference": "https://sports.caliente.mx/es_MX/MLS/2026-08-29/Seattle-Sounders-vs-Chicago-Fire",
+      "source_type": "DIRECT_SPORTSBOOK_WEB",
+      "is_verified": true,
+      "pair_same_provider": true,
+      "direct_provider_observation": true,
+      "role": "INTERMEDIATE_PREKICKOFF_MARKET_MOVEMENT_ONLY",
+      "observation_payload_sha256": "0e046e3012109832a20a4124301b35e5ba00dbddc552f8ed45c89edd425791a2"
+    }
+  ],
+  "governance": {
+    "append_only": true,
+    "frozen_evaluation_benchmark_replacement_forbidden": true,
+    "forward_prediction_overwrite_forbidden": true,
+    "post_freeze_observations_are_research_context_only": true,
+    "same_provider_comparison_required": true,
+    "direct_provider_observation_required": true,
+    "post_kickoff_market_observation_forbidden": true,
+    "independent_n_incremented": false,
+    "forward_ledger_modified": false,
+    "decision_weight": 0.0,
+    "automatic_promotion": false
+  }
+}
