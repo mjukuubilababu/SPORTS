@@ -95,7 +95,7 @@ jobs:
           assert timeline['governance']['real_money']=='NO'
 
           assert memory['status']=='STEP_1_IMPLEMENTED'
-          assert pattern['status'] in {'FROZEN_ARCHITECTURE_CONTRACT','STEP_0_FROZEN'}
+          assert pattern['status']=='ARCHITECTURE_FROZEN_SPEC_ONLY'
           assert p002['lineage']=='P002'
           assert p002['status']=='FROZEN_RESEARCH_RULE'
           assert p002['o25_max']==1.60
