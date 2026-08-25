@@ -9,7 +9,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "packages" / "gate1"))
 
-from api_football_live_provider import fetch_live, live_model_input, snapshot_to_dict
+from api_football_live_provider import (
+    event_to_dict,
+    fetch_live_with_events,
+    live_model_input,
+    snapshot_to_dict,
+)
 
 
 DEFAULT_COMPETITIONS = ["EPL", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"]
@@ -33,7 +38,7 @@ def main() -> int:
         raise SystemExit("APISPORTS_KEY_REQUIRED")
 
     competitions = [item.strip() for item in args.competitions.split(",") if item.strip()]
-    rows, observed_at = fetch_live(api_key=api_key, competition_ids=competitions)
+    rows, events, observed_at = fetch_live_with_events(api_key=api_key, competition_ids=competitions)
 
     live_rows = [row for row in rows if row.state == "LIVE_IN_PLAY"]
     output = {
@@ -44,11 +49,17 @@ def main() -> int:
         "live_in_play_n": len(live_rows),
         "snapshots": [snapshot_to_dict(row) for row in rows],
         "live_model_inputs": [live_model_input(row) for row in live_rows],
+        "game_event_observation_version": "API_FOOTBALL_GAME_EVENT_OBSERVATION_V0_1",
+        "events_n": len(events),
+        "events": [event_to_dict(row) for row in events],
         "governance": {
             "provider_prediction_used": False,
             "bookmaker_data_used": False,
             "api_key_persisted": False,
             "silent_rate_multiplier_derivation": False,
+            "events_share_existing_live_fixture_identity": True,
+            "events_do_not_silently_change_live_rate_multipliers": True,
+            "unmapped_events_retained_not_dropped": True,
             "real_money": "NO",
         },
     }
@@ -56,7 +67,12 @@ def main() -> int:
     path = Path(args.output)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"output": str(path), "rows_n": len(rows), "live_in_play_n": len(live_rows)}, indent=2))
+    print(json.dumps({
+        "output": str(path),
+        "rows_n": len(rows),
+        "live_in_play_n": len(live_rows),
+        "events_n": len(events),
+    }, indent=2))
     return 0
 
 
