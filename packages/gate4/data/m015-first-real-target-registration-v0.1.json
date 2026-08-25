@@ -1,0 +1,20 @@
+{
+  "registration_version": "M015_FIRST_REAL_FORWARD_TARGET_REGISTRATION_V0_1",
+  "challenger_id": "M015-FORWARD-CHALLENGER-V0.1",
+  "model_id": "M015",
+  "model_version": "REGULARIZED_POISSON_GLM_GATE2_COMPONENTS_V0_1",
+  "target_source": "FixtureDownload",
+  "target_source_row_id": "322",
+  "competition": "MLS",
+  "season": 2026,
+  "home_team": "seattle sounders",
+  "away_team": "chicago fire",
+  "kickoff_at": "2026-08-29T20:30:00Z",
+  "prepared_at": "2026-08-25T00:42:00Z",
+  "state": "TARGET_REGISTERED_MODEL_CAPTURE_PENDING_CI",
+  "market_state": "PENDING",
+  "ledger_state": "NOT_APPENDED_UNTIL_MARKET_CAPTURE",
+  "independent_n_incremented": false,
+  "decision_weight": 0.0,
+  "automatic_promotion": false
+}
