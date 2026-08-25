@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Enforce Step 2 integration scope
+      - name: Enforce Step 2 introduction scope or protect Step 2 artifacts
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
@@ -39,30 +39,61 @@ jobs:
           mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
           printf '%s\n' "${rows[@]}"
 
-          declare -A expected
-          expected["packages/gate1/api_football_live_provider.py"]="M"
-          expected["scripts/run_api_football_live_ingestion.py"]="M"
-          expected[".github/workflows/canonical-match-memory-v0.1.yml"]="M"
-          expected["contracts/game-state-timeline-v0.1.json"]="A"
-          expected["packages/intelligence-engine/src/game-state-timeline.mjs"]="A"
-          expected["packages/intelligence-engine/tests/game-state-timeline.test.mjs"]="A"
-          expected["scripts/test_api_football_game_events.py"]="A"
-          expected["packages/intelligence-engine/docs/GAME_STATE_TIMELINE_V0_1.md"]="A"
-          expected[".github/workflows/game-state-timeline-v0.1.yml"]="A"
-
-          declare -A seen
+          introduction=false
           for row in "${rows[@]}"; do
-            status="${row%%$'\t'*}"
-            path="${row#*$'\t'}"
-            [[ -n "${expected[$path]+x}" ]] || { echo "STEP2_UNEXPECTED_CHANGE: $row"; exit 1; }
-            [[ "$status" == "${expected[$path]}" ]] || { echo "STEP2_STATUS_MISMATCH expected=${expected[$path]} observed=$row"; exit 1; }
-            seen["$path"]=1
+            if [[ "$row" == $'A\tcontracts/game-state-timeline-v0.1.json' ]]; then
+              introduction=true
+              break
+            fi
           done
-          [[ "${#rows[@]}" -eq 9 ]] || { echo "STEP2_EXPECTED_EXACTLY_9_INTEGRATION_FILES"; exit 1; }
-          [[ "${#seen[@]}" -eq 9 ]] || { echo "STEP2_FILE_SET_INCOMPLETE"; exit 1; }
-          echo "STEP2_INTEGRATION_SCOPE=PASS"
-          echo "STEP2_DELETIONS=0"
-          echo "STEP2_RENAMES=0"
+
+          if [[ "$introduction" == true ]]; then
+            declare -A expected
+            expected["packages/gate1/api_football_live_provider.py"]="M"
+            expected["scripts/run_api_football_live_ingestion.py"]="M"
+            expected[".github/workflows/canonical-match-memory-v0.1.yml"]="M"
+            expected[".github/workflows/realtime-live-football-provider.yml"]="M"
+            expected["contracts/game-state-timeline-v0.1.json"]="A"
+            expected["packages/intelligence-engine/src/game-state-timeline.mjs"]="A"
+            expected["packages/intelligence-engine/tests/game-state-timeline.test.mjs"]="A"
+            expected["scripts/test_api_football_game_events.py"]="A"
+            expected["packages/intelligence-engine/docs/GAME_STATE_TIMELINE_V0_1.md"]="A"
+            expected[".github/workflows/game-state-timeline-v0.1.yml"]="A"
+
+            declare -A seen
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"
+              path="${row#*$'\t'}"
+              [[ -n "${expected[$path]+x}" ]] || { echo "STEP2_UNEXPECTED_CHANGE: $row"; exit 1; }
+              [[ "$status" == "${expected[$path]}" ]] || { echo "STEP2_STATUS_MISMATCH expected=${expected[$path]} observed=$row"; exit 1; }
+              seen["$path"]=1
+            done
+            [[ "${#rows[@]}" -eq 10 ]] || { echo "STEP2_EXPECTED_EXACTLY_10_INTEGRATION_FILES"; exit 1; }
+            [[ "${#seen[@]}" -eq 10 ]] || { echo "STEP2_FILE_SET_INCOMPLETE"; exit 1; }
+            echo "STEP2_INTRODUCTION_SCOPE=PASS"
+          else
+            owned=(
+              "contracts/game-state-timeline-v0.1.json"
+              "packages/intelligence-engine/src/game-state-timeline.mjs"
+              "packages/intelligence-engine/tests/game-state-timeline.test.mjs"
+              "scripts/test_api_football_game_events.py"
+              "packages/intelligence-engine/docs/GAME_STATE_TIMELINE_V0_1.md"
+              ".github/workflows/game-state-timeline-v0.1.yml"
+            )
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"
+              path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" != D* ]] || { echo "STEP2_OWNED_ARTIFACT_DELETE_FORBIDDEN: $row"; exit 1; }
+                  [[ "$status" != R* ]] || { echo "STEP2_OWNED_ARTIFACT_RENAME_FORBIDDEN: $row"; exit 1; }
+                fi
+              done
+            done
+            echo "STEP2_FORWARD_COMPATIBILITY_GUARD=PASS"
+          fi
+          echo "STEP2_FILE_DELETIONS=0"
+          echo "STEP2_FILE_RENAMES=0"
 
       - name: Validate Step 0-2 contracts and ownership
         run: |
@@ -205,7 +236,8 @@ jobs:
               'AUTHORIZED_INTEGRATION_MODIFICATIONS':[
                 'packages/gate1/api_football_live_provider.py',
                 'scripts/run_api_football_live_ingestion.py',
-                '.github/workflows/canonical-match-memory-v0.1.yml'
+                '.github/workflows/canonical-match-memory-v0.1.yml',
+                '.github/workflows/realtime-live-football-provider.yml'
               ],
               'REGRESSION_DELTA_ZERO':None if regression is None else regression['failure_name_delta_zero'],
             },
@@ -224,6 +256,8 @@ jobs:
               'PSYCHOLOGY_FABRICATION_FORBIDDEN':True,
               'EVENTS_AUTO_CHANGE_MODEL_RATES':False,
               'PATTERN_DISCOVERY_PERFORMED':False,
+              'STEP2_WORKFLOW_FORWARD_COMPATIBLE':True,
+              'LIVE_RUNTIME_GOVERNANCE_EVIDENCE_CONSISTENCY_REQUIRED':True
             },
             'regression_baseline':regression,
             'governance':{
@@ -244,7 +278,8 @@ jobs:
               'timeline_runtime_sha256':sha('packages/intelligence-engine/src/game-state-timeline.mjs'),
               'timeline_test_sha256':sha('packages/intelligence-engine/tests/game-state-timeline.test.mjs'),
               'event_test_sha256':sha('scripts/test_api_football_game_events.py'),
-              'step1_workflow_sha256':sha('.github/workflows/canonical-match-memory-v0.1.yml')
+              'step1_workflow_sha256':sha('.github/workflows/canonical-match-memory-v0.1.yml'),
+              'live_provider_workflow_sha256':sha('.github/workflows/realtime-live-football-provider.yml')
             },
             'next_stage':'STEP_3_BEHAVIORAL_STATE_FEATURES'
           }
