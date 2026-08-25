@@ -1,0 +1,47 @@
+name: M015 First Real Forward Target
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture-first-real-target:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify first real target registration
+        run: python scripts/test_m015_first_real_target_registration.py
+
+      - name: Verify target-capture unit tests
+        run: python scripts/test_m015_forward_target_capture.py
+
+      - name: Capture first real post-registration target
+        run: python scripts/capture_m015_first_real_forward_target.py
+
+      - name: Verify canonical ledger remains unchanged
+        run: python scripts/run_m015_forward_evidence_ledger.py
+
+      - name: Upload target evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m015-first-real-forward-target
+          path: |
+            artifacts/m015-first-real-forward-target-v0.1.json
+            artifacts/m015-first-real-target/CANDIDATE.json
+            artifacts/m015-first-real-target/TEST_EVIDENCE.json
+            artifacts/m015-forward-evidence-ledger-report-v0.1.json
+            artifacts/m015-forward-ledger/TEST_EVIDENCE.json
+          if-no-files-found: error
