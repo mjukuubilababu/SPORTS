@@ -1,0 +1,29 @@
+{
+  "observation_version": "M015_SEATTLE_CHICAGO_CALIENTE_MARKET_V0_1",
+  "match_id": "MLS-2026-2026-08-29-089a841f1890",
+  "fixture": "Seattle Sounders vs Chicago Fire",
+  "kickoff_at": "2026-08-29T20:30:00Z",
+  "provider": "Caliente.mx",
+  "source_type": "PUBLIC_WEB_SAME_PROVIDER_CAPTURE",
+  "is_verified": true,
+  "is_primary": false,
+  "observed_at": "2026-08-25T14:56:00Z",
+  "market": "O3.5/U3.5",
+  "o35": 2.25,
+  "u35": 1.615,
+  "source_reference": "https://sports.caliente.mx/es_MX/MLS/2026-08-29/Seattle-Sounders-vs-Chicago-Fire",
+  "source_evidence_sha256": "9e9799d7df29e828267dc953df918a4c1bce2b9f4aa9742a6ae0f6efa5671840",
+  "capture_facts": {
+    "fixture_identity_exact": true,
+    "paired_market_same_provider": true,
+    "observed_pre_kickoff": true,
+    "raw_fact_tuple": ["Seattle Sounders vs Chicago Fire", "2026-08-29T20:30:00Z", "Caliente.mx", "O3.5=2.25", "U3.5=1.615", "2026-08-25T14:56:00Z"]
+  },
+  "governance": {
+    "benchmark_only": true,
+    "market_used_as_model_input": false,
+    "candidate_model_probability_must_remain_unchanged": true,
+    "settlement_not_allowed_by_this_observation": true,
+    "independent_n_incremented": false
+  }
+}
