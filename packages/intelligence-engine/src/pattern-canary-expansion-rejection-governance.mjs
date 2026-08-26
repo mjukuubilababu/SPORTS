@@ -118,7 +118,10 @@ export function evaluatePatternCanaryExpansionEvidence({
     verifyControlledPatternCanaryDecision(d);
     if (d.state !== 'CANARY_APPLIED_PAPER_ONLY' || d.canary?.applied !== true) throw new Error('STEP11_ONLY_ROUTED_CANARY_DECISIONS_COUNT');
     if (d.source_canary_authorization_fingerprint !== authorization.canary_authorization_fingerprint) throw new Error('STEP11_CONFIRMATION_DECISION_AUTHORIZATION_MISMATCH');
-    if (parseTimestamp('STEP11_CONFIRMATION_ROUTED_AT', d.routed_at) <= frozenMs) throw new Error('STEP11_CONFIRMATION_DECISION_MUST_FOLLOW_CHECKPOINT_FREEZE');
+    const routedMs = parseTimestamp('STEP11_CONFIRMATION_ROUTED_AT', d.routed_at);
+    const kickoffMs = parseTimestamp('STEP11_CONFIRMATION_KICKOFF_AT', d.kickoff_at);
+    if (routedMs <= frozenMs) throw new Error('STEP11_CONFIRMATION_DECISION_MUST_FOLLOW_CHECKPOINT_FREEZE');
+    if (routedMs >= kickoffMs) throw new Error('STEP11_POST_KICKOFF_CONFIRMATION_ROUTING_FORBIDDEN');
     if (decisions.has(d.canary_decision_fingerprint)) throw new Error('STEP11_DUPLICATE_CONFIRMATION_DECISION');
     decisions.set(d.canary_decision_fingerprint, d);
   }
@@ -127,6 +130,9 @@ export function evaluatePatternCanaryExpansionEvidence({
     if (s.source_canary_authorization_fingerprint !== authorization.canary_authorization_fingerprint) throw new Error('STEP11_CONFIRMATION_SETTLEMENT_AUTHORIZATION_MISMATCH');
     const d = decisions.get(s.source_canary_decision_fingerprint);
     if (!d || keyOf(d) !== keyOf(s)) throw new Error('STEP11_CONFIRMATION_DECISION_SETTLEMENT_LINEAGE_MISMATCH');
+    const settledMs = parseTimestamp('STEP11_CONFIRMATION_SETTLED_AT', s.settled_at);
+    const kickoffMs = parseTimestamp('STEP11_CONFIRMATION_KICKOFF_AT', d.kickoff_at);
+    if (settledMs <= kickoffMs) throw new Error('STEP11_CONFIRMATION_SETTLEMENT_MUST_FOLLOW_KICKOFF');
     const key = keyOf(s);
     if (excluded.has(key)) throw new Error('STEP11_INITIAL_CANARY_EVIDENCE_REUSE_FORBIDDEN');
     if (seen.has(key)) throw new Error('STEP11_DUPLICATE_EXPANSION_MATCH_MARKET_SELECTION');
