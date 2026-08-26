@@ -1,0 +1,82 @@
+{
+  "contract_id": "STAGED_PATTERN_CANARY_EXPANSION_ACTIVATION_MONITORING_V0_1",
+  "status": "STEP_12_IMPLEMENTED",
+  "purpose": "Activate and monitor only the manually approved Step 11 staged Pattern Intelligence canary expansion, preserving deterministic lineage, champion fallback, paper/research-only execution, and Gate6 capital ownership.",
+  "inputs": {
+    "required_step11_state": "NEXT_CANARY_STAGE_APPROVED_NOT_ACTIVATED",
+    "required_step11_decision": "APPROVE_NEXT_CANARY_STAGE",
+    "exact_step11_decision_fingerprint_required": true,
+    "same_step10_canary_authorization_required": true,
+    "same_shadow_plan_calibration_and_routing_seed_required": true,
+    "activation_must_follow_step11_decision": true
+  },
+  "activation_boundary": {
+    "allowed_channels": ["PAPER", "RESEARCH"],
+    "previous_stage_maximum_routing_fraction": 0.05,
+    "staged_expansion_maximum_routing_fraction": 0.10,
+    "maximum_absolute_probability_shift": 0.02,
+    "probability_influence_cap_may_increase": false,
+    "deterministic_routing_method": "DETERMINISTIC_SHA256_MATCH_MARKET_SELECTION",
+    "routing_seed_must_be_preserved": true,
+    "retroactive_routing_allowed": false,
+    "post_kickoff_routing_allowed": false,
+    "champion_probability_mutated_in_place": false,
+    "automatic_further_expansion": false,
+    "automatic_full_promotion": false
+  },
+  "monitoring": {
+    "minimum_new_stage_routed_settled_n": 30,
+    "minimum_expansion_band_routed_settled_n": 30,
+    "minimum_n_basis": "P002_INDEPENDENT_VALIDATION_MIN_N",
+    "full_stage_brier_non_degradation_required": true,
+    "full_stage_log_loss_non_degradation_required": true,
+    "expansion_band_brier_non_degradation_required": true,
+    "expansion_band_log_loss_non_degradation_required": true,
+    "maximum_ece_degradation": 0.01,
+    "additional_alpha_spent": false,
+    "settlement_must_be_post_kickoff": true
+  },
+  "rollback": {
+    "kill_switch_armed_at_activation": true,
+    "immediate_signals": [
+      "PROVENANCE_OR_FINGERPRINT_FAILURE",
+      "POST_KICKOFF_LEAKAGE",
+      "LINEAGE_OR_CALIBRATION_DRIFT",
+      "MANUAL_KILL_SWITCH"
+    ],
+    "performance_degradation_after_min_n_requires_rollback": true,
+    "rollback_target": "CHAMPION_ONLY",
+    "routing_fraction_after_rollback": 0,
+    "probability_influence_after_rollback": 0,
+    "same_activation_reactivation_allowed": false,
+    "new_governed_authorization_required_for_future_attempt": true
+  },
+  "ownership": {
+    "step10_canary_owner": "packages/intelligence-engine/src/controlled-pattern-canary-activation-rollback.mjs",
+    "step11_expansion_governance_owner": "packages/intelligence-engine/src/pattern-canary-expansion-rejection-governance.mjs",
+    "gate6_capital_and_risk_owner": "packages/gate6",
+    "existing_owners_replaced": false
+  },
+  "decision_boundary": {
+    "paper_canary_influence_allowed": true,
+    "production_decision_weight": 0,
+    "production_mutation_allowed": false,
+    "capital_use_authorized": false,
+    "automatic_retuning": false,
+    "automatic_full_promotion": false
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_step12_evidence": false,
+    "real_step11_approval_required": true,
+    "real_step12_activation_claimed_by_implementation": false,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_STEP11_APPROVAL_AND_NEW_STAGED_EXPANSION_EVIDENCE"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "gate6_capital_lock_preserved": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage": "STEP_13_PATTERN_CANARY_GRADUATION_OR_RETIREMENT_GOVERNANCE"
+}
