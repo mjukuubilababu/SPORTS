@@ -1,0 +1,199 @@
+name: Controlled Pattern Canary Activation Rollback v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+
+permissions:
+  contents: read
+
+jobs:
+  validate-controlled-pattern-canary:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce Step 10 introduction scope or protect Step 10 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          owned=(
+            "contracts/controlled-pattern-canary-activation-rollback-v0.1.json"
+            "packages/intelligence-engine/src/controlled-pattern-canary-activation-rollback.mjs"
+            "packages/intelligence-engine/tests/controlled-pattern-canary-activation-rollback.test.mjs"
+            "packages/intelligence-engine/docs/CONTROLLED_PATTERN_CANARY_ACTIVATION_ROLLBACK_V0_1.md"
+            ".github/workflows/controlled-pattern-canary-activation-rollback-v0.1.yml"
+          )
+          if ! git cat-file -e "$BASE:contracts/controlled-pattern-canary-activation-rollback-v0.1.json" 2>/dev/null; then
+            declare -A seen=()
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"; matched=false
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" == "A" ]] || { echo "STEP10_INTRODUCTION_FILE_MUST_BE_ADDED: $row"; exit 1; }
+                  seen["$path"]=1; matched=true; break
+                fi
+              done
+              [[ "$matched" == true ]] || { echo "STEP10_UNEXPECTED_INTRODUCTION_CHANGE: $row"; exit 1; }
+            done
+            [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP10_EXPECTED_EXACTLY_5_ADDITIONS"; exit 1; }
+            [[ "${#seen[@]}" -eq 5 ]] || { echo "STEP10_INTRODUCTION_FILE_SET_INCOMPLETE"; exit 1; }
+          else
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  case "$status" in D|R*) echo "STEP10_OWNED_ARTIFACT_DELETION_OR_RENAME_FORBIDDEN: $row"; exit 1 ;; esac
+                fi
+              done
+            done
+          fi
+          echo "STEP10_SCOPE_GUARD=PASS"
+
+      - name: Validate Step 9-10 contracts, P002 and Gate6 ownership
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s9=json.loads(Path('contracts/pattern-shadow-forward-monitoring-promotion-approval-v0.1.json').read_text())
+          s10=json.loads(Path('contracts/controlled-pattern-canary-activation-rollback-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          g6=json.loads(Path('packages/gate6/gate6_manifest.json').read_text())
+          assert s9['contract_id']=='PATTERN_SHADOW_FORWARD_MONITORING_PROMOTION_APPROVAL_V0_1'
+          assert s9['status']=='STEP_9_IMPLEMENTED'
+          assert s9['next_stage']=='STEP_10_CONTROLLED_PATTERN_CANARY_ACTIVATION_AND_ROLLBACK_ENFORCEMENT'
+          assert s10['contract_id']=='CONTROLLED_PATTERN_CANARY_ACTIVATION_ROLLBACK_V0_1'
+          assert s10['status']=='STEP_10_IMPLEMENTED'
+          assert s10['inputs']['required_step9_state']=='CONTROLLED_CANARY_APPROVED_NOT_ACTIVATED_ZERO_WEIGHT'
+          assert s10['inputs']['exact_step9_forward_evaluation_required'] is True
+          assert s10['inputs']['minimum_step9_forward_settled_n']==30
+          assert s10['inputs']['minimum_step8_settled_n']==100
+          assert s10['canary_boundary']['maximum_prediction_unit_routing_fraction']==0.05
+          assert s10['canary_boundary']['maximum_absolute_probability_shift']==0.02
+          assert s10['canary_boundary']['cherry_pick_allowed'] is False
+          assert s10['canary_boundary']['capital_execution_allowed'] is False
+          assert s10['health_monitoring']['minimum_routed_settled_n']==30
+          assert s10['health_monitoring']['additional_alpha_spent'] is False
+          assert s10['rollback']['kill_switch_armed_at_activation'] is True
+          assert s10['rollback']['routing_fraction_after_rollback']==0
+          assert s10['rollback']['probability_influence_after_rollback']==0
+          assert s10['rollback']['same_authorization_reactivation_allowed'] is False
+          assert s10['ownership']['gate6_capital_and_risk_owner']=='packages/gate6'
+          assert s10['ownership']['existing_owners_replaced'] is False
+          assert s10['decision_boundary']['production_decision_weight']==0
+          assert s10['decision_boundary']['automatic_full_promotion'] is False
+          assert s10['real_evidence_boundary']['synthetic_unit_test_rows_may_count_as_real_canary_evidence'] is False
+          assert s10['governance']['p002_changed'] is False
+          assert s10['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert s10['governance']['gate6_capital_lock_preserved'] is True
+          assert s10['governance']['real_money']=='NO'
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['independent_validation_min_n']==30
+          assert p002['capital_effect']=='NONE_UNTIL_GOVERNED_EVIDENCE'
+          assert g6['gate']=='Gate 6 — Capital & Risk Engine'
+          assert 'LOCKED' in g6['capital_modes']
+          assert 'evidence-gated capital promotion' in g6['risk_controls']
+          print('STEP9_TO_STEP10_CONTRACT_CHAIN=PASS')
+          print('STEP10_ROUTING_CAP_5_PERCENT=PASS')
+          print('STEP10_PROBABILITY_CAP_2PP=PASS')
+          print('STEP10_ROLLBACK_ENFORCEMENT=PASS')
+          print('GATE6_CAPITAL_OWNER_PRESERVED=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run Step 9 regression
+        run: node --test packages/intelligence-engine/tests/pattern-shadow-forward-monitoring-promotion-approval.test.mjs
+
+      - name: Run Step 10 tests
+        run: node --test packages/intelligence-engine/tests/controlled-pattern-canary-activation-rollback.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mkdir -p artifacts/controlled-pattern-canary-activation-rollback-v0.1
+          rm -rf /tmp/step10-base /tmp/step10-head
+          git worktree add --detach /tmp/step10-base "$BASE"
+          git worktree add --detach /tmp/step10-head "$HEAD"
+          set +e
+          (cd /tmp/step10-base/packages/intelligence-engine && npm test) > /tmp/step10-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step10-head/packages/intelligence-engine && npm test) > /tmp/step10-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s\n' "$BASE_RC" > /tmp/step10-base.rc
+          printf '%s\n' "$HEAD_RC" > /tmp/step10-head.rc
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          def failures(path):
+            out=[]
+            for line in Path(path).read_text(errors='replace').splitlines():
+              t=line.strip(); m=tap.match(t) or glyph.match(t)
+              if m: out.append(m.group(1).strip())
+            return sorted(set(out))
+          brc=int(Path('/tmp/step10-base.rc').read_text()); hrc=int(Path('/tmp/step10-head.rc').read_text())
+          base=failures('/tmp/step10-base.log'); head=failures('/tmp/step10-head.log')
+          if brc!=0 and not base: raise SystemExit('STEP10_UNPARSED_CANONICAL_BASE_TEST_FAILURE_DEBT')
+          if hrc!=0 and not head: raise SystemExit('STEP10_UNPARSED_HEAD_TEST_FAILURE_DEBT')
+          if brc!=hrc: raise SystemExit('STEP10_NPM_TEST_EXIT_CODE_CHANGED')
+          if base!=head: raise SystemExit('STEP10_REGRESSION_FAILURE_SET_CHANGED')
+          summary={'comparison':'CANONICAL_BASE_VS_STEP10_HEAD','node_version':'20','base_npm_test_rc':brc,'head_npm_test_rc':hrc,'base_failure_n':len(base),'head_failure_n':len(head),'base_failures':base,'head_failures':head,'new_failure_names':sorted(set(head)-set(base)),'removed_failure_names':sorted(set(base)-set(head)),'failure_name_delta_zero':base==head}
+          Path('artifacts/controlled-pattern-canary-activation-rollback-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+          echo "STEP10_REGRESSION_DELTA=0"
+
+      - name: Write Step 10 evidence
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          root=Path('artifacts/controlled-pattern-canary-activation-rollback-v0.1')
+          regression=json.loads((root/'REGRESSION_BASELINE.json').read_text())
+          evidence={
+            'artifact':'Controlled_Pattern_Canary_Activation_Rollback_v0.1',
+            'step':'STEP_10_CONTROLLED_PATTERN_CANARY_ACTIVATION_AND_ROLLBACK_ENFORCEMENT',
+            'overall':{'TEST_AUTHORED':True,'TEST_EXECUTED':True,'TEST_PASS':True,'STEP_10_IMPLEMENTATION_COMPLETE':True,'ADDED_FILES':5,'MODIFIED_EXISTING_FILES':0,'DELETED_EXISTING_FILES':0,'REGRESSION_DELTA_ZERO':regression['failure_name_delta_zero']},
+            'capabilities':{'EXACT_STEP8_LINEAGE_REQUIRED':True,'STEP8_MIN_SETTLED_N':100,'EXACT_STEP9_FORWARD_EVALUATION_REQUIRED':True,'STEP9_FORWARD_MIN_SETTLED_N':30,'DETERMINISTIC_ROUTING':True,'MAX_ROUTING_FRACTION':0.05,'MAX_ABS_PROBABILITY_SHIFT':0.02,'CHERRY_PICK_FORBIDDEN':True,'PAPER_RESEARCH_ONLY':True,'CANARY_HEALTH_MIN_SETTLED_N':30,'BRIER_NON_DEGRADATION':True,'LOGLOSS_NON_DEGRADATION':True,'ECE_MAX_DEGRADATION':0.01,'IMMEDIATE_INTEGRITY_ROLLBACK':True,'MANUAL_KILL_SWITCH':True,'ROLLBACK_ROUTING_FRACTION':0,'ROLLBACK_PROBABILITY_INFLUENCE':0,'SAME_AUTHORIZATION_REACTIVATION':False,'PRODUCTION_DECISION_WEIGHT':0,'AUTOMATIC_FULL_PROMOTION':False},
+            'real_evidence_status':{'REAL_CANARY_EXECUTED_IN_CI':False,'SYNTHETIC_TEST_FIXTURES_ONLY':True,'SYNTHETIC_RESULTS_COUNT_AS_REAL_CANARY_EVIDENCE':False,'REAL_CANARY_ACTIVATION_CLAIMED':False,'CURRENT_REAL_STATUS':'NOT_RUN_WAITING_FOR_REAL_STEP9_APPROVAL_AND_CONTROLLED_CANARY_EVIDENCE'},
+            'regression_baseline':regression,
+            'governance':{'P002_UNCHANGED':True,'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,'GATE6_CAPITAL_OWNER_PRESERVED':True,'EXISTING_OWNER_REPLACEMENT':False,'AUTOMATIC_RETUNING':False,'CAPITAL_EFFECT':'NONE','REAL_MONEY':'NO'},
+            'hashes':{'contract_sha256':sha('contracts/controlled-pattern-canary-activation-rollback-v0.1.json'),'runtime_sha256':sha('packages/intelligence-engine/src/controlled-pattern-canary-activation-rollback.mjs'),'test_sha256':sha('packages/intelligence-engine/tests/controlled-pattern-canary-activation-rollback.test.mjs'),'docs_sha256':sha('packages/intelligence-engine/docs/CONTROLLED_PATTERN_CANARY_ACTIVATION_ROLLBACK_V0_1.md'),'p002_sha256':sha('contracts/p002-frozen-rules.json'),'gate6_manifest_sha256':sha('packages/gate6/gate6_manifest.json')},
+            'next_stage':'STEP_11_PATTERN_CANARY_EXPANSION_OR_REJECTION_GOVERNANCE'
+          }
+          (root/'TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 10 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: controlled-pattern-canary-activation-rollback-v0.1-evidence
+          path: |
+            artifacts/controlled-pattern-canary-activation-rollback-v0.1/TEST_EVIDENCE.json
+            artifacts/controlled-pattern-canary-activation-rollback-v0.1/REGRESSION_BASELINE.json
+          if-no-files-found: error
