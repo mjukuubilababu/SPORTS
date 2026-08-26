@@ -1,0 +1,197 @@
+name: Pattern Canary Expansion Rejection Governance v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pattern-canary-expansion-governance:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce Step 11 introduction scope or protect Step 11 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          owned=(
+            "contracts/pattern-canary-expansion-rejection-governance-v0.1.json"
+            "packages/intelligence-engine/src/pattern-canary-expansion-rejection-governance.mjs"
+            "packages/intelligence-engine/tests/pattern-canary-expansion-rejection-governance.test.mjs"
+            "packages/intelligence-engine/docs/PATTERN_CANARY_EXPANSION_REJECTION_GOVERNANCE_V0_1.md"
+            ".github/workflows/pattern-canary-expansion-rejection-governance-v0.1.yml"
+          )
+          if ! git cat-file -e "$BASE:contracts/pattern-canary-expansion-rejection-governance-v0.1.json" 2>/dev/null; then
+            declare -A seen=()
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"; matched=false
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" == "A" ]] || { echo "STEP11_INTRODUCTION_FILE_MUST_BE_ADDED: $row"; exit 1; }
+                  seen["$path"]=1; matched=true; break
+                fi
+              done
+              [[ "$matched" == true ]] || { echo "STEP11_UNEXPECTED_INTRODUCTION_CHANGE: $row"; exit 1; }
+            done
+            [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP11_EXPECTED_EXACTLY_5_ADDITIONS"; exit 1; }
+            [[ "${#seen[@]}" -eq 5 ]] || { echo "STEP11_INTRODUCTION_FILE_SET_INCOMPLETE"; exit 1; }
+          else
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  case "$status" in D|R*) echo "STEP11_OWNED_ARTIFACT_DELETION_OR_RENAME_FORBIDDEN: $row"; exit 1 ;; esac
+                fi
+              done
+            done
+          fi
+          echo "STEP11_SCOPE_GUARD=PASS"
+
+      - name: Validate Step 10-11 contracts, P002 and Gate6 ownership
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s10=json.loads(Path('contracts/controlled-pattern-canary-activation-rollback-v0.1.json').read_text())
+          s11=json.loads(Path('contracts/pattern-canary-expansion-rejection-governance-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          g6=json.loads(Path('packages/gate6/gate6_manifest.json').read_text())
+          assert s10['contract_id']=='CONTROLLED_PATTERN_CANARY_ACTIVATION_ROLLBACK_V0_1'
+          assert s10['status']=='STEP_10_IMPLEMENTED'
+          assert s10['next_stage']=='STEP_11_PATTERN_CANARY_EXPANSION_OR_REJECTION_GOVERNANCE'
+          assert s11['contract_id']=='PATTERN_CANARY_EXPANSION_REJECTION_GOVERNANCE_V0_1'
+          assert s11['status']=='STEP_11_IMPLEMENTED'
+          assert s11['inputs']['required_step10_health_state']=='CANARY_HEALTHY_CONTINUE_PAPER_ONLY'
+          assert s11['checkpoint']['minimum_initial_routed_settled_n']==30
+          assert s11['checkpoint']['checkpoint_rows_may_be_reused_as_confirmation'] is False
+          assert s11['confirmation']['minimum_new_routed_settled_n']==30
+          assert s11['confirmation']['minimum_total_routed_settled_n']==60
+          assert s11['confirmation']['additional_alpha_spent'] is False
+          assert s11['expansion_boundary']['current_step10_max_routing_fraction']==0.05
+          assert s11['expansion_boundary']['next_stage_maximum_routing_fraction']==0.10
+          assert s11['expansion_boundary']['maximum_absolute_probability_shift']==0.02
+          assert s11['expansion_boundary']['probability_influence_cap_may_increase_in_step11'] is False
+          assert s11['expansion_boundary']['approval_is_not_activation'] is True
+          assert s11['expansion_boundary']['automatic_expansion'] is False
+          assert s11['rejection']['reuses_step10_rollback_owner'] is True
+          assert s11['rejection']['same_authorization_reactivation_allowed'] is False
+          assert s11['decision_boundary']['production_decision_weight']==0
+          assert s11['decision_boundary']['capital_use_authorized'] is False
+          assert s11['real_evidence_boundary']['synthetic_unit_test_rows_may_count_as_real_expansion_evidence'] is False
+          assert s11['governance']['p002_changed'] is False
+          assert s11['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert s11['governance']['gate6_capital_lock_preserved'] is True
+          assert s11['governance']['real_money']=='NO'
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['independent_validation_min_n']==30
+          assert p002['capital_effect']=='NONE_UNTIL_GOVERNED_EVIDENCE'
+          assert g6['gate']=='Gate 6 — Capital & Risk Engine'
+          assert 'LOCKED' in g6['capital_modes']
+          print('STEP10_TO_STEP11_CONTRACT_CHAIN=PASS')
+          print('STEP11_SECOND_DISJOINT_COHORT_REQUIRED=PASS')
+          print('STEP11_APPROVAL_IS_NOT_ACTIVATION=PASS')
+          print('STEP11_REJECTION_REUSES_STEP10_ROLLBACK=PASS')
+          print('GATE6_CAPITAL_OWNER_PRESERVED=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run Step 10 regression
+        run: node --test packages/intelligence-engine/tests/controlled-pattern-canary-activation-rollback.test.mjs
+
+      - name: Run Step 11 tests
+        run: node --test packages/intelligence-engine/tests/pattern-canary-expansion-rejection-governance.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mkdir -p artifacts/pattern-canary-expansion-rejection-governance-v0.1
+          rm -rf /tmp/step11-base /tmp/step11-head
+          git worktree add --detach /tmp/step11-base "$BASE"
+          git worktree add --detach /tmp/step11-head "$HEAD"
+          set +e
+          (cd /tmp/step11-base/packages/intelligence-engine && npm test) > /tmp/step11-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step11-head/packages/intelligence-engine && npm test) > /tmp/step11-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s\n' "$BASE_RC" > /tmp/step11-base.rc
+          printf '%s\n' "$HEAD_RC" > /tmp/step11-head.rc
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          def failures(path):
+            out=[]
+            for line in Path(path).read_text(errors='replace').splitlines():
+              t=line.strip(); m=tap.match(t) or glyph.match(t)
+              if m: out.append(m.group(1).strip())
+            return sorted(set(out))
+          brc=int(Path('/tmp/step11-base.rc').read_text()); hrc=int(Path('/tmp/step11-head.rc').read_text())
+          base=failures('/tmp/step11-base.log'); head=failures('/tmp/step11-head.log')
+          if brc!=0 and not base: raise SystemExit('STEP11_UNPARSED_CANONICAL_BASE_TEST_FAILURE_DEBT')
+          if hrc!=0 and not head: raise SystemExit('STEP11_UNPARSED_HEAD_TEST_FAILURE_DEBT')
+          if brc!=hrc: raise SystemExit('STEP11_NPM_TEST_EXIT_CODE_CHANGED')
+          if base!=head: raise SystemExit('STEP11_REGRESSION_FAILURE_SET_CHANGED')
+          summary={'comparison':'CANONICAL_BASE_VS_STEP11_HEAD','node_version':'20','base_npm_test_rc':brc,'head_npm_test_rc':hrc,'base_failure_n':len(base),'head_failure_n':len(head),'base_failures':base,'head_failures':head,'new_failure_names':sorted(set(head)-set(base)),'removed_failure_names':sorted(set(base)-set(head)),'failure_name_delta_zero':base==head}
+          Path('artifacts/pattern-canary-expansion-rejection-governance-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+          echo "STEP11_REGRESSION_DELTA=0"
+
+      - name: Write Step 11 evidence
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          root=Path('artifacts/pattern-canary-expansion-rejection-governance-v0.1')
+          root.mkdir(parents=True,exist_ok=True)
+          regression=json.loads((root/'REGRESSION_BASELINE.json').read_text())
+          evidence={
+            'artifact':'Pattern_Canary_Expansion_Rejection_Governance_v0.1',
+            'step':'STEP_11_PATTERN_CANARY_EXPANSION_OR_REJECTION_GOVERNANCE',
+            'overall':{'TEST_AUTHORED':True,'TEST_EXECUTED':True,'TEST_PASS':True,'STEP_11_IMPLEMENTATION_COMPLETE':True,'ADDED_FILES':5,'MODIFIED_EXISTING_FILES':0,'DELETED_EXISTING_FILES':0,'REGRESSION_DELTA_ZERO':regression['failure_name_delta_zero']},
+            'capabilities':{'EXACT_STEP10_HEALTH_CHECKPOINT_REPRODUCTION':True,'INITIAL_MIN_ROUTED_SETTLED_N':30,'SECOND_DISJOINT_CONFIRMATION_REQUIRED':True,'NEW_CONFIRMATION_MIN_ROUTED_SETTLED_N':30,'MIN_TOTAL_ROUTED_SETTLED_N':60,'POST_CHECKPOINT_ROUTING_REQUIRED':True,'INITIAL_EVIDENCE_REUSE_FORBIDDEN':True,'FULL_COHORT_HEALTH_REQUIRED':True,'CONFIRMATION_COHORT_HEALTH_REQUIRED':True,'ADDITIONAL_ALPHA_SPENT':False,'MANUAL_EXPAND_HOLD_REJECT_DECISION':True,'NEXT_STAGE_MAX_ROUTING_FRACTION':0.10,'MAX_ABS_PROBABILITY_SHIFT':0.02,'APPROVAL_IS_NOT_ACTIVATION':True,'REJECTION_REUSES_STEP10_ROLLBACK':True,'PRODUCTION_DECISION_WEIGHT':0,'AUTOMATIC_EXPANSION':False},
+            'real_evidence_status':{'REAL_EXPANSION_EVALUATION_EXECUTED_IN_CI':False,'SYNTHETIC_TEST_FIXTURES_ONLY':True,'SYNTHETIC_RESULTS_COUNT_AS_REAL_EXPANSION_EVIDENCE':False,'REAL_EXPANSION_CLAIMED':False,'CURRENT_REAL_STATUS':'NOT_RUN_WAITING_FOR_REAL_STEP10_HEALTHY_CANARY_AND_SECOND_DISJOINT_CANARY_COHORT'},
+            'regression_baseline':regression,
+            'governance':{'P002_UNCHANGED':True,'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,'GATE6_CAPITAL_OWNER_PRESERVED':True,'EXISTING_OWNER_REPLACEMENT':False,'AUTOMATIC_RETUNING':False,'CAPITAL_EFFECT':'NONE','REAL_MONEY':'NO'},
+            'hashes':{'contract_sha256':sha('contracts/pattern-canary-expansion-rejection-governance-v0.1.json'),'runtime_sha256':sha('packages/intelligence-engine/src/pattern-canary-expansion-rejection-governance.mjs'),'test_sha256':sha('packages/intelligence-engine/tests/pattern-canary-expansion-rejection-governance.test.mjs'),'docs_sha256':sha('packages/intelligence-engine/docs/PATTERN_CANARY_EXPANSION_REJECTION_GOVERNANCE_V0_1.md'),'p002_sha256':sha('contracts/p002-frozen-rules.json'),'gate6_manifest_sha256':sha('packages/gate6/gate6_manifest.json')},
+            'next_stage':'STEP_12_STAGED_CANARY_EXPANSION_ACTIVATION_AND_MONITORING'
+          }
+          (root/'TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 11 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pattern-canary-expansion-rejection-governance-v0.1-evidence
+          path: |
+            artifacts/pattern-canary-expansion-rejection-governance-v0.1/TEST_EVIDENCE.json
+            artifacts/pattern-canary-expansion-rejection-governance-v0.1/REGRESSION_BASELINE.json
+          if-no-files-found: error
