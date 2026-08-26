@@ -31,6 +31,9 @@ function loss(p, y) {
     log_loss: -(y * Math.log(Math.max(eps, p)) + (1 - y) * Math.log(Math.max(eps, 1 - p)))
   };
 }
+function isoAt(i, hour, minute = 0) {
+  return new Date(Date.UTC(2026, 10, 2 + i, hour, minute, 0)).toISOString();
+}
 
 function step8Settlement(i, { baseline = 0.55, shadow = 0.65, outcome = i % 10 < 7 ? 1 : 0, clv = 0.01 } = {}) {
   const payload = {
@@ -68,15 +71,17 @@ function dossier() {
   return { d, settlements, evaluation };
 }
 
-function shadowPrediction(i, { baseline = 0.55, shadow = 0.65, generatedAt = '2026-11-02T10:00:00Z' } = {}) {
+function shadowPrediction(i, { baseline = 0.55, shadow = 0.65, generatedAt = null, kickoffAt = null, matchId = null } = {}) {
+  const generated = generatedAt ?? isoAt(i, 10);
+  const kickoff = kickoffAt ?? isoAt(i, 12);
   const payload = {
     shadow_version: PATTERN_PROMOTION_SHADOW_VERSION,
-    match_id: `FWD-${i}`,
+    match_id: matchId ?? `FWD-${i}`,
     market_key: 'BINARY_TEST',
     selection: 'YES',
-    kickoff_at: '2026-11-02T12:00:00Z',
-    generated_at: generatedAt,
-    baseline: { model_version: 'CHAMPION-V1', probability: baseline, generated_at: generatedAt },
+    kickoff_at: kickoff,
+    generated_at: generated,
+    baseline: { model_version: 'CHAMPION-V1', probability: baseline, generated_at: generated },
     shadow: { probability: shadow, raw_logit_shift: 0.2, capped_logit_shift: 0.2, probability_delta: shadow - baseline, activations: [] },
     source_shadow_plan_fingerprint: 'STEP8-SHADOW-PLAN-FROZEN',
     governance: { shadow_only: true, decision_weight: 0, baseline_mutated: false, production_decision_affected: false, market_data_used_as_prediction_input: false }
@@ -85,27 +90,27 @@ function shadowPrediction(i, { baseline = 0.55, shadow = 0.65, generatedAt = '20
 }
 
 function forwardObservation(d, i, { help = true } = {}) {
-  const outcome = help ? (i % 10 < 7 ? 1 : 0) : (i % 10 < 5 ? 1 : 0);
+  const outcome = help ? (i % 5 < 4 ? 1 : 0) : (i % 10 < 5 ? 1 : 0);
   const baseline = help ? 0.55 : 0.70;
   const shadow = help ? 0.65 : 0.85;
   const prediction = shadowPrediction(i, { baseline, shadow });
+  const settledAt = new Date(Date.parse(prediction.kickoff_at) + 2 * 60 * 60 * 1000).toISOString();
+  const registeredAt = new Date(Date.parse(settledAt) + 60 * 1000).toISOString();
   const settlement = settlePatternShadowPrediction({
     shadowPrediction: prediction,
     outcome,
-    settledAt: '2026-11-02T14:00:00Z',
+    settledAt,
     verifiedMarketClv: help ? 0.01 : -0.01
   });
-  return registerPatternForwardShadowObservation({
-    dossier: d,
-    shadowPrediction: prediction,
-    settlement,
-    registeredAt: '2026-11-02T14:01:00Z'
-  });
+  return registerPatternForwardShadowObservation({ dossier: d, shadowPrediction: prediction, settlement, registeredAt });
 }
 
 function forwardRows(d, n, options = {}) {
   return Array.from({ length: n }, (_, i) => forwardObservation(d, i, options));
 }
+
+const FORWARD_EVALUATED_AT = '2026-12-05T00:00:00Z';
+const APPROVAL_AT = '2026-12-05T01:00:00Z';
 
 test('Step 9 freezes an exact eligible Step 8 cohort and remains zero weight', () => {
   const { d } = dossier();
@@ -127,27 +132,25 @@ test('non-eligible Step 8 result cannot create a promotion dossier', () => {
 
 test('Step 8 evidence reuse is forbidden in Step 9 forward cohort', () => {
   const { d } = dossier();
-  const prediction = shadowPrediction(999);
-  const reused = step8Settlement(0);
-  const rewritten = { ...reused, source_shadow_prediction_fingerprint: prediction.shadow_prediction_fingerprint };
-  const { settlement_fingerprint: _old, ...payload } = rewritten;
-  const settlement = { ...payload, settlement_fingerprint: sha256(payload) };
-  assert.throws(() => registerPatternForwardShadowObservation({ dossier: d, shadowPrediction: { ...prediction, match_id: 'STEP8-0' }, settlement, registeredAt: '2026-11-02T14:01:00Z' }), /STEP9_SHADOW_PREDICTION_FINGERPRINT_INVALID|STEP9_STEP8_EVIDENCE_REUSE_FORBIDDEN|STEP9_MATCH_MARKET_SELECTION_LINEAGE_MISMATCH/);
+  const prediction = shadowPrediction(0, { matchId: 'STEP8-0' });
+  const settlement = settlePatternShadowPrediction({ shadowPrediction: prediction, outcome: 1, settledAt: isoAt(0, 14), verifiedMarketClv: 0.01 });
+  assert.throws(() => registerPatternForwardShadowObservation({ dossier: d, shadowPrediction: prediction, settlement, registeredAt: isoAt(0, 14, 1) }), /STEP9_STEP8_EVIDENCE_REUSE_FORBIDDEN/);
 });
 
 test('forward shadow prediction must be generated after dossier freeze and before kickoff', () => {
   const { d } = dossier();
   const before = shadowPrediction(1, { generatedAt: '2026-10-31T23:59:00Z' });
-  const settlementBefore = settlePatternShadowPrediction({ shadowPrediction: before, outcome: 1, settledAt: '2026-11-02T14:00:00Z', verifiedMarketClv: 0.01 });
-  assert.throws(() => registerPatternForwardShadowObservation({ dossier: d, shadowPrediction: before, settlement: settlementBefore, registeredAt: '2026-11-02T14:01:00Z' }), /STEP9_FORWARD_PREDICTION_MUST_FOLLOW_DOSSIER_FREEZE/);
-  const afterKickoff = shadowPrediction(2, { generatedAt: '2026-11-02T12:00:00Z' });
-  const settlementAfter = settlePatternShadowPrediction({ shadowPrediction: afterKickoff, outcome: 1, settledAt: '2026-11-02T14:00:00Z', verifiedMarketClv: 0.01 });
-  assert.throws(() => registerPatternForwardShadowObservation({ dossier: d, shadowPrediction: afterKickoff, settlement: settlementAfter, registeredAt: '2026-11-02T14:01:00Z' }), /STEP9_POST_KICKOFF_SHADOW_PREDICTION_FORBIDDEN/);
+  const settlementBefore = settlePatternShadowPrediction({ shadowPrediction: before, outcome: 1, settledAt: isoAt(1, 14), verifiedMarketClv: 0.01 });
+  assert.throws(() => registerPatternForwardShadowObservation({ dossier: d, shadowPrediction: before, settlement: settlementBefore, registeredAt: isoAt(1, 14, 1) }), /STEP9_FORWARD_PREDICTION_MUST_FOLLOW_DOSSIER_FREEZE/);
+  const same = isoAt(2, 12);
+  const afterKickoff = shadowPrediction(2, { generatedAt: same, kickoffAt: same });
+  const settlementAfter = settlePatternShadowPrediction({ shadowPrediction: afterKickoff, outcome: 1, settledAt: isoAt(2, 14), verifiedMarketClv: 0.01 });
+  assert.throws(() => registerPatternForwardShadowObservation({ dossier: d, shadowPrediction: afterKickoff, settlement: settlementAfter, registeredAt: isoAt(2, 14, 1) }), /STEP9_POST_KICKOFF_SHADOW_PREDICTION_FORBIDDEN/);
 });
 
 test('N=29 remains forward monitoring only with no approval eligibility', () => {
   const { d } = dossier();
-  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 29), evaluatedAt: '2026-11-03T00:00:00Z' });
+  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 29), evaluatedAt: FORWARD_EVALUATED_AT });
   assert.equal(FORWARD_MIN_SETTLED_N, 30);
   assert.equal(e.state, 'FORWARD_MONITORING_ACCUMULATING_ZERO_WEIGHT');
   assert.equal(e.gates.minimum_new_forward_n, false);
@@ -156,7 +159,7 @@ test('N=29 remains forward monitoring only with no approval eligibility', () => 
 
 test('N=30 healthy new forward cohort becomes explicit canary-approval eligible only', () => {
   const { d } = dossier();
-  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30), evaluatedAt: '2026-11-03T00:00:00Z' });
+  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30), evaluatedAt: FORWARD_EVALUATED_AT });
   assert.equal(e.state, 'ELIGIBLE_FOR_EXPLICIT_CONTROLLED_CANARY_APPROVAL_ZERO_WEIGHT');
   assert.equal(e.gates.minimum_new_forward_n, true);
   assert.equal(e.gates.brier_better_overall, true);
@@ -170,17 +173,22 @@ test('N=30 healthy new forward cohort becomes explicit canary-approval eligible 
 
 test('degraded forward cohort retains shadow and champion authority', () => {
   const { d } = dossier();
-  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30, { help: false }), evaluatedAt: '2026-11-03T00:00:00Z' });
+  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30, { help: false }), evaluatedAt: FORWARD_EVALUATED_AT });
   assert.equal(e.state, 'FORWARD_MONITORING_DEGRADED_RETAIN_SHADOW_ZERO_WEIGHT');
   assert.equal(e.governance.champion_remains_authoritative, true);
   assert.equal(e.governance.decision_weight, 0);
 });
 
+test('forward evaluation cannot predate registered evidence', () => {
+  const { d } = dossier();
+  assert.throws(() => evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30), evaluatedAt: '2026-11-03T00:00:00Z' }), /STEP9_EVALUATION_CANNOT_PREDATE_FORWARD_EVIDENCE/);
+});
+
 test('controlled canary approval requires eligible forward evidence, named approver and rationale', () => {
   const { d } = dossier();
-  const eligible = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30), evaluatedAt: '2026-11-03T00:00:00Z' });
-  assert.throws(() => recordPatternPromotionApproval({ dossier: d, forwardEvaluation: eligible, decision: 'APPROVE_CONTROLLED_CANARY', approver: '', rationale: 'x', decidedAt: '2026-11-03T01:00:00Z' }), /STEP9_APPROVER_REQUIRED/);
-  const approval = recordPatternPromotionApproval({ dossier: d, forwardEvaluation: eligible, decision: 'APPROVE_CONTROLLED_CANARY', approver: 'GOVERNANCE_REVIEWER', rationale: 'Forward cohort passed all frozen gates.', decidedAt: '2026-11-03T01:00:00Z' });
+  const eligible = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30), evaluatedAt: FORWARD_EVALUATED_AT });
+  assert.throws(() => recordPatternPromotionApproval({ dossier: d, forwardEvaluation: eligible, decision: 'APPROVE_CONTROLLED_CANARY', approver: '', rationale: 'x', decidedAt: APPROVAL_AT }), /STEP9_APPROVER_REQUIRED/);
+  const approval = recordPatternPromotionApproval({ dossier: d, forwardEvaluation: eligible, decision: 'APPROVE_CONTROLLED_CANARY', approver: 'GOVERNANCE_REVIEWER', rationale: 'Forward cohort passed all frozen gates.', decidedAt: APPROVAL_AT });
   assert.equal(approval.state, 'CONTROLLED_CANARY_APPROVED_NOT_ACTIVATED_ZERO_WEIGHT');
   assert.equal(approval.authorization.controlled_canary_may_be_implemented_next_stage, true);
   assert.equal(approval.authorization.production_activation_performed_here, false);
@@ -191,17 +199,17 @@ test('controlled canary approval requires eligible forward evidence, named appro
 
 test('degraded evidence cannot be approved but can be explicitly rejected/continued in shadow', () => {
   const { d } = dossier();
-  const degraded = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30, { help: false }), evaluatedAt: '2026-11-03T00:00:00Z' });
-  assert.throws(() => recordPatternPromotionApproval({ dossier: d, forwardEvaluation: degraded, decision: 'APPROVE_CONTROLLED_CANARY', approver: 'GOV', rationale: 'No', decidedAt: '2026-11-03T01:00:00Z' }), /STEP9_CONTROLLED_CANARY_APPROVAL_WITHOUT_FORWARD_ELIGIBILITY_FORBIDDEN/);
-  const rejected = recordPatternPromotionApproval({ dossier: d, forwardEvaluation: degraded, decision: 'REJECT_OR_CONTINUE_SHADOW', approver: 'GOV', rationale: 'Forward degradation retained.', decidedAt: '2026-11-03T01:00:00Z' });
+  const degraded = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30, { help: false }), evaluatedAt: FORWARD_EVALUATED_AT });
+  assert.throws(() => recordPatternPromotionApproval({ dossier: d, forwardEvaluation: degraded, decision: 'APPROVE_CONTROLLED_CANARY', approver: 'GOV', rationale: 'No', decidedAt: APPROVAL_AT }), /STEP9_CONTROLLED_CANARY_APPROVAL_WITHOUT_FORWARD_ELIGIBILITY_FORBIDDEN/);
+  const rejected = recordPatternPromotionApproval({ dossier: d, forwardEvaluation: degraded, decision: 'REJECT_OR_CONTINUE_SHADOW', approver: 'GOV', rationale: 'Forward degradation retained.', decidedAt: APPROVAL_AT });
   assert.equal(rejected.state, 'PROMOTION_REJECTED_OR_CONTINUE_SHADOW_ZERO_WEIGHT');
   assert.equal(rejected.authorization.controlled_canary_may_be_implemented_next_stage, false);
 });
 
 test('tampered approval fails closed and rollback policy remains pre-registered', () => {
   const { d } = dossier();
-  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30), evaluatedAt: '2026-11-03T00:00:00Z' });
-  const approval = recordPatternPromotionApproval({ dossier: d, forwardEvaluation: e, decision: 'APPROVE_CONTROLLED_CANARY', approver: 'GOV', rationale: 'All gates passed.', decidedAt: '2026-11-03T01:00:00Z' });
+  const e = evaluatePatternForwardMonitoring({ dossier: d, observations: forwardRows(d, 30), evaluatedAt: FORWARD_EVALUATED_AT });
+  const approval = recordPatternPromotionApproval({ dossier: d, forwardEvaluation: e, decision: 'APPROVE_CONTROLLED_CANARY', approver: 'GOV', rationale: 'All gates passed.', decidedAt: APPROVAL_AT });
   assert.equal(approval.rollback_policy_for_next_stage.brier_degradation, 'ROLLBACK_TO_CHAMPION');
   const broken = structuredClone(approval);
   broken.governance.decision_weight = 1;
