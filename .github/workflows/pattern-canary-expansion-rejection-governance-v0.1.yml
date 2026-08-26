@@ -4,6 +4,10 @@ on:
   pull_request:
     branches:
       - import/decision-intelligence-v0.5-qualified-set
+  push:
+    branches:
+      - feature/pattern-canary-expansion-rejection-governance-v0.1
+      - import/decision-intelligence-v0.5-qualified-set
 
 permissions:
   contents: read
@@ -27,12 +31,34 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Resolve canonical comparison range
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          elif [[ "${GITHUB_REF_NAME}" == "feature/pattern-canary-expansion-rejection-governance-v0.1" ]]; then
+            git fetch --no-tags origin import/decision-intelligence-v0.5-qualified-set:refs/remotes/origin/import/decision-intelligence-v0.5-qualified-set
+            BASE="$(git merge-base HEAD origin/import/decision-intelligence-v0.5-qualified-set)"
+            HEAD="${GITHUB_SHA}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${GITHUB_SHA}"
+          fi
+          git cat-file -e "$BASE^{commit}"
+          git cat-file -e "$HEAD^{commit}"
+          echo "STEP11_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "STEP11_HEAD=$HEAD" >> "$GITHUB_ENV"
+          echo "STEP11_COMPARISON_BASE=$BASE"
+          echo "STEP11_COMPARISON_HEAD=$HEAD"
+
       - name: Enforce Step 11 introduction scope or protect Step 11 artifacts
         shell: bash
         run: |
           set -euo pipefail
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
+          BASE="$STEP11_BASE"
+          HEAD="$STEP11_HEAD"
           mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
           owned=(
             "contracts/pattern-canary-expansion-rejection-governance-v0.1.json"
@@ -129,8 +155,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
+          BASE="$STEP11_BASE"
+          HEAD="$STEP11_HEAD"
           mkdir -p artifacts/pattern-canary-expansion-rejection-governance-v0.1
           rm -rf /tmp/step11-base /tmp/step11-head
           git worktree add --detach /tmp/step11-base "$BASE"
