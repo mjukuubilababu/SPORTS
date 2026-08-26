@@ -10,6 +10,8 @@ import {
 } from '../src/staged-pattern-canary-expansion-activation-monitoring.mjs';
 import {
   PATTERN_CANARY_GRADUATION_GOVERNANCE_VERSION,
+  createStep12GraduationCohortManifest,
+  verifyStep12GraduationCohortManifest,
   freezePatternCanaryGraduationDossier,
   verifyPatternCanaryGraduationDossier,
   recordPatternCanaryGraduationDecision,
@@ -149,12 +151,17 @@ function makeSettlement(activation, i, { outcome = 1, championProbability = 0.55
 function makeHealthyFixture(count = 30) {
   const lineage = makeLineage();
   const settlements = Array.from({ length: count }, (_, i) => makeSettlement(lineage.step12Activation, i));
+  const cohortManifest = createStep12GraduationCohortManifest({
+    step12Activation: lineage.step12Activation,
+    settlements,
+    capturedAt: '2026-01-06T12:00:00Z'
+  });
   const step12Health = evaluateStagedPatternCanaryHealth({
     activation: lineage.step12Activation,
     settlements,
     evaluatedAt: '2026-01-07T00:00:00Z'
   });
-  return { ...lineage, settlements, step12Health };
+  return { ...lineage, settlements, cohortManifest, step12Health };
 }
 
 function makeDossier() {
@@ -166,12 +173,22 @@ function makeDossier() {
   return { ...fixture, dossier };
 }
 
-test('Step 13 freezes exact healthy Step 12 evidence into a zero-weight graduation dossier', () => {
+test('Step 13 pre-health manifest cryptographically binds the exact Step 12 settlement cohort', () => {
+  const { cohortManifest } = makeHealthyFixture();
+  assert.equal(verifyStep12GraduationCohortManifest(cohortManifest), true);
+  assert.equal(cohortManifest.full_stage_routed_settled_n, 30);
+  assert.equal(cohortManifest.expansion_band_routed_settled_n, 30);
+  assert.equal(cohortManifest.settlement_fingerprints.length, 30);
+  assert.equal(cohortManifest.governance.post_manifest_cohort_rewrite_allowed, false);
+});
+
+test('Step 13 freezes exact manifest-bound healthy Step 12 evidence into a zero-weight graduation dossier', () => {
   const { dossier } = makeDossier();
   assert.equal(verifyPatternCanaryGraduationDossier(dossier), true);
   assert.equal(dossier.dossier_version, PATTERN_CANARY_GRADUATION_GOVERNANCE_VERSION);
   assert.equal(dossier.evidence.full_stage_routed_settled_n, 30);
   assert.equal(dossier.evidence.expansion_band_routed_settled_n, 30);
+  assert.equal(dossier.evidence.pre_health_cohort_manifest_bound, true);
   assert.equal(dossier.evidence.step12_health_reproduced_exactly, true);
   assert.equal(dossier.governance.production_decision_weight, 0);
   assert.equal(dossier.governance.champion_replacement_authorized, false);
@@ -184,11 +201,21 @@ test('Step 13 refuses graduation dossier before Step 12 independent minimum evid
   assert.throws(() => freezePatternCanaryGraduationDossier({ ...fixture, frozenAt: '2026-01-08T00:00:00Z' }), /STEP13_HEALTHY_STEP12_REQUIRED/);
 });
 
-test('Step 13 refuses a settlement cohort that cannot reproduce the exact Step 12 health fingerprint', () => {
+test('Step 13 refuses same-metric settlement substitution because manifest fingerprint set is exact', () => {
   const fixture = makeHealthyFixture();
   const replacement = makeSettlement(fixture.step12Activation, 999);
   const altered = [...fixture.settlements.slice(0, -1), replacement];
-  assert.throws(() => freezePatternCanaryGraduationDossier({ ...fixture, settlements: altered, frozenAt: '2026-01-08T00:00:00Z' }), /STEP13_STEP12_HEALTH_REPRODUCTION_FAILED/);
+  assert.throws(() => freezePatternCanaryGraduationDossier({ ...fixture, settlements: altered, frozenAt: '2026-01-08T00:00:00Z' }), /STEP13_SETTLEMENT_MANIFEST_FINGERPRINT_SET_MISMATCH/);
+});
+
+test('Step 13 refuses a cohort manifest captured after the Step 12 health evaluation', () => {
+  const fixture = makeHealthyFixture();
+  const lateManifest = createStep12GraduationCohortManifest({
+    step12Activation: fixture.step12Activation,
+    settlements: fixture.settlements,
+    capturedAt: '2026-01-07T01:00:00Z'
+  });
+  assert.throws(() => freezePatternCanaryGraduationDossier({ ...fixture, cohortManifest: lateManifest, frozenAt: '2026-01-08T00:00:00Z' }), /STEP13_MANIFEST_MUST_NOT_FOLLOW_STEP12_HEALTH/);
 });
 
 test('Step 13 graduation creates only a zero-weight challenger candidate and does not activate production', () => {
@@ -199,7 +226,7 @@ test('Step 13 graduation creates only a zero-weight challenger candidate and doe
     step12Health,
     decision: 'GRADUATE_TO_ZERO_WEIGHT_CHALLENGER_CANDIDATE',
     approver: 'step13-governor',
-    rationale: 'healthy staged evidence qualifies only for future governed review',
+    rationale: 'healthy manifest-bound staged evidence qualifies only for future governed review',
     decidedAt: '2026-01-09T00:00:00Z'
   });
   assert.equal(verifyPatternCanaryGraduationDecision(decision), true);
@@ -211,7 +238,7 @@ test('Step 13 graduation creates only a zero-weight challenger candidate and doe
   assert.equal(decision.next_stage, 'STEP_14_ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_AND_PRODUCTION_SAFETY_REVIEW');
 });
 
-test('Step 13 hold keeps Step 12 staged canary bounded and requires a new later dossier', () => {
+test('Step 13 hold keeps Step 12 staged canary bounded and requires new manifest-bound evidence', () => {
   const { dossier, step12Activation, step12Health } = makeDossier();
   const decision = recordPatternCanaryGraduationDecision({
     dossier,
@@ -219,7 +246,7 @@ test('Step 13 hold keeps Step 12 staged canary bounded and requires a new later 
     step12Health,
     decision: 'HOLD_STAGED_CANARY',
     approver: 'step13-governor',
-    rationale: 'collect more independent evidence',
+    rationale: 'collect more independently bound evidence',
     decidedAt: '2026-01-09T00:00:00Z'
   });
   assert.equal(verifyPatternCanaryGraduationDecision(decision), true);

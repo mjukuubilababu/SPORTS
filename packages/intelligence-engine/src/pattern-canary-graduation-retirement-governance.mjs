@@ -79,16 +79,73 @@ function verifyExactGraduationLineage({ step10Authorization, step11Decision, ste
   return true;
 }
 
+export function createStep12GraduationCohortManifest({ step12Activation, settlements, capturedAt }) {
+  verifyStagedPatternCanaryExpansionActivation(step12Activation);
+  if (!Array.isArray(settlements) || settlements.length === 0) throw new Error('STEP13_MANIFEST_SETTLEMENT_ARRAY_REQUIRED');
+  const capturedMs = parseTimestamp('STEP13_MANIFEST_CAPTURED_AT', capturedAt);
+  const seen = new Set();
+  let expansionBandN = 0;
+  for (const settlement of settlements) {
+    verifyStagedPatternCanarySettlement(settlement);
+    if (settlement.source_staged_activation_fingerprint !== step12Activation.staged_activation_fingerprint) {
+      throw new Error('STEP13_MANIFEST_SETTLEMENT_ACTIVATION_MISMATCH');
+    }
+    if (parseTimestamp('STEP13_MANIFEST_SETTLED_AT', settlement.settled_at) > capturedMs) {
+      throw new Error('STEP13_MANIFEST_CANNOT_PREDATE_INCLUDED_SETTLEMENT');
+    }
+    const key = keyOf(settlement);
+    if (seen.has(key)) throw new Error('STEP13_MANIFEST_DUPLICATE_MATCH_MARKET_SELECTION');
+    seen.add(key);
+    if (settlement.routing_band === 'EXPANSION_BAND') expansionBandN += 1;
+  }
+  const payload = {
+    manifest_version: PATTERN_CANARY_GRADUATION_GOVERNANCE_VERSION,
+    state: 'STEP12_GRADUATION_COHORT_MANIFEST_FROZEN',
+    captured_at: capturedAt,
+    staged_activation_fingerprint: step12Activation.staged_activation_fingerprint,
+    full_stage_routed_settled_n: settlements.length,
+    expansion_band_routed_settled_n: expansionBandN,
+    settlement_fingerprints: sorted(settlements.map(s => s.staged_settlement_fingerprint)),
+    match_market_selection_keys: sorted(settlements.map(keyOf)),
+    governance: {
+      immutable: true,
+      post_manifest_cohort_rewrite_allowed: false,
+      production_decision_weight: 0,
+      capital_execution_allowed: false,
+      real_money: 'NO'
+    }
+  };
+  return deepFreeze({ ...payload, cohort_manifest_fingerprint: sha256(payload) });
+}
+
+export function verifyStep12GraduationCohortManifest(manifest) {
+  if (!manifest || manifest.manifest_version !== PATTERN_CANARY_GRADUATION_GOVERNANCE_VERSION) throw new Error('STEP13_MANIFEST_VERSION_INVALID');
+  fingerprintPayload(manifest, 'cohort_manifest_fingerprint', 'STEP13_MANIFEST_FINGERPRINT_INVALID');
+  if (manifest.state !== 'STEP12_GRADUATION_COHORT_MANIFEST_FROZEN') throw new Error('STEP13_MANIFEST_STATE_INVALID');
+  if (manifest.governance?.immutable !== true || manifest.governance?.post_manifest_cohort_rewrite_allowed !== false ||
+      manifest.governance?.production_decision_weight !== 0 || manifest.governance?.capital_execution_allowed !== false ||
+      manifest.governance?.real_money !== 'NO') throw new Error('STEP13_MANIFEST_GOVERNANCE_INVALID');
+  return true;
+}
+
 export function freezePatternCanaryGraduationDossier({
   step10Authorization,
   step11Decision,
   step12Activation,
   step12Health,
+  cohortManifest,
   settlements,
   frozenAt
 }) {
   verifyExactGraduationLineage({ step10Authorization, step11Decision, step12Activation, step12Health });
+  verifyStep12GraduationCohortManifest(cohortManifest);
   if (!Array.isArray(settlements)) throw new Error('STEP13_SETTLEMENT_ARRAY_REQUIRED');
+  if (cohortManifest.staged_activation_fingerprint !== step12Activation.staged_activation_fingerprint) {
+    throw new Error('STEP13_MANIFEST_ACTIVATION_MISMATCH');
+  }
+  if (parseTimestamp('STEP13_MANIFEST_CAPTURED_AT', cohortManifest.captured_at) > parseTimestamp('STEP13_STEP12_HEALTH_EVALUATED_AT', step12Health.evaluated_at)) {
+    throw new Error('STEP13_MANIFEST_MUST_NOT_FOLLOW_STEP12_HEALTH');
+  }
   if (step12Health.state !== 'STAGED_CANARY_HEALTHY_CONTINUE_PAPER_ONLY' || step12Health.rollback_required !== false) {
     throw new Error('STEP13_HEALTHY_STEP12_REQUIRED');
   }
@@ -97,7 +154,9 @@ export function freezePatternCanaryGraduationDossier({
       step12Health.expansion_band_routed_settled_n < GRADUATION_MIN_EXPANSION_BAND_SETTLED_N) {
     throw new Error('STEP13_MINIMUM_STEP12_EVIDENCE_REQUIRED');
   }
-  if (settlements.length !== step12Health.new_stage_routed_settled_n) throw new Error('STEP13_EXACT_STEP12_SETTLEMENT_COHORT_REQUIRED');
+  if (settlements.length !== step12Health.new_stage_routed_settled_n || settlements.length !== cohortManifest.full_stage_routed_settled_n) {
+    throw new Error('STEP13_EXACT_STEP12_SETTLEMENT_COHORT_REQUIRED');
+  }
 
   const seen = new Set();
   let expansionBandN = 0;
@@ -111,7 +170,15 @@ export function freezePatternCanaryGraduationDossier({
     seen.add(key);
     if (settlement.routing_band === 'EXPANSION_BAND') expansionBandN += 1;
   }
-  if (expansionBandN !== step12Health.expansion_band_routed_settled_n) throw new Error('STEP13_EXPANSION_BAND_COHORT_MISMATCH');
+  if (expansionBandN !== step12Health.expansion_band_routed_settled_n || expansionBandN !== cohortManifest.expansion_band_routed_settled_n) {
+    throw new Error('STEP13_EXPANSION_BAND_COHORT_MISMATCH');
+  }
+  if (stableStringify(sorted(settlements.map(s => s.staged_settlement_fingerprint))) !== stableStringify(cohortManifest.settlement_fingerprints)) {
+    throw new Error('STEP13_SETTLEMENT_MANIFEST_FINGERPRINT_SET_MISMATCH');
+  }
+  if (stableStringify(sorted(settlements.map(keyOf))) !== stableStringify(cohortManifest.match_market_selection_keys)) {
+    throw new Error('STEP13_SETTLEMENT_MANIFEST_KEY_SET_MISMATCH');
+  }
 
   const reproducedHealth = evaluateStagedPatternCanaryHealth({
     activation: step12Activation,
@@ -136,6 +203,7 @@ export function freezePatternCanaryGraduationDossier({
     source_step11_expansion_decision_fingerprint: step11Decision.expansion_decision_fingerprint,
     source_step12_activation_fingerprint: step12Activation.staged_activation_fingerprint,
     source_step12_health_fingerprint: step12Health.staged_health_fingerprint,
+    source_step12_cohort_manifest_fingerprint: cohortManifest.cohort_manifest_fingerprint,
     source_shadow_plan_fingerprint: step12Activation.source_shadow_plan_fingerprint,
     approved_pattern_ids: sorted(step10Authorization.approved_pattern_ids ?? []),
     calibration: {
@@ -154,9 +222,10 @@ export function freezePatternCanaryGraduationDossier({
     evidence: {
       full_stage_routed_settled_n: settlements.length,
       expansion_band_routed_settled_n: expansionBandN,
-      settlement_fingerprints: sorted(settlements.map(s => s.staged_settlement_fingerprint)),
+      settlement_fingerprints: cohortManifest.settlement_fingerprints,
       full_stage: step12Health.full_stage,
       expansion_band: step12Health.expansion_band,
+      pre_health_cohort_manifest_bound: true,
       all_step12_health_gates_passed: true,
       step12_health_reproduced_exactly: true,
       additional_alpha_spent: false
@@ -186,6 +255,7 @@ export function verifyPatternCanaryGraduationDossier(dossier) {
   if (dossier.state !== 'ELIGIBLE_FOR_MANUAL_GRADUATION_HOLD_OR_RETIREMENT_ZERO_WEIGHT') throw new Error('STEP13_DOSSIER_STATE_INVALID');
   if (dossier.evidence?.full_stage_routed_settled_n < GRADUATION_MIN_FULL_STAGE_SETTLED_N ||
       dossier.evidence?.expansion_band_routed_settled_n < GRADUATION_MIN_EXPANSION_BAND_SETTLED_N ||
+      dossier.evidence?.pre_health_cohort_manifest_bound !== true ||
       dossier.evidence?.step12_health_reproduced_exactly !== true) throw new Error('STEP13_DOSSIER_EVIDENCE_INVALID');
   if (dossier.governance?.production_decision_weight !== 0 ||
       dossier.governance?.champion_replacement_authorized !== false ||
@@ -238,7 +308,7 @@ export function recordPatternCanaryGraduationDecision({
   } else if (decision === 'HOLD_STAGED_CANARY') {
     state = 'STAGED_CANARY_HELD_AT_STEP12_AWAITING_NEW_EVIDENCE';
     step12MayContinue = true;
-    nextStage = 'CONTINUE_STEP12_STAGED_CANARY_MONITORING_AND_REQUIRE_NEW_DOSSIER_FOR_LATER_DECISION';
+    nextStage = 'CONTINUE_STEP12_STAGED_CANARY_MONITORING_AND_REQUIRE_NEW_PRE_HEALTH_MANIFEST_AND_DOSSIER_FOR_LATER_DECISION';
   } else {
     rollback = recordStagedPatternCanaryRollback({
       activation: step12Activation,
