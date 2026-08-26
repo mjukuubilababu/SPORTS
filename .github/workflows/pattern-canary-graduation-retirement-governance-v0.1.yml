@@ -1,0 +1,244 @@
+name: Pattern Canary Graduation Retirement Governance v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  push:
+    branches:
+      - feature/pattern-canary-graduation-retirement-governance-v0.1
+      - import/decision-intelligence-v0.5-qualified-set
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pattern-canary-graduation-retirement-governance:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Resolve canonical comparison range
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          elif [[ "${GITHUB_REF_NAME}" == "feature/pattern-canary-graduation-retirement-governance-v0.1" ]]; then
+            git fetch --no-tags origin import/decision-intelligence-v0.5-qualified-set:refs/remotes/origin/import/decision-intelligence-v0.5-qualified-set
+            BASE="$(git merge-base HEAD origin/import/decision-intelligence-v0.5-qualified-set)"
+            HEAD="${GITHUB_SHA}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${GITHUB_SHA}"
+          fi
+          git cat-file -e "$BASE^{commit}"
+          git cat-file -e "$HEAD^{commit}"
+          echo "STEP13_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "STEP13_HEAD=$HEAD" >> "$GITHUB_ENV"
+          echo "STEP13_COMPARISON_BASE=$BASE"
+          echo "STEP13_COMPARISON_HEAD=$HEAD"
+
+      - name: Enforce Step 13 introduction scope or protect Step 13 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$STEP13_BASE"
+          HEAD="$STEP13_HEAD"
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          owned=(
+            "contracts/pattern-canary-graduation-retirement-governance-v0.1.json"
+            "packages/intelligence-engine/src/pattern-canary-graduation-retirement-governance.mjs"
+            "packages/intelligence-engine/tests/pattern-canary-graduation-retirement-governance.test.mjs"
+            "packages/intelligence-engine/docs/PATTERN_CANARY_GRADUATION_RETIREMENT_GOVERNANCE_V0_1.md"
+            ".github/workflows/pattern-canary-graduation-retirement-governance-v0.1.yml"
+          )
+          if ! git cat-file -e "$BASE:contracts/pattern-canary-graduation-retirement-governance-v0.1.json" 2>/dev/null; then
+            declare -A seen=()
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"; matched=false
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" == "A" ]] || { echo "STEP13_INTRODUCTION_FILE_MUST_BE_ADDED: $row"; exit 1; }
+                  seen["$path"]=1; matched=true; break
+                fi
+              done
+              [[ "$matched" == true ]] || { echo "STEP13_UNEXPECTED_INTRODUCTION_CHANGE: $row"; exit 1; }
+            done
+            [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP13_EXPECTED_EXACTLY_5_ADDITIONS"; exit 1; }
+            [[ "${#seen[@]}" -eq 5 ]] || { echo "STEP13_INTRODUCTION_FILE_SET_INCOMPLETE"; exit 1; }
+          else
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  case "$status" in D|R*) echo "STEP13_OWNED_ARTIFACT_DELETION_OR_RENAME_FORBIDDEN: $row"; exit 1 ;; esac
+                fi
+              done
+            done
+          fi
+          echo "STEP13_SCOPE_GUARD=PASS"
+
+      - name: Validate Step 10-13 contracts, P002 and Gate6 ownership
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s10=json.loads(Path('contracts/controlled-pattern-canary-activation-rollback-v0.1.json').read_text())
+          s11=json.loads(Path('contracts/pattern-canary-expansion-rejection-governance-v0.1.json').read_text())
+          s12=json.loads(Path('contracts/staged-pattern-canary-expansion-activation-monitoring-v0.1.json').read_text())
+          s13=json.loads(Path('contracts/pattern-canary-graduation-retirement-governance-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          g6=json.loads(Path('packages/gate6/gate6_manifest.json').read_text())
+          assert s10['status']=='STEP_10_IMPLEMENTED'
+          assert s11['status']=='STEP_11_IMPLEMENTED'
+          assert s12['status']=='STEP_12_IMPLEMENTED'
+          assert s12['next_stage']=='STEP_13_PATTERN_CANARY_GRADUATION_OR_RETIREMENT_GOVERNANCE'
+          assert s13['contract_id']=='PATTERN_CANARY_GRADUATION_RETIREMENT_GOVERNANCE_V0_1'
+          assert s13['status']=='STEP_13_IMPLEMENTED'
+          assert s13['inputs']['required_step12_health_state']=='STAGED_CANARY_HEALTHY_CONTINUE_PAPER_ONLY'
+          assert s13['inputs']['pre_health_step12_cohort_manifest_required'] is True
+          assert s13['inputs']['exact_step12_settlement_cohort_required'] is True
+          assert s13['inputs']['all_step12_health_gates_must_pass'] is True
+          assert s13['cohort_binding']['manifest_must_follow_all_included_settlements'] is True
+          assert s13['cohort_binding']['manifest_must_not_follow_step12_health_evaluation'] is True
+          assert s13['cohort_binding']['settlement_fingerprint_set_required'] is True
+          assert s13['cohort_binding']['post_manifest_cohort_rewrite_allowed'] is False
+          assert s13['evidence_freeze']['minimum_step12_full_stage_routed_settled_n']==30
+          assert s13['evidence_freeze']['minimum_step12_expansion_band_routed_settled_n']==30
+          assert s13['evidence_freeze']['health_reproduction_required'] is True
+          assert s13['evidence_freeze']['post_freeze_evidence_may_rewrite_dossier'] is False
+          assert s13['evidence_freeze']['additional_alpha_spent'] is False
+          assert s13['graduation_boundary']['graduation_is_production_activation'] is False
+          assert s13['graduation_boundary']['graduation_replaces_champion'] is False
+          assert s13['graduation_boundary']['graduation_authorizes_capital'] is False
+          assert s13['graduation_boundary']['graduated_candidate_decision_weight']==0
+          assert s13['graduation_boundary']['automatic_full_promotion'] is False
+          assert s13['hold_boundary']['routing_fraction_may_increase'] is False
+          assert s13['hold_boundary']['probability_influence_may_increase'] is False
+          assert s13['retirement']['reuses_step12_rollback_owner'] is True
+          assert s13['retirement']['routing_fraction_after_retirement']==0
+          assert s13['retirement']['probability_influence_after_retirement']==0
+          assert s13['decision_boundary']['production_decision_weight']==0
+          assert s13['decision_boundary']['capital_use_authorized'] is False
+          assert s13['decision_boundary']['champion_replacement_authorized'] is False
+          assert s13['real_evidence_boundary']['synthetic_unit_test_rows_may_count_as_real_graduation_evidence'] is False
+          assert s13['real_evidence_boundary']['historical_unbound_step12_health_may_count_for_graduation'] is False
+          assert s13['governance']['p002_changed'] is False
+          assert s13['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert s13['governance']['gate6_capital_lock_preserved'] is True
+          assert s13['governance']['real_money']=='NO'
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['independent_validation_min_n']==30
+          assert p002['capital_effect']=='NONE_UNTIL_GOVERNED_EVIDENCE'
+          assert g6['gate']=='Gate 6 — Capital & Risk Engine'
+          assert 'LOCKED' in g6['capital_modes']
+          print('STEP10_TO_STEP13_CONTRACT_CHAIN=PASS')
+          print('STEP13_PRE_HEALTH_COHORT_BINDING_REQUIRED=PASS')
+          print('STEP13_EXACT_SETTLEMENT_FINGERPRINT_SET_REQUIRED=PASS')
+          print('STEP13_GRADUATION_ZERO_WEIGHT_ONLY=PASS')
+          print('STEP13_RETIREMENT_REUSES_STEP12_ROLLBACK=PASS')
+          print('GATE6_CAPITAL_OWNER_PRESERVED=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run Step 10 regression
+        run: node --test packages/intelligence-engine/tests/controlled-pattern-canary-activation-rollback.test.mjs
+
+      - name: Run Step 11 regression
+        run: node --test packages/intelligence-engine/tests/pattern-canary-expansion-rejection-governance.test.mjs
+
+      - name: Run Step 12 regression
+        run: node --test packages/intelligence-engine/tests/staged-pattern-canary-expansion-activation-monitoring.test.mjs
+
+      - name: Run Step 13 tests
+        run: node --test packages/intelligence-engine/tests/pattern-canary-graduation-retirement-governance.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$STEP13_BASE"
+          HEAD="$STEP13_HEAD"
+          mkdir -p artifacts/pattern-canary-graduation-retirement-governance-v0.1
+          rm -rf /tmp/step13-base /tmp/step13-head
+          git worktree add --detach /tmp/step13-base "$BASE"
+          git worktree add --detach /tmp/step13-head "$HEAD"
+          set +e
+          (cd /tmp/step13-base/packages/intelligence-engine && npm test) > /tmp/step13-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step13-head/packages/intelligence-engine && npm test) > /tmp/step13-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s\n' "$BASE_RC" > /tmp/step13-base.rc
+          printf '%s\n' "$HEAD_RC" > /tmp/step13-head.rc
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          def failures(path):
+            out=[]
+            for line in Path(path).read_text(errors='replace').splitlines():
+              t=line.strip(); m=tap.match(t) or glyph.match(t)
+              if m: out.append(m.group(1).strip())
+            return sorted(set(out))
+          brc=int(Path('/tmp/step13-base.rc').read_text()); hrc=int(Path('/tmp/step13-head.rc').read_text())
+          base=failures('/tmp/step13-base.log'); head=failures('/tmp/step13-head.log')
+          if brc!=0 and not base: raise SystemExit('STEP13_UNPARSED_CANONICAL_BASE_TEST_FAILURE_DEBT')
+          if hrc!=0 and not head: raise SystemExit('STEP13_UNPARSED_HEAD_TEST_FAILURE_DEBT')
+          if brc!=hrc: raise SystemExit('STEP13_NPM_TEST_EXIT_CODE_CHANGED')
+          if base!=head: raise SystemExit('STEP13_REGRESSION_FAILURE_SET_CHANGED')
+          summary={'comparison':'CANONICAL_BASE_VS_STEP13_HEAD','node_version':'20','base_npm_test_rc':brc,'head_npm_test_rc':hrc,'base_failure_n':len(base),'head_failure_n':len(head),'base_failures':base,'head_failures':head,'new_failure_names':sorted(set(head)-set(base)),'removed_failure_names':sorted(set(base)-set(head)),'failure_name_delta_zero':base==head}
+          Path('artifacts/pattern-canary-graduation-retirement-governance-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+          echo "STEP13_REGRESSION_DELTA=0"
+
+      - name: Write Step 13 evidence
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          root=Path('artifacts/pattern-canary-graduation-retirement-governance-v0.1')
+          root.mkdir(parents=True,exist_ok=True)
+          regression=json.loads((root/'REGRESSION_BASELINE.json').read_text())
+          evidence={
+            'artifact':'Pattern_Canary_Graduation_Retirement_Governance_v0.1',
+            'step':'STEP_13_PATTERN_CANARY_GRADUATION_OR_RETIREMENT_GOVERNANCE',
+            'overall':{'TEST_AUTHORED':True,'TEST_EXECUTED':True,'TEST_PASS':True,'STEP_13_IMPLEMENTATION_COMPLETE':True,'ADDED_FILES':5,'MODIFIED_EXISTING_FILES':0,'DELETED_EXISTING_FILES':0,'REGRESSION_DELTA_ZERO':regression['failure_name_delta_zero']},
+            'capabilities':{'EXACT_STEP10_TO_STEP12_LINEAGE_REQUIRED':True,'PRE_HEALTH_STEP12_COHORT_MANIFEST_REQUIRED':True,'EXACT_SETTLEMENT_FINGERPRINT_SET_BOUND':True,'SAME_METRIC_COHORT_SUBSTITUTION_REJECTED':True,'MIN_FULL_STAGE_SETTLED_N':30,'MIN_EXPANSION_BAND_SETTLED_N':30,'EXACT_STEP12_HEALTH_REPRODUCTION':True,'MANUAL_GRADUATE_HOLD_RETIRE_DECISION':True,'GRADUATION_ZERO_WEIGHT_ONLY':True,'GRADUATION_IS_PRODUCTION_ACTIVATION':False,'CHAMPION_REPLACEMENT_AUTHORIZED':False,'HOLD_CAN_INCREASE_ROUTING':False,'HOLD_CAN_INCREASE_PROBABILITY_INFLUENCE':False,'RETIREMENT_REUSES_STEP12_ROLLBACK':True,'RETIREMENT_ROUTING_FRACTION':0,'RETIREMENT_PROBABILITY_INFLUENCE':0,'PRODUCTION_DECISION_WEIGHT':0,'ADDITIONAL_ALPHA_SPENT':False},
+            'real_evidence_status':{'REAL_GRADUATION_EVALUATION_EXECUTED_IN_CI':False,'SYNTHETIC_TEST_FIXTURES_ONLY':True,'SYNTHETIC_RESULTS_COUNT_AS_REAL_GRADUATION_EVIDENCE':False,'HISTORICAL_UNBOUND_STEP12_HEALTH_ELIGIBLE':False,'REAL_GRADUATION_CLAIMED':False,'CURRENT_REAL_STATUS':'NOT_RUN_WAITING_FOR_NEW_REAL_HEALTHY_STEP12_EVIDENCE_WITH_PRE_HEALTH_COHORT_MANIFEST'},
+            'regression_baseline':regression,
+            'governance':{'P002_UNCHANGED':True,'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,'GATE6_CAPITAL_OWNER_PRESERVED':True,'EXISTING_OWNER_REPLACEMENT':False,'AUTOMATIC_PROMOTION':False,'AUTOMATIC_RETUNING':False,'CAPITAL_EFFECT':'NONE','REAL_MONEY':'NO'},
+            'hashes':{'contract_sha256':sha('contracts/pattern-canary-graduation-retirement-governance-v0.1.json'),'runtime_sha256':sha('packages/intelligence-engine/src/pattern-canary-graduation-retirement-governance.mjs'),'test_sha256':sha('packages/intelligence-engine/tests/pattern-canary-graduation-retirement-governance.test.mjs'),'docs_sha256':sha('packages/intelligence-engine/docs/PATTERN_CANARY_GRADUATION_RETIREMENT_GOVERNANCE_V0_1.md'),'p002_sha256':sha('contracts/p002-frozen-rules.json'),'gate6_manifest_sha256':sha('packages/gate6/gate6_manifest.json')},
+            'next_stage_on_graduation':'STEP_14_ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_AND_PRODUCTION_SAFETY_REVIEW'
+          }
+          (root/'TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 13 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pattern-canary-graduation-retirement-governance-v0.1-evidence
+          path: |
+            artifacts/pattern-canary-graduation-retirement-governance-v0.1/TEST_EVIDENCE.json
+            artifacts/pattern-canary-graduation-retirement-governance-v0.1/REGRESSION_BASELINE.json
+          if-no-files-found: error

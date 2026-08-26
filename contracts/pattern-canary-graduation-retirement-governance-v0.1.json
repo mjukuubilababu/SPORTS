@@ -1,0 +1,93 @@
+{
+  "contract_id": "PATTERN_CANARY_GRADUATION_RETIREMENT_GOVERNANCE_V0_1",
+  "status": "STEP_13_IMPLEMENTED",
+  "purpose": "Bind a Step 12 settlement cohort before its health evaluation, reproduce exact healthy Step 12 evidence, and govern manual graduation, hold, or retirement without automatically promoting to production, replacing the champion, or changing Gate6 capital ownership.",
+  "inputs": {
+    "required_step12_health_state": "STAGED_CANARY_HEALTHY_CONTINUE_PAPER_ONLY",
+    "exact_step10_authorization_required": true,
+    "exact_step11_expansion_decision_required": true,
+    "exact_step12_activation_required": true,
+    "exact_step12_health_required": true,
+    "pre_health_step12_cohort_manifest_required": true,
+    "exact_step12_settlement_cohort_required": true,
+    "all_step12_health_gates_must_pass": true,
+    "step12_rollback_must_be_false": true
+  },
+  "cohort_binding": {
+    "manifest_must_follow_all_included_settlements": true,
+    "manifest_must_not_follow_step12_health_evaluation": true,
+    "settlement_fingerprint_set_required": true,
+    "match_market_selection_uniqueness_required": true,
+    "manifest_activation_lineage_required": true,
+    "post_manifest_cohort_rewrite_allowed": false
+  },
+  "evidence_freeze": {
+    "minimum_step12_full_stage_routed_settled_n": 30,
+    "minimum_step12_expansion_band_routed_settled_n": 30,
+    "minimum_n_basis": "P002_INDEPENDENT_VALIDATION_MIN_N",
+    "settlement_fingerprints_frozen": true,
+    "health_reproduction_required": true,
+    "lineage_reproduction_required": true,
+    "post_freeze_evidence_may_rewrite_dossier": false,
+    "additional_alpha_spent": false
+  },
+  "governance_decisions": [
+    "GRADUATE_TO_ZERO_WEIGHT_CHALLENGER_CANDIDATE",
+    "HOLD_STAGED_CANARY",
+    "RETIRE_PATTERN_CANARY"
+  ],
+  "graduation_boundary": {
+    "graduation_is_production_activation": false,
+    "graduation_replaces_champion": false,
+    "graduation_authorizes_capital": false,
+    "graduated_candidate_decision_weight": 0,
+    "automatic_full_promotion": false,
+    "automatic_retuning": false,
+    "future_explicit_promotion_authorization_required": true,
+    "maximum_absolute_probability_shift_increased": false
+  },
+  "hold_boundary": {
+    "step12_staged_canary_may_continue": true,
+    "routing_fraction_may_increase": false,
+    "probability_influence_may_increase": false,
+    "new_pre_health_manifest_and_dossier_required_for_later_graduation": true
+  },
+  "retirement": {
+    "reuses_step12_rollback_owner": true,
+    "rollback_target": "CHAMPION_ONLY",
+    "routing_fraction_after_retirement": 0,
+    "probability_influence_after_retirement": 0,
+    "same_step12_activation_reactivation_allowed": false,
+    "retired_evidence_retained": true,
+    "new_governed_lineage_required_for_future_attempt": true
+  },
+  "ownership": {
+    "step10_canary_owner": "packages/intelligence-engine/src/controlled-pattern-canary-activation-rollback.mjs",
+    "step11_expansion_governance_owner": "packages/intelligence-engine/src/pattern-canary-expansion-rejection-governance.mjs",
+    "step12_staged_canary_owner": "packages/intelligence-engine/src/staged-pattern-canary-expansion-activation-monitoring.mjs",
+    "gate6_capital_and_risk_owner": "packages/gate6",
+    "existing_owners_replaced": false
+  },
+  "decision_boundary": {
+    "production_decision_weight": 0,
+    "production_mutation_allowed": false,
+    "capital_use_authorized": false,
+    "champion_replacement_authorized": false,
+    "automatic_promotion": false
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_graduation_evidence": false,
+    "real_healthy_step12_evidence_with_pre_health_manifest_required": true,
+    "historical_unbound_step12_health_may_count_for_graduation": false,
+    "real_graduation_claimed_by_implementation": false,
+    "current_real_status": "NOT_RUN_WAITING_FOR_NEW_REAL_HEALTHY_STEP12_EVIDENCE_WITH_PRE_HEALTH_COHORT_MANIFEST"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "gate6_capital_lock_preserved": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage_on_graduation": "STEP_14_ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_AND_PRODUCTION_SAFETY_REVIEW"
+}
