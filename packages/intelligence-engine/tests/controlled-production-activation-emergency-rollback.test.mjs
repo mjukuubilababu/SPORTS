@@ -249,7 +249,7 @@ test('Step 15 weighted production mutation is capped at two percentage points an
   });
   assert.equal(verifyControlledProductionDecision(decision), true);
   assert.equal(decision.applied_probability_shift, 0.02);
-  assert.equal(decision.production_probability, 0.12);
+  assert.ok(Math.abs(decision.production_probability - 0.12) < 1e-12);
   assert.equal(decision.capital_execution_allowed, false);
   assert.equal(decision.real_money, 'NO');
 });
