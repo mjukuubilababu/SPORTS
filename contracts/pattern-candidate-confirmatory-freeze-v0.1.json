@@ -1,0 +1,98 @@
+{
+  "contract_id": "PATTERN_CANDIDATE_CONFIRMATORY_FREEZE_V0_1",
+  "version": "v0.1",
+  "status": "STEP_5_IMPLEMENTED",
+  "purpose": "Freeze every Step 4 behavioral pattern candidate, its exact hypothesis, estimand, direction, context, source lineage, disjoint-evidence boundary, sample gates, practical-effect floor, and multiple-testing plan before any confirmatory evidence is evaluated.",
+  "scope": "GLOBAL_FOOTBALL_LEAGUE_AGNOSTIC",
+  "depends_on": {
+    "pattern_intelligence_contract": "PATTERN_INTELLIGENCE_CONTRACT_V0_1",
+    "behavioral_state_features": "BEHAVIORAL_STATE_FEATURES_V0_1",
+    "pattern_discovery_candidates": "PATTERN_DISCOVERY_CANDIDATES_V0_1"
+  },
+  "freeze_policy": {
+    "freeze_entire_step4_candidate_batch": true,
+    "manual_candidate_subset_selection_allowed": false,
+    "post_discovery_cherry_picking_allowed": false,
+    "deterministic_order": "PATTERN_ID_ASC",
+    "candidate_definition_mutation_after_freeze_allowed": false,
+    "candidate_lifecycle_state_advanced_by_step5": false,
+    "step5_lifecycle_state_remains": "CANDIDATE"
+  },
+  "anti_hindsight": {
+    "freeze_timestamp_must_follow_step4_discovered_at": true,
+    "confirmatory_start_date": "NEXT_UTC_CALENDAR_DATE_AFTER_FREEZE",
+    "all_step4_subject_and_reference_match_ids_forbidden_in_confirmatory_evidence": true,
+    "confirmatory_match_date_must_be_on_or_after_confirmatory_start_date": true,
+    "same_match_may_not_be_discovery_and_confirmatory_evidence": true,
+    "post_freeze_hypothesis_change_forbidden": true,
+    "post_freeze_direction_change_forbidden": true,
+    "post_freeze_metric_change_forbidden": true,
+    "post_freeze_context_change_forbidden": true
+  },
+  "confirmatory_plan": {
+    "primary_estimand": "PROPORTION_DIFFERENCE_SUBJECT_MINUS_DISJOINT_REFERENCE",
+    "reference_definition": "SAME_LEAGUE_SAME_VENUE_CONTEXT_OTHER_TEAMS_EXCLUDING_MATCHES_INVOLVING_SUBJECT",
+    "same_metric_success_and_opportunity_definitions_as_step4_required": true,
+    "same_league_required": true,
+    "same_venue_context_required": true,
+    "discovery_direction_frozen": true,
+    "minimum_practical_effect_absolute": 0.10,
+    "minimum_practical_effect_percentage_points": 10,
+    "subject_match_n_min": 30,
+    "subject_metric_opportunity_n_min": 30,
+    "reference_metric_opportunity_n_min": 30,
+    "market_data_used_as_behavioral_truth": false,
+    "bookmaker_data_used_as_behavioral_truth": false
+  },
+  "multiple_testing_control": {
+    "family_definition": "ALL_STEP4_CANDIDATES_IN_THE_FROZEN_DISCOVERY_BATCH",
+    "familywise_alpha": 0.05,
+    "method": "HOLM_BONFERRONI",
+    "raw_p_value_order": "ASCENDING_WITH_PATTERN_ID_TIEBREAK",
+    "confirmatory_alpha_spent_in_step5": false,
+    "significance_test_run_in_step5": false,
+    "correction_run_in_step5": false,
+    "step4_exploratory_comparison_count_retained": true
+  },
+  "result_boundary": {
+    "out_of_sample_result_in_step5": "NOT_RUN_STEP_5",
+    "forward_result_in_step5": "NOT_RUN_STEP_5",
+    "temporal_stability_in_step5": "NOT_TESTED_STEP_5",
+    "pattern_validation_performed_in_step5": false,
+    "pattern_rejection_performed_in_step5": false,
+    "decision_weight": 0
+  },
+  "integrity": {
+    "source_step4_discovery_fingerprint_required": true,
+    "every_step4_candidate_fingerprint_required": true,
+    "per_confirmatory_plan_fingerprint_required": true,
+    "confirmatory_freeze_fingerprint_required": true,
+    "all_frozen_candidate_fingerprints_must_exactly_equal_step4_candidate_set": true,
+    "tamper_detection_required": true
+  },
+  "existing_intelligence_bridge": {
+    "evidence_graph_node_supported": true,
+    "plan_frozen": true,
+    "pattern_validated": false,
+    "evidence_graph_verified": false,
+    "evidence_graph_decision_weight": 0,
+    "evidence_graph_decision_eligible": false,
+    "governed_learning_auto_apply": false,
+    "governed_learning_production_mutation_allowed": false
+  },
+  "next_stage": "STEP_6_PATTERN_CONFIRMATORY_OUT_OF_SAMPLE_EVALUATION",
+  "governance": {
+    "pattern_discovery_rewritten": false,
+    "pattern_validation_performed": false,
+    "predictive_weight_assigned": false,
+    "automatic_model_retuning": false,
+    "automatic_pattern_promotion": false,
+    "p002_changed": false,
+    "p002_discovery_min_n": 30,
+    "p002_independent_validation_min_n": 30,
+    "gate1_to_gate6_ownership_changed": false,
+    "market_data_used": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  }
+}
