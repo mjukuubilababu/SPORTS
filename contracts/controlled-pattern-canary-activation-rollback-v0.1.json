@@ -4,7 +4,12 @@
   "purpose": "Activate a tightly bounded Pattern Intelligence canary only after Step 9 approval, preserve champion fallback and Gate6 capital ownership, and enforce rollback on integrity or performance degradation.",
   "inputs": {
     "required_step9_state": "CONTROLLED_CANARY_APPROVED_NOT_ACTIVATED_ZERO_WEIGHT",
+    "exact_step9_forward_evaluation_required": true,
+    "required_step9_forward_state": "ELIGIBLE_FOR_EXPLICIT_CONTROLLED_CANARY_APPROVAL_ZERO_WEIGHT",
+    "minimum_step9_forward_settled_n": 30,
+    "all_step9_forward_gates_must_pass": true,
     "exact_step8_lineage_required": true,
+    "minimum_step8_settled_n": 100,
     "same_shadow_plan_fingerprint_required": true,
     "exact_step8_settlement_cohort_required": true
   },
