@@ -1,0 +1,77 @@
+{
+  "contract_id": "PATTERN_CANARY_EXPANSION_REJECTION_GOVERNANCE_V0_1",
+  "status": "STEP_11_IMPLEMENTED",
+  "purpose": "Govern expansion, hold, or rejection of a Step 10 Pattern Intelligence canary using a second disjoint routed cohort, without activating the next stage or changing Gate6 capital ownership.",
+  "inputs": {
+    "required_step10_health_state": "CANARY_HEALTHY_CONTINUE_PAPER_ONLY",
+    "exact_step10_settlement_cohort_required": true,
+    "same_canary_authorization_required": true,
+    "same_shadow_plan_and_calibration_lineage_required": true
+  },
+  "checkpoint": {
+    "minimum_initial_routed_settled_n": 30,
+    "healthy_checkpoint_must_be_frozen_before_confirmation": true,
+    "checkpoint_rows_may_be_reused_as_confirmation": false
+  },
+  "confirmation": {
+    "minimum_new_routed_settled_n": 30,
+    "minimum_total_routed_settled_n": 60,
+    "new_decision_routed_after_checkpoint_freeze_required": true,
+    "confirmation_routing_must_be_pre_kickoff": true,
+    "confirmation_settlement_must_be_post_kickoff": true,
+    "new_match_market_selection_keys_required": true,
+    "full_cohort_brier_non_degradation_required": true,
+    "full_cohort_log_loss_non_degradation_required": true,
+    "full_cohort_maximum_ece_degradation": 0.01,
+    "confirmation_cohort_brier_non_degradation_required": true,
+    "confirmation_cohort_log_loss_non_degradation_required": true,
+    "confirmation_cohort_maximum_ece_degradation": 0.01,
+    "additional_alpha_spent": false
+  },
+  "governance_decisions": [
+    "APPROVE_NEXT_CANARY_STAGE",
+    "HOLD_CURRENT_CANARY",
+    "REJECT_AND_RETIRE_PATTERN_CANARY"
+  ],
+  "expansion_boundary": {
+    "current_step10_max_routing_fraction": 0.05,
+    "next_stage_maximum_routing_fraction": 0.10,
+    "maximum_absolute_probability_shift": 0.02,
+    "probability_influence_cap_may_increase_in_step11": false,
+    "approval_is_not_activation": true,
+    "automatic_expansion": false,
+    "automatic_full_promotion": false,
+    "paper_research_only": true
+  },
+  "rejection": {
+    "reuses_step10_rollback_owner": true,
+    "rollback_target": "CHAMPION_ONLY",
+    "same_authorization_reactivation_allowed": false,
+    "rejected_canary_evidence_retained": true
+  },
+  "ownership": {
+    "step10_canary_owner": "packages/intelligence-engine/src/controlled-pattern-canary-activation-rollback.mjs",
+    "gate6_capital_and_risk_owner": "packages/gate6",
+    "existing_owners_replaced": false
+  },
+  "decision_boundary": {
+    "production_decision_weight": 0,
+    "production_mutation_allowed": false,
+    "capital_use_authorized": false,
+    "automatic_retuning": false
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_expansion_evidence": false,
+    "real_step10_canary_required": true,
+    "real_expansion_claimed_by_implementation": false,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_STEP10_HEALTHY_CANARY_AND_SECOND_DISJOINT_CANARY_COHORT"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "gate6_capital_lock_preserved": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage": "STEP_12_STAGED_CANARY_EXPANSION_ACTIVATION_AND_MONITORING"
+}
