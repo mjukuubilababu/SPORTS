@@ -17,6 +17,8 @@
     "minimum_new_routed_settled_n": 30,
     "minimum_total_routed_settled_n": 60,
     "new_decision_routed_after_checkpoint_freeze_required": true,
+    "confirmation_routing_must_be_pre_kickoff": true,
+    "confirmation_settlement_must_be_post_kickoff": true,
     "new_match_market_selection_keys_required": true,
     "full_cohort_brier_non_degradation_required": true,
     "full_cohort_log_loss_non_degradation_required": true,
