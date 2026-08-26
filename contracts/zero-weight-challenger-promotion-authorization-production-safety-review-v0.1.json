@@ -1,0 +1,98 @@
+{
+  "contract_id": "ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_PRODUCTION_SAFETY_REVIEW_V0_1",
+  "status": "STEP_14_IMPLEMENTED",
+  "purpose": "Review a Step 13 graduated zero-weight challenger for production safety and manually authorize, hold, or reject progression without activating production weight, replacing the champion, or authorizing capital.",
+  "inputs": {
+    "required_step13_decision": "GRADUATE_TO_ZERO_WEIGHT_CHALLENGER_CANDIDATE",
+    "required_step13_state": "PATTERN_GRADUATED_ZERO_WEIGHT_CHALLENGER_CANDIDATE_NOT_PRODUCTION_ACTIVATED",
+    "required_candidate_state": "ZERO_WEIGHT_CHALLENGER_CANDIDATE_NOT_PRODUCTION_ACTIVATED",
+    "exact_step13_graduation_dossier_required": true,
+    "exact_step13_graduation_decision_required": true,
+    "candidate_decision_weight_must_equal_zero": true,
+    "step14_review_must_follow_step13_decision": true
+  },
+  "required_safety_controls": [
+    "HOLDOUT_FIREWALL_INTACT",
+    "GRADUATION_EVIDENCE_EXCLUDED_FROM_TRAINING_RETUNING_AND_INDEPENDENT_PROMOTION_PROOF",
+    "CANDIDATE_AND_GRADUATION_LINEAGE_REPRODUCIBLE",
+    "CALIBRATION_LINEAGE_VERIFIED",
+    "ROLLBACK_AND_CHAMPION_FALLBACK_VERIFIED",
+    "OBSERVABILITY_ALERTING_AND_KILL_SIGNAL_PATH_READY",
+    "DEPLOYMENT_CHANGE_REVERSIBLE",
+    "SECURITY_IDENTITY_ACCESS_AND_DATA_GOVERNANCE_CLEAR",
+    "CAPACITY_BACKPRESSURE_AND_FAILURE_ISOLATION_READY",
+    "REGRESSION_AND_SYSTEM_ASSURANCE_GREEN",
+    "GATE6_CAPITAL_LOCK_CONFIRMED",
+    "PRODUCTION_WEIGHT_AND_CHAMPION_UNCHANGED"
+  ],
+  "safety_review": {
+    "all_required_controls_must_pass_for_approval": true,
+    "evidence_reference_required_for_every_control": true,
+    "review_is_immutable": true,
+    "candidate_change_after_review_requires_new_review": true,
+    "failed_control_may_be_held_or_rejected_but_not_approved": true,
+    "automatic_approval": false
+  },
+  "evaluation_firewall": {
+    "step12_step13_graduation_evidence_may_be_reused_for_training": false,
+    "step12_step13_graduation_evidence_may_be_reused_for_retuning": false,
+    "step12_step13_graduation_evidence_counts_as_new_independent_production_activation_proof": false,
+    "new_prospective_evidence_required_for_future_nonzero_activation": true,
+    "additional_alpha_spent_in_step14": false
+  },
+  "governance_decisions": [
+    "APPROVE_FOR_CONTROLLED_PRODUCTION_ACTIVATION_NOT_ACTIVATED",
+    "HOLD_ZERO_WEIGHT_CHALLENGER",
+    "REJECT_ZERO_WEIGHT_CHALLENGER"
+  ],
+  "approval_boundary": {
+    "approval_is_production_activation": false,
+    "production_decision_weight_after_approval": 0,
+    "champion_replacement_authorized": false,
+    "capital_use_authorized": false,
+    "routing_or_probability_influence_changed_here": false,
+    "automatic_activation": false,
+    "automatic_retuning": false,
+    "future_explicit_controlled_activation_required": true
+  },
+  "hold_boundary": {
+    "production_decision_weight": 0,
+    "champion_unchanged": true,
+    "new_safety_review_required_before_future_approval": true,
+    "capital_effect": "NONE"
+  },
+  "rejection_boundary": {
+    "candidate_archived_zero_weight": true,
+    "same_step13_graduation_decision_may_be_reauthorized": false,
+    "champion_unchanged": true,
+    "production_decision_weight": 0,
+    "capital_effect": "NONE"
+  },
+  "ownership": {
+    "step13_graduation_owner": "packages/intelligence-engine/src/pattern-canary-graduation-retirement-governance.mjs",
+    "gate6_capital_and_risk_owner": "packages/gate6",
+    "existing_owners_replaced": false
+  },
+  "decision_boundary": {
+    "production_decision_weight": 0,
+    "production_mutation_allowed": false,
+    "champion_replacement_authorized": false,
+    "capital_use_authorized": false,
+    "real_money": "NO"
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_attestations_may_count_as_real_step14_safety_evidence": false,
+    "real_step13_graduated_zero_weight_candidate_required": true,
+    "real_external_safety_evidence_references_required": true,
+    "real_step14_authorization_claimed_by_implementation": false,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_STEP13_GRADUATED_ZERO_WEIGHT_CHALLENGER_AND_REAL_SAFETY_REVIEW_EVIDENCE"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "gate6_capital_lock_preserved": true,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage_on_approval": "STEP_15_CONTROLLED_PRODUCTION_ACTIVATION_AND_EMERGENCY_ROLLBACK"
+}

@@ -1,0 +1,301 @@
+name: Zero Weight Challenger Promotion Authorization Production Safety Review v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  push:
+    branches:
+      - feature/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1
+      - import/decision-intelligence-v0.5-qualified-set
+
+permissions:
+  contents: read
+
+jobs:
+  validate-zero-weight-challenger-promotion-safety:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Resolve canonical comparison range
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          elif [[ "${GITHUB_REF_NAME}" == "feature/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1" ]]; then
+            git fetch --no-tags origin import/decision-intelligence-v0.5-qualified-set:refs/remotes/origin/import/decision-intelligence-v0.5-qualified-set
+            BASE="$(git merge-base HEAD origin/import/decision-intelligence-v0.5-qualified-set)"
+            HEAD="${GITHUB_SHA}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${GITHUB_SHA}"
+          fi
+          git cat-file -e "$BASE^{commit}"
+          git cat-file -e "$HEAD^{commit}"
+          echo "STEP14_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "STEP14_HEAD=$HEAD" >> "$GITHUB_ENV"
+          echo "STEP14_COMPARISON_BASE=$BASE"
+          echo "STEP14_COMPARISON_HEAD=$HEAD"
+
+      - name: Enforce Step 14 introduction scope or protect Step 14 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$STEP14_BASE"
+          HEAD="$STEP14_HEAD"
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          owned=(
+            "contracts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1.json"
+            "packages/intelligence-engine/src/zero-weight-challenger-promotion-authorization-production-safety-review.mjs"
+            "packages/intelligence-engine/tests/zero-weight-challenger-promotion-authorization-production-safety-review.test.mjs"
+            "packages/intelligence-engine/docs/ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_PRODUCTION_SAFETY_REVIEW_V0_1.md"
+            ".github/workflows/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1.yml"
+          )
+          if ! git cat-file -e "$BASE:contracts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1.json" 2>/dev/null; then
+            declare -A seen=()
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"; matched=false
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" == "A" ]] || { echo "STEP14_INTRODUCTION_FILE_MUST_BE_ADDED: $row"; exit 1; }
+                  seen["$path"]=1; matched=true; break
+                fi
+              done
+              [[ "$matched" == true ]] || { echo "STEP14_UNEXPECTED_INTRODUCTION_CHANGE: $row"; exit 1; }
+            done
+            [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP14_EXPECTED_EXACTLY_5_ADDITIONS"; exit 1; }
+            [[ "${#seen[@]}" -eq 5 ]] || { echo "STEP14_INTRODUCTION_FILE_SET_INCOMPLETE"; exit 1; }
+          else
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  case "$status" in D|R*) echo "STEP14_OWNED_ARTIFACT_DELETION_OR_RENAME_FORBIDDEN: $row"; exit 1 ;; esac
+                fi
+              done
+            done
+          fi
+          echo "STEP14_SCOPE_GUARD=PASS"
+
+      - name: Validate Step 13-14 contracts, P002 and Gate6 ownership
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s13=json.loads(Path('contracts/pattern-canary-graduation-retirement-governance-v0.1.json').read_text())
+          s14=json.loads(Path('contracts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1.json').read_text())
+          challenger=json.loads(Path('contracts/evaluation-freeze-challenger-protocol-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          g6=json.loads(Path('packages/gate6/gate6_manifest.json').read_text())
+          assert s13['status']=='STEP_13_IMPLEMENTED'
+          assert s13['next_stage_on_graduation']=='STEP_14_ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_AND_PRODUCTION_SAFETY_REVIEW'
+          assert s14['contract_id']=='ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_PRODUCTION_SAFETY_REVIEW_V0_1'
+          assert s14['status']=='STEP_14_IMPLEMENTED'
+          assert s14['inputs']['required_step13_decision']=='GRADUATE_TO_ZERO_WEIGHT_CHALLENGER_CANDIDATE'
+          assert s14['inputs']['candidate_decision_weight_must_equal_zero'] is True
+          assert len(s14['required_safety_controls'])==12
+          assert s14['safety_review']['all_required_controls_must_pass_for_approval'] is True
+          assert s14['safety_review']['evidence_reference_required_for_every_control'] is True
+          assert s14['safety_review']['candidate_change_after_review_requires_new_review'] is True
+          assert s14['evaluation_firewall']['step12_step13_graduation_evidence_may_be_reused_for_training'] is False
+          assert s14['evaluation_firewall']['step12_step13_graduation_evidence_may_be_reused_for_retuning'] is False
+          assert s14['evaluation_firewall']['step12_step13_graduation_evidence_counts_as_new_independent_production_activation_proof'] is False
+          assert s14['evaluation_firewall']['new_prospective_evidence_required_for_future_nonzero_activation'] is True
+          assert s14['evaluation_firewall']['additional_alpha_spent_in_step14'] is False
+          assert s14['approval_boundary']['approval_is_production_activation'] is False
+          assert s14['approval_boundary']['production_decision_weight_after_approval']==0
+          assert s14['approval_boundary']['champion_replacement_authorized'] is False
+          assert s14['approval_boundary']['capital_use_authorized'] is False
+          assert s14['approval_boundary']['routing_or_probability_influence_changed_here'] is False
+          assert s14['hold_boundary']['production_decision_weight']==0
+          assert s14['hold_boundary']['new_safety_review_required_before_future_approval'] is True
+          assert s14['rejection_boundary']['candidate_archived_zero_weight'] is True
+          assert s14['rejection_boundary']['same_step13_graduation_decision_may_be_reauthorized'] is False
+          assert s14['decision_boundary']['production_decision_weight']==0
+          assert s14['decision_boundary']['champion_replacement_authorized'] is False
+          assert s14['decision_boundary']['capital_use_authorized'] is False
+          assert s14['real_evidence_boundary']['synthetic_unit_test_attestations_may_count_as_real_step14_safety_evidence'] is False
+          assert s14['governance']['p002_changed'] is False
+          assert s14['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert s14['governance']['gate6_capital_lock_preserved'] is True
+          assert s14['governance']['real_money']=='NO'
+          assert challenger['freeze_requirements']['tuning_reuse_allowed'] is False
+          assert challenger['freeze_requirements']['promotion_reuse_allowed'] is False
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['independent_validation_min_n']==30
+          assert p002['capital_effect']=='NONE_UNTIL_GOVERNED_EVIDENCE'
+          assert g6['gate']=='Gate 6 — Capital & Risk Engine'
+          assert 'LOCKED' in g6['capital_modes']
+          print('STEP13_TO_STEP14_CONTRACT_CHAIN=PASS')
+          print('STEP14_ZERO_WEIGHT_BOUNDARY=PASS')
+          print('STEP14_HOLDOUT_FIREWALL=PASS')
+          print('STEP14_SAFETY_EVIDENCE_REFERENCES_REQUIRED=PASS')
+          print('STEP14_APPROVAL_IS_NOT_ACTIVATION=PASS')
+          print('GATE6_CAPITAL_OWNER_PRESERVED=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run Step 10 regression
+        run: node --test packages/intelligence-engine/tests/controlled-pattern-canary-activation-rollback.test.mjs
+
+      - name: Run Step 11 regression
+        run: node --test packages/intelligence-engine/tests/pattern-canary-expansion-rejection-governance.test.mjs
+
+      - name: Run Step 12 regression
+        run: node --test packages/intelligence-engine/tests/staged-pattern-canary-expansion-activation-monitoring.test.mjs
+
+      - name: Run Step 13 regression
+        run: node --test packages/intelligence-engine/tests/pattern-canary-graduation-retirement-governance.test.mjs
+
+      - name: Run Step 14 tests
+        run: node --test packages/intelligence-engine/tests/zero-weight-challenger-promotion-authorization-production-safety-review.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$STEP14_BASE"
+          HEAD="$STEP14_HEAD"
+          mkdir -p artifacts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1
+          rm -rf /tmp/step14-base /tmp/step14-head
+          git worktree add --detach /tmp/step14-base "$BASE"
+          git worktree add --detach /tmp/step14-head "$HEAD"
+          set +e
+          (cd /tmp/step14-base/packages/intelligence-engine && npm test) > /tmp/step14-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step14-head/packages/intelligence-engine && npm test) > /tmp/step14-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s\n' "$BASE_RC" > /tmp/step14-base.rc
+          printf '%s\n' "$HEAD_RC" > /tmp/step14-head.rc
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          def failures(path):
+            out=[]
+            for line in Path(path).read_text(errors='replace').splitlines():
+              text=line.strip(); match=tap.match(text) or glyph.match(text)
+              if match: out.append(match.group(1).strip())
+            return sorted(set(out))
+          brc=int(Path('/tmp/step14-base.rc').read_text())
+          hrc=int(Path('/tmp/step14-head.rc').read_text())
+          base=failures('/tmp/step14-base.log')
+          head=failures('/tmp/step14-head.log')
+          if brc!=0 and not base: raise SystemExit('STEP14_UNPARSED_CANONICAL_BASE_TEST_FAILURE_DEBT')
+          if hrc!=0 and not head: raise SystemExit('STEP14_UNPARSED_HEAD_TEST_FAILURE_DEBT')
+          if brc!=hrc: raise SystemExit('STEP14_NPM_TEST_EXIT_CODE_CHANGED')
+          if base!=head: raise SystemExit('STEP14_REGRESSION_FAILURE_SET_CHANGED')
+          summary={
+            'comparison':'CANONICAL_BASE_VS_STEP14_HEAD',
+            'node_version':'20',
+            'base_npm_test_rc':brc,
+            'head_npm_test_rc':hrc,
+            'base_failure_n':len(base),
+            'head_failure_n':len(head),
+            'base_failures':base,
+            'head_failures':head,
+            'new_failure_names':sorted(set(head)-set(base)),
+            'removed_failure_names':sorted(set(base)-set(head)),
+            'failure_name_delta_zero':base==head
+          }
+          Path('artifacts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+          echo "STEP14_REGRESSION_DELTA=0"
+
+      - name: Write Step 14 evidence
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          root=Path('artifacts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1')
+          root.mkdir(parents=True,exist_ok=True)
+          regression=json.loads((root/'REGRESSION_BASELINE.json').read_text())
+          evidence={
+            'artifact':'Zero_Weight_Challenger_Promotion_Authorization_Production_Safety_Review_v0.1',
+            'step':'STEP_14_ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_AND_PRODUCTION_SAFETY_REVIEW',
+            'overall':{
+              'TEST_AUTHORED':True,
+              'TEST_EXECUTED':True,
+              'TEST_PASS':True,
+              'STEP_14_IMPLEMENTATION_COMPLETE':True,
+              'ADDED_FILES':5,
+              'MODIFIED_EXISTING_FILES':0,
+              'DELETED_EXISTING_FILES':0,
+              'REGRESSION_DELTA_ZERO':regression['failure_name_delta_zero']
+            },
+            'capabilities':{
+              'EXACT_STEP13_GRADUATED_CANDIDATE_REQUIRED':True,
+              'REQUIRED_SAFETY_CONTROL_N':12,
+              'EVIDENCE_REFERENCE_REQUIRED_PER_CONTROL':True,
+              'FAILED_CONTROL_BLOCKS_APPROVAL':True,
+              'GRADUATION_EVIDENCE_REUSE_FOR_TRAINING':False,
+              'GRADUATION_EVIDENCE_REUSE_FOR_RETUNING':False,
+              'GRADUATION_EVIDENCE_COUNTS_AS_NEW_ACTIVATION_PROOF':False,
+              'APPROVAL_IS_PRODUCTION_ACTIVATION':False,
+              'PRODUCTION_DECISION_WEIGHT_AFTER_APPROVAL':0,
+              'CHAMPION_REPLACEMENT_AUTHORIZED':False,
+              'CAPITAL_USE_AUTHORIZED':False,
+              'ROUTING_OR_PROBABILITY_INFLUENCE_CHANGED':False,
+              'HOLD_REQUIRES_NEW_SAFETY_REVIEW':True,
+              'REJECT_ARCHIVES_ZERO_WEIGHT_CANDIDATE':True
+            },
+            'real_evidence_status':{
+              'REAL_STEP14_SAFETY_REVIEW_EXECUTED_IN_CI':False,
+              'SYNTHETIC_TEST_FIXTURES_ONLY':True,
+              'SYNTHETIC_ATTESTATIONS_COUNT_AS_REAL_STEP14_EVIDENCE':False,
+              'REAL_STEP14_AUTHORIZATION_CLAIMED':False,
+              'CURRENT_REAL_STATUS':'NOT_RUN_WAITING_FOR_REAL_STEP13_GRADUATED_ZERO_WEIGHT_CHALLENGER_AND_REAL_SAFETY_REVIEW_EVIDENCE'
+            },
+            'regression_baseline':regression,
+            'governance':{
+              'P002_UNCHANGED':True,
+              'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,
+              'GATE6_CAPITAL_OWNER_PRESERVED':True,
+              'EXISTING_OWNER_REPLACEMENT':False,
+              'AUTOMATIC_ACTIVATION':False,
+              'AUTOMATIC_RETUNING':False,
+              'CAPITAL_EFFECT':'NONE',
+              'REAL_MONEY':'NO'
+            },
+            'hashes':{
+              'contract_sha256':sha('contracts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1.json'),
+              'runtime_sha256':sha('packages/intelligence-engine/src/zero-weight-challenger-promotion-authorization-production-safety-review.mjs'),
+              'test_sha256':sha('packages/intelligence-engine/tests/zero-weight-challenger-promotion-authorization-production-safety-review.test.mjs'),
+              'docs_sha256':sha('packages/intelligence-engine/docs/ZERO_WEIGHT_CHALLENGER_PROMOTION_AUTHORIZATION_PRODUCTION_SAFETY_REVIEW_V0_1.md'),
+              'step13_contract_sha256':sha('contracts/pattern-canary-graduation-retirement-governance-v0.1.json'),
+              'challenger_freeze_contract_sha256':sha('contracts/evaluation-freeze-challenger-protocol-v0.1.json'),
+              'p002_sha256':sha('contracts/p002-frozen-rules.json'),
+              'gate6_manifest_sha256':sha('packages/gate6/gate6_manifest.json')
+            },
+            'next_stage_on_approval':'STEP_15_CONTROLLED_PRODUCTION_ACTIVATION_AND_EMERGENCY_ROLLBACK'
+          }
+          (root/'TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 14 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-weight-challenger-promotion-authorization-production-safety-review-v0.1-evidence
+          path: artifacts/zero-weight-challenger-promotion-authorization-production-safety-review-v0.1/
