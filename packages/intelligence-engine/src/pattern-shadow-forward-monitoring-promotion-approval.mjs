@@ -71,10 +71,7 @@ export function freezePatternPromotionDossier({ step8Evaluation, step8Settlement
     throw new Error('STEP9_EXACT_STEP8_SETTLEMENT_COHORT_REQUIRED');
   }
   for (const row of step8Settlements) verifyStep8Settlement(row);
-  const rerun = evaluatePatternShadow({
-    settlements: step8Settlements,
-    evaluatedAt: step8Evaluation.evaluated_at
-  });
+  const rerun = evaluatePatternShadow({ settlements: step8Settlements, evaluatedAt: step8Evaluation.evaluated_at });
   if (rerun.shadow_evaluation_fingerprint !== step8Evaluation.shadow_evaluation_fingerprint) {
     throw new Error('STEP9_STEP8_EVALUATION_SETTLEMENT_COHORT_MISMATCH');
   }
@@ -93,10 +90,7 @@ export function freezePatternPromotionDossier({ step8Evaluation, step8Settlement
     source_step8_settled_n: step8Evaluation.settled_n,
     source_step8_settlement_fingerprints: fingerprints,
     excluded_step8_match_market_selection_keys: [...keys].sort(),
-    source_step8_metrics: {
-      champion: step8Evaluation.champion,
-      shadow_challenger: step8Evaluation.shadow_challenger
-    },
+    source_step8_metrics: { champion: step8Evaluation.champion, shadow_challenger: step8Evaluation.shadow_challenger },
     forward_plan: {
       minimum_new_settled_n: FORWARD_MIN_SETTLED_N,
       step8_row_reuse_allowed: false,
@@ -180,13 +174,7 @@ export function registerPatternForwardShadowObservation({ dossier, shadowPredict
     baseline_loss: settlement.baseline_loss,
     shadow_loss: settlement.shadow_loss,
     verified_market_clv: settlement.verified_market_clv,
-    governance: {
-      forward_only: true,
-      step8_row_reused: false,
-      shadow_only: true,
-      decision_weight: 0,
-      production_decision_affected: false
-    }
+    governance: { forward_only: true, step8_row_reused: false, shadow_only: true, decision_weight: 0, production_decision_affected: false }
   };
   return deepFreeze({ ...payload, forward_observation_fingerprint: sha256(payload) });
 }
@@ -201,9 +189,7 @@ export function verifyPatternForwardShadowObservation(observation) {
   return true;
 }
 
-function mean(values) {
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
+function mean(values) { return values.reduce((sum, value) => sum + value, 0) / values.length; }
 
 function ece(rows, probabilityKey, bins = 10) {
   let total = 0;
@@ -261,12 +247,15 @@ function halfSummary(rows, label) {
 
 export function evaluatePatternForwardMonitoring({ dossier, observations, evaluatedAt }) {
   verifyPatternPromotionDossier(dossier);
-  parseTimestamp('STEP9_FORWARD_EVALUATED_AT', evaluatedAt);
+  const evaluatedMs = parseTimestamp('STEP9_FORWARD_EVALUATED_AT', evaluatedAt);
   if (!Array.isArray(observations)) throw new Error('STEP9_FORWARD_OBSERVATION_ARRAY_REQUIRED');
   const seen = new Set();
   for (const row of observations) {
     verifyPatternForwardShadowObservation(row);
     if (row.dossier_fingerprint !== dossier.dossier_fingerprint) throw new Error('STEP9_FORWARD_OBSERVATION_DOSSIER_MISMATCH');
+    if (parseTimestamp('STEP9_FORWARD_REGISTERED_AT', row.registered_at) > evaluatedMs || parseTimestamp('STEP9_FORWARD_SETTLED_AT', row.settled_at) > evaluatedMs) {
+      throw new Error('STEP9_EVALUATION_CANNOT_PREDATE_FORWARD_EVIDENCE');
+    }
     const key = keyOf(row);
     if (seen.has(key)) throw new Error('STEP9_DUPLICATE_FORWARD_MATCH_MARKET_SELECTION');
     seen.add(key);
@@ -290,11 +279,7 @@ export function evaluatePatternForwardMonitoring({ dossier, observations, evalua
   const eligible = Object.values(gates).every(Boolean);
   const payload = {
     evaluation_version: PATTERN_SHADOW_FORWARD_APPROVAL_VERSION,
-    state: !enoughN
-      ? 'FORWARD_MONITORING_ACCUMULATING_ZERO_WEIGHT'
-      : eligible
-        ? 'ELIGIBLE_FOR_EXPLICIT_CONTROLLED_CANARY_APPROVAL_ZERO_WEIGHT'
-        : 'FORWARD_MONITORING_DEGRADED_RETAIN_SHADOW_ZERO_WEIGHT',
+    state: !enoughN ? 'FORWARD_MONITORING_ACCUMULATING_ZERO_WEIGHT' : eligible ? 'ELIGIBLE_FOR_EXPLICIT_CONTROLLED_CANARY_APPROVAL_ZERO_WEIGHT' : 'FORWARD_MONITORING_DEGRADED_RETAIN_SHADOW_ZERO_WEIGHT',
     evaluated_at: evaluatedAt,
     dossier_fingerprint: dossier.dossier_fingerprint,
     forward_settled_n: n,
