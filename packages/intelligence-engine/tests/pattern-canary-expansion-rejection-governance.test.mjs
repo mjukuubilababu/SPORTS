@@ -42,7 +42,7 @@ function authorization() {
   return { ...payload, canary_authorization_fingerprint: sha256(payload) };
 }
 
-function decision(auth, i, { afterFreeze=true, canaryP=0.60, championP=0.55 } = {}) {
+function decision(auth, i, { afterFreeze=true, canaryP=0.57, championP=0.55 } = {}) {
   const routedAt = afterFreeze ? iso('2026-02-02T00:00:00.000Z', i, 8) : iso('2026-01-10T00:00:00.000Z', i, 8);
   const kickoff = afterFreeze ? iso('2026-02-02T00:00:00.000Z', i, 12) : iso('2026-01-10T00:00:00.000Z', i, 12);
   const payload = {
@@ -59,7 +59,7 @@ function decision(auth, i, { afterFreeze=true, canaryP=0.60, championP=0.55 } = 
   return { ...payload, canary_decision_fingerprint: sha256(payload) };
 }
 
-function settlement(auth, { matchId, i, championP=0.55, canaryP=0.60, outcome, sourceDecision='INITIAL', dateBase='2026-01-02T00:00:00.000Z' }) {
+function settlement(auth, { matchId, i, championP=0.55, canaryP=0.57, outcome, sourceDecision='INITIAL', dateBase='2026-01-02T00:00:00.000Z' }) {
   const payload = {
     settlement_version: CONTROLLED_PATTERN_CANARY_VERSION,
     match_id: matchId, market_key: 'BINARY_TEST', selection: 'YES', outcome,
@@ -80,7 +80,7 @@ function confirmation(auth, n=30, { healthy=true, afterFreeze=true } = {}) {
   const ds=[], ss=[];
   for (let i=0;i<n;i+=1) {
     const championP = healthy ? 0.55 : 0.50;
-    const canaryP = healthy ? 0.60 : 0.52;
+    const canaryP = healthy ? 0.57 : 0.52;
     const outcome = healthy ? (i%10<7?1:0) : (i%10<2?1:0);
     const d=decision(auth,i,{afterFreeze,championP,canaryP});
     ds.push(d);
@@ -126,7 +126,7 @@ test('a second disjoint healthy N=30 cohort makes Step 11 manually decision-elig
 test('Step 11 forbids reuse of initial canary match-market-selection evidence',()=>{
   const {auth,initial,checkpoint}=setupCheckpoint(); const c=confirmation(auth,30);
   const d={...c.decisions[0],match_id:'INIT-0'}; const {canary_decision_fingerprint,...dp}=d; const d2={...dp,canary_decision_fingerprint:sha256(dp)};
-  const s=settlement(auth,{matchId:'INIT-0',i:0,championP:0.55,canaryP:0.60,outcome:1,sourceDecision:d2.canary_decision_fingerprint,dateBase:'2026-02-02T00:00:00.000Z'});
+  const s=settlement(auth,{matchId:'INIT-0',i:0,championP:0.55,canaryP:0.57,outcome:1,sourceDecision:d2.canary_decision_fingerprint,dateBase:'2026-02-02T00:00:00.000Z'});
   assert.throws(()=>evaluatePatternCanaryExpansionEvidence({checkpoint,authorization:auth,checkpointSettlements:initial,confirmationDecisions:[d2,...c.decisions.slice(1)],confirmationSettlements:[s,...c.settlements.slice(1)],evaluatedAt:'2026-03-10T00:00:00.000Z'}),/STEP11_INITIAL_CANARY_EVIDENCE_REUSE_FORBIDDEN/);
 });
 
