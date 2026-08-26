@@ -1,0 +1,102 @@
+{
+  "contract_id": "CONTROLLED_PRODUCTION_EVIDENCE_REVIEW_WEIGHT_GOVERNANCE_V0_1",
+  "status": "STEP_16_IMPLEMENTED",
+  "purpose": "Bind the exact prospective Step 15 production-evidence cohort before health evaluation, reproduce the exact healthy Step 15 health result, and govern a manual bounded next-weight authorization, hold, or retirement without applying a new weight, replacing the champion, or unlocking capital.",
+  "inputs": {
+    "required_step15_health_state": "CONTROLLED_PRODUCTION_HEALTHY_CONTINUE_BOUNDED_CAPITAL_LOCKED",
+    "required_step15_next_stage": "STEP_16_CONTROLLED_PRODUCTION_EVIDENCE_REVIEW_AND_WEIGHT_GOVERNANCE",
+    "exact_step15_activation_required": true,
+    "exact_step15_health_required": true,
+    "pre_health_step15_evidence_cohort_manifest_required": true,
+    "exact_manifest_bound_settlement_cohort_required": true,
+    "step15_health_must_be_reproduced_from_manifest_bound_cohort": true,
+    "step15_rollback_required_must_be_false": true,
+    "all_step15_health_gates_must_pass": true
+  },
+  "evidence_binding": {
+    "minimum_settled_n": 30,
+    "minimum_n_basis": "P002_INDEPENDENT_VALIDATION_MIN_N",
+    "manifest_must_follow_all_included_settlements": true,
+    "manifest_must_precede_step15_health_evaluation": true,
+    "settlement_fingerprint_order_bound": true,
+    "settlement_fingerprint_set_bound": true,
+    "match_market_selection_order_bound": true,
+    "match_market_selection_set_bound": true,
+    "same_metric_cohort_substitution_allowed": false,
+    "historical_unbound_step15_health_eligible_for_weight_governance": false,
+    "post_manifest_cohort_rewrite_allowed": false
+  },
+  "weight_governance_boundary": {
+    "current_step15_maximum_initial_weight": 0.05,
+    "maximum_weight_multiplier_per_governed_stage": 2,
+    "absolute_maximum_next_stage_decision_weight": 0.10,
+    "next_stage_ceiling_formula": "MIN(CURRENT_WEIGHT_X_2,_0.10)",
+    "maximum_absolute_probability_shift": 0.02,
+    "probability_shift_cap_increased": false,
+    "weight_change_applied_in_step16": false,
+    "automatic_weight_increase": false,
+    "automatic_retuning": false,
+    "champion_replacement_authorized": false,
+    "capital_execution_authorized": false
+  },
+  "manual_decisions": [
+    "AUTHORIZE_NEXT_CONTROLLED_WEIGHT_STAGE_NOT_APPLIED",
+    "HOLD_CURRENT_CONTROLLED_WEIGHT",
+    "RETIRE_AND_ROLLBACK_TO_CHAMPION"
+  ],
+  "authorization_boundary": {
+    "authorization_is_weight_activation": false,
+    "authorized_weight_must_not_exceed_review_ceiling": true,
+    "current_step15_weight_remains_active_until_later_governed_activation": true,
+    "probability_shift_cap_remains_unchanged": true,
+    "champion_remains_primary_fallback": true,
+    "capital_execution_remains_locked": true,
+    "new_prospective_evidence_required_after_any_later_weight_activation": true
+  },
+  "hold_boundary": {
+    "current_step15_weight_remains_unchanged": true,
+    "weight_increase_authorized": false,
+    "new_pre_health_manifest_and_new_health_review_required_before_future_increase": true
+  },
+  "retirement_boundary": {
+    "reuse_step15_emergency_rollback_owner": true,
+    "rollback_reason": "MANUAL_KILL_SWITCH",
+    "rollback_target": "CHAMPION_ONLY",
+    "production_decision_weight_after_retirement": 0,
+    "probability_influence_after_retirement": 0,
+    "same_step15_activation_reactivation_allowed": false,
+    "evidence_retained": true
+  },
+  "evaluation_firewall": {
+    "step12_step13_graduation_evidence_counts_as_step16_evidence": false,
+    "step15_manifest_bound_settlements_are_the_review_evidence": true,
+    "step15_review_evidence_reuse_for_training": false,
+    "step15_review_evidence_reuse_for_retuning": false,
+    "automatic_weight_increase_from_metrics": false,
+    "additional_alpha_spent_in_step16": false
+  },
+  "ownership": {
+    "step15_activation_health_and_rollback_owner": "packages/intelligence-engine/src/controlled-production-activation-emergency-rollback.mjs",
+    "step16_evidence_review_and_weight_governance_owner": "packages/intelligence-engine/src/controlled-production-evidence-review-weight-governance.mjs",
+    "gate6_capital_and_risk_owner": "packages/gate6",
+    "existing_owners_replaced": false
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_step16_evidence": false,
+    "real_manifest_bound_healthy_step15_evidence_required": true,
+    "historical_step15_health_without_pre_health_manifest_may_count": false,
+    "real_step16_weight_authorization_claimed_by_implementation": false,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_MANIFEST_BOUND_HEALTHY_STEP15_EVIDENCE"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "gate6_capital_lock_preserved": true,
+    "champion_replacement_authorized": false,
+    "automatic_promotion": false,
+    "automatic_retuning": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage_on_authorization": "STEP_17_STAGED_CONTROLLED_PRODUCTION_WEIGHT_ACTIVATION_AND_MONITORING"
+}
