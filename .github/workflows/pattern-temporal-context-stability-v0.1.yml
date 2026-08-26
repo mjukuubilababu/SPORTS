@@ -1,0 +1,197 @@
+name: Pattern Temporal Context Stability v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pattern-stability:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce Step 7 introduction scope or protect Step 7 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          if [[ -z "$BASE" || -z "$HEAD" ]]; then
+            echo "STEP7_SCOPE_GUARD_REQUIRES_PULL_REQUEST"
+            exit 1
+          fi
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          printf '%s\n' "${rows[@]}"
+          owned=(
+            "contracts/pattern-temporal-context-stability-v0.1.json"
+            "packages/intelligence-engine/src/pattern-temporal-context-stability.mjs"
+            "packages/intelligence-engine/tests/pattern-temporal-context-stability.test.mjs"
+            "packages/intelligence-engine/docs/PATTERN_TEMPORAL_CONTEXT_STABILITY_V0_1.md"
+            ".github/workflows/pattern-temporal-context-stability-v0.1.yml"
+          )
+          if ! git cat-file -e "$BASE:contracts/pattern-temporal-context-stability-v0.1.json" 2>/dev/null; then
+            declare -A seen=()
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"; matched=false
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" == "A" ]] || { echo "STEP7_INTRODUCTION_FILE_MUST_BE_ADDED: $row"; exit 1; }
+                  seen["$path"]=1; matched=true; break
+                fi
+              done
+              [[ "$matched" == true ]] || { echo "STEP7_UNEXPECTED_INTRODUCTION_CHANGE: $row"; exit 1; }
+            done
+            [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP7_EXPECTED_EXACTLY_5_ADDITIONS"; exit 1; }
+            [[ "${#seen[@]}" -eq 5 ]] || { echo "STEP7_INTRODUCTION_FILE_SET_INCOMPLETE"; exit 1; }
+            echo "STEP7_INTRODUCTION_SCOPE=PASS"
+          else
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  case "$status" in D|R*) echo "STEP7_OWNED_ARTIFACT_DELETION_OR_RENAME_FORBIDDEN: $row"; exit 1 ;; esac
+                fi
+              done
+            done
+            echo "STEP7_FORWARD_COMPATIBILITY_PROTECTOR=PASS"
+          fi
+
+      - name: Validate Step 6-7 contracts and governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          step6=json.loads(Path('contracts/pattern-confirmatory-out-of-sample-evaluation-v0.1.json').read_text())
+          step7=json.loads(Path('contracts/pattern-temporal-context-stability-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          assert step6['contract_id']=='PATTERN_CONFIRMATORY_OUT_OF_SAMPLE_EVALUATION_V0_1'
+          assert step6['status']=='STEP_6_IMPLEMENTED'
+          assert step6['next_stage']=='STEP_7_PATTERN_TEMPORAL_AND_CONTEXT_STABILITY'
+          assert step7['contract_id']=='PATTERN_TEMPORAL_CONTEXT_STABILITY_V0_1'
+          assert step7['status']=='STEP_7_IMPLEMENTED'
+          assert step7['evidence_lock']['exact_step6_corpus_fingerprint_required'] is True
+          assert step7['evidence_lock']['post_step6_corpus_substitution_allowed'] is False
+          assert step7['evidence_lock']['new_significance_test_run'] is False
+          assert step7['evidence_lock']['additional_alpha_spent'] is False
+          assert step7['temporal_stability']['window_count']==3
+          assert step7['temporal_stability']['minimum_subject_opportunity_n_per_window']==10
+          assert step7['temporal_stability']['minimum_reference_opportunity_n_per_window']==10
+          assert step7['temporal_stability']['minimum_oriented_effect_each_window']==0.05
+          assert step7['temporal_stability']['minimum_median_oriented_effect']==0.10
+          assert step7['temporal_stability']['maximum_oriented_effect_range']==0.20
+          assert step7['opponent_diversity']['minimum_unique_opponents']==10
+          assert step7['opponent_diversity']['maximum_single_opponent_share_of_subject_opportunity_clusters']==0.20
+          assert step7['decision_boundary']['decision_weight']==0
+          assert step7['decision_boundary']['automatic_pattern_promotion'] is False
+          assert step7['real_evidence_boundary']['synthetic_unit_test_rows_may_count_as_real_validation'] is False
+          assert step7['governance']['p002_changed'] is False
+          assert step7['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert step7['governance']['real_money']=='NO'
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['discovery_min_n']==30
+          assert p002['independent_validation_min_n']==30
+          assert p002['capital_effect']=='NONE_UNTIL_GOVERNED_EVIDENCE'
+          print('STEP6_TO_STEP7_CONTRACT_CHAIN=PASS')
+          print('STEP7_NO_NEW_ALPHA=PASS')
+          print('STEP7_ZERO_WEIGHT=PASS')
+          print('STEP7_REAL_RESULT_NOT_FABRICATED=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run Step 6 regression
+        run: node --test packages/intelligence-engine/tests/pattern-confirmatory-out-of-sample-evaluation.test.mjs
+
+      - name: Run Step 7 tests
+        run: node --test packages/intelligence-engine/tests/pattern-temporal-context-stability.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mkdir -p artifacts/pattern-temporal-context-stability-v0.1
+          rm -rf /tmp/step7-base /tmp/step7-head
+          git worktree add --detach /tmp/step7-base "$BASE"
+          git worktree add --detach /tmp/step7-head "$HEAD"
+          set +e
+          (cd /tmp/step7-base/packages/intelligence-engine && npm test) > /tmp/step7-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step7-head/packages/intelligence-engine && npm test) > /tmp/step7-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s\n' "$BASE_RC" > /tmp/step7-base.rc
+          printf '%s\n' "$HEAD_RC" > /tmp/step7-head.rc
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          def failures(path):
+            out=[]
+            for line in Path(path).read_text(errors='replace').splitlines():
+              text=line.strip(); m=tap.match(text) or glyph.match(text)
+              if m: out.append(m.group(1).strip())
+            return sorted(set(out))
+          brc=int(Path('/tmp/step7-base.rc').read_text()); hrc=int(Path('/tmp/step7-head.rc').read_text())
+          base=failures('/tmp/step7-base.log'); head=failures('/tmp/step7-head.log')
+          if brc!=0 and not base: raise SystemExit('STEP7_UNPARSED_CANONICAL_BASE_TEST_FAILURE_DEBT')
+          if hrc!=0 and not head: raise SystemExit('STEP7_UNPARSED_HEAD_TEST_FAILURE_DEBT')
+          if brc!=hrc: raise SystemExit('STEP7_NPM_TEST_EXIT_CODE_CHANGED')
+          if base!=head: raise SystemExit('STEP7_REGRESSION_FAILURE_SET_CHANGED')
+          summary={'comparison':'CANONICAL_BASE_VS_STEP7_HEAD','node_version':'20','base_npm_test_rc':brc,'head_npm_test_rc':hrc,'npm_test_rc_parity':brc==hrc,'base_failure_n':len(base),'head_failure_n':len(head),'base_failures':base,'head_failures':head,'new_failure_names':sorted(set(head)-set(base)),'removed_failure_names':sorted(set(base)-set(head)),'failure_name_delta_zero':base==head,'canonical_baseline_has_existing_failures':brc!=0}
+          Path('artifacts/pattern-temporal-context-stability-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+          echo "STEP7_REGRESSION_DELTA=0"
+
+      - name: Write Step 7 test evidence
+        run: |
+          mkdir -p artifacts/pattern-temporal-context-stability-v0.1
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          rp=Path('artifacts/pattern-temporal-context-stability-v0.1/REGRESSION_BASELINE.json')
+          regression=json.loads(rp.read_text()) if rp.exists() else None
+          evidence={
+            'artifact':'Pattern_Temporal_Context_Stability_v0.1',
+            'step':'STEP_7_PATTERN_TEMPORAL_AND_CONTEXT_STABILITY',
+            'overall':{'TEST_AUTHORED':True,'TEST_EXECUTED':True,'TEST_PASS':True,'STEP_7_IMPLEMENTATION_COMPLETE':True,'ADDED_FILES':5,'MODIFIED_EXISTING_FILES':0,'DELETED_EXISTING_FILES':0,'REGRESSION_DELTA_ZERO':None if regression is None else regression['failure_name_delta_zero']},
+            'capabilities':{'EXACT_STEP6_CORPUS_LOCK':True,'TEMPORAL_WINDOW_N':3,'WINDOW_MIN_OPPORTUNITY_N':10,'WINDOW_MIN_CLUSTER_N':10,'MIN_WINDOW_ORIENTED_EFFECT':0.05,'MIN_MEDIAN_ORIENTED_EFFECT':0.10,'MAX_TEMPORAL_EFFECT_RANGE':0.20,'ALL_CONTEXT_HOME_AWAY_CHECK':True,'MIN_UNIQUE_OPPONENT_N':10,'MAX_SINGLE_OPPONENT_SHARE':0.20,'CROSS_SEASON_SCOPE_LIMIT_RETAINED':True,'NEW_SIGNIFICANCE_TEST':False,'ADDITIONAL_ALPHA_SPENT':False,'PREDICTIVE_WEIGHT':0,'AUTOMATIC_PROMOTION':False},
+            'real_evidence_status':{'REAL_STABILITY_EVALUATION_EXECUTED_IN_CI':False,'SYNTHETIC_TEST_FIXTURES_ONLY':True,'SYNTHETIC_RESULTS_COUNT_AS_REAL_VALIDATION':False,'REAL_VALIDATED_PATTERN_CLAIMED_BY_STEP7_IMPLEMENTATION':False,'CURRENT_REAL_STATUS':'NOT_RUN_WAITING_FOR_REAL_STEP6_OOS_PASS'},
+            'regression_baseline':regression,
+            'governance':{'P002_UNCHANGED':True,'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,'AUTOMATIC_RETUNING':False,'AUTOMATIC_PATTERN_PROMOTION':False,'CAPITAL_EFFECT':'NONE','REAL_MONEY':'NO'},
+            'hashes':{'contract_sha256':sha('contracts/pattern-temporal-context-stability-v0.1.json'),'runtime_sha256':sha('packages/intelligence-engine/src/pattern-temporal-context-stability.mjs'),'test_sha256':sha('packages/intelligence-engine/tests/pattern-temporal-context-stability.test.mjs'),'docs_sha256':sha('packages/intelligence-engine/docs/PATTERN_TEMPORAL_CONTEXT_STABILITY_V0_1.md'),'p002_sha256':sha('contracts/p002-frozen-rules.json')},
+            'next_stage':'STEP_8_PATTERN_PROMOTION_GOVERNANCE_AND_SHADOW_INTEGRATION'
+          }
+          Path('artifacts/pattern-temporal-context-stability-v0.1/TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 7 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pattern-temporal-context-stability-v0.1-evidence
+          path: |
+            artifacts/pattern-temporal-context-stability-v0.1/TEST_EVIDENCE.json
+            artifacts/pattern-temporal-context-stability-v0.1/REGRESSION_BASELINE.json
+          if-no-files-found: error
