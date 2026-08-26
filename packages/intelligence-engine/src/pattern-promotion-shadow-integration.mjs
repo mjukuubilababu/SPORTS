@@ -208,6 +208,18 @@ function ece(rows,key,bins=10) {
   return total;
 }
 
+function insufficientStep8LearningProposal({ n, baseline, shadow }) {
+  return deepFreeze({
+    proposalType:'CHALLENGER_REVIEW',
+    modelId:'PATTERN_SHADOW_CHALLENGER',
+    comparison:{decision:'RETAIN_CHAMPION',reason:'INSUFFICIENT_STEP8_SHADOW_N'},
+    errorEvidence:{shadow_n:n,baseline_brier:baseline.brier,shadow_brier:shadow.brier,baseline_log_loss:baseline.logLoss,shadow_log_loss:shadow.logLoss,baseline_ece:baseline.ece,shadow_ece:shadow.ece},
+    autoApply:false,
+    productionMutationAllowed:false,
+    decisionWeightChange:'NO_CHANGE'
+  });
+}
+
 export function evaluatePatternShadow({ settlements, evaluatedAt, minSettledN=SHADOW_MIN_SETTLED_N }) {
   parseTimestamp('STEP8_SHADOW_EVALUATED_AT',evaluatedAt);
   if (!Array.isArray(settlements)) throw new Error('STEP8_SETTLEMENT_ARRAY_REQUIRED');
@@ -225,14 +237,17 @@ export function evaluatePatternShadow({ settlements, evaluatedAt, minSettledN=SH
   const shadow={n,brier:n?mean(settlements.map(r=>r.shadow_loss.brier)):null,logLoss:n?mean(settlements.map(r=>r.shadow_loss.log_loss)):null,ece:n?ece(settlements,'shadow_probability'):null,clv:verifiedClv.length===n&&n?mean(verifiedClv):0};
   const enoughN=n>=minSettledN;
   const calibrationNonDegraded=enoughN && shadow.ece<=baseline.ece+SHADOW_MAX_ECE_DEGRADATION;
-  const legacyComparison=enoughN?compareChallenger({champion:baseline,challenger:shadow,minN:minSettledN}):{decision:'RETAIN_CHAMPION',reason:'INSUFFICIENT_N'};
+  const legacyComparison=enoughN?compareChallenger({champion:baseline,challenger:shadow,minN:minSettledN}):{decision:'RETAIN_CHAMPION',reason:'INSUFFICIENT_STEP8_SHADOW_N'};
   const eligible=enoughN && calibrationNonDegraded && legacyComparison.decision==='ELIGIBLE_FOR_GOVERNANCE_REVIEW';
-  const learningProposal=proposeLearningChange({
-    errorEvidence:{shadow_n:n,baseline_brier:baseline.brier,shadow_brier:shadow.brier,baseline_log_loss:baseline.logLoss,shadow_log_loss:shadow.logLoss,baseline_ece:baseline.ece,shadow_ece:shadow.ece},
-    challengerScore:shadow,
-    championScore:baseline,
-    modelId:'PATTERN_SHADOW_CHALLENGER'
-  });
+  const errorEvidence={shadow_n:n,baseline_brier:baseline.brier,shadow_brier:shadow.brier,baseline_log_loss:baseline.logLoss,shadow_log_loss:shadow.logLoss,baseline_ece:baseline.ece,shadow_ece:shadow.ece};
+  const learningProposal=enoughN
+    ? proposeLearningChange({
+        errorEvidence,
+        challengerScore:shadow,
+        championScore:baseline,
+        modelId:'PATTERN_SHADOW_CHALLENGER'
+      })
+    : insufficientStep8LearningProposal({n,baseline,shadow});
   const result={
     evaluation_version:PATTERN_PROMOTION_SHADOW_VERSION,
     state:!enoughN?'SHADOW_EVIDENCE_ACCUMULATING':eligible?'ELIGIBLE_FOR_MANUAL_GOVERNANCE_REVIEW_ZERO_WEIGHT':'RETAIN_CHAMPION_SHADOW_NOT_PROVEN',
@@ -255,5 +270,8 @@ export function verifyPatternShadowEvaluation(evaluation) {
   if (!shadow_evaluation_fingerprint || sha256(payload)!==shadow_evaluation_fingerprint) throw new Error('STEP8_EVALUATION_FINGERPRINT_INVALID');
   if (evaluation.governance?.decision_weight!==0 || evaluation.governance?.automatic_promotion!==false || evaluation.governance?.production_mutation_allowed!==false) throw new Error('STEP8_EVALUATION_PRODUCTION_INFLUENCE_FORBIDDEN');
   if (evaluation.governed_learning_bridge?.autoApply!==false || evaluation.governed_learning_bridge?.productionMutationAllowed!==false) throw new Error('STEP8_GOVERNED_LEARNING_AUTO_APPLY_FORBIDDEN');
+  if ((evaluation.settled_n ?? 0) < (evaluation.minimum_settled_n ?? SHADOW_MIN_SETTLED_N) && evaluation.governed_learning_bridge?.decisionWeightChange!=='NO_CHANGE') {
+    throw new Error('STEP8_PRE_MIN_N_LEARNING_REVIEW_FORBIDDEN');
+  }
   return true;
 }
