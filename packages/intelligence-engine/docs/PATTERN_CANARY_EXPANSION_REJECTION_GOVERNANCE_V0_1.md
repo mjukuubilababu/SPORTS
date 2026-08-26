@@ -16,6 +16,8 @@ Step 11 therefore freezes the exact healthy Step 10 checkpoint and requires a se
 - new confirmation routed settled N >= 30;
 - total routed settled N >= 60;
 - every confirmation decision must be routed after the checkpoint freeze;
+- every confirmation decision must still be routed before kickoff;
+- every confirmation settlement must occur after kickoff;
 - initial match/market/selection keys cannot be reused;
 - the same Step 10 canary authorization must be used.
 
@@ -24,6 +26,16 @@ Step 11 therefore freezes the exact healthy Step 10 checkpoint and requires a se
 The checkpoint is not created from a status string alone. Step 11 requires the exact Step 10 settlement cohort and re-runs the canonical Step 10 health evaluator. The reproduced health fingerprint must match the supplied healthy Step 10 health artifact.
 
 This protects the expansion decision from a detached or cherry-picked health summary.
+
+## No-hindsight confirmation boundary
+
+A self-consistent fingerprint is not sufficient evidence by itself. Step 11 re-checks temporal causality at its own boundary:
+
+- `routed_at` must be strictly before `kickoff_at`;
+- `settled_at` must be strictly after `kickoff_at`;
+- evidence cannot be evaluated before its settlement timestamp.
+
+This defense-in-depth rule prevents a forged or reconstructed downstream artifact from bypassing the original pre-match decision boundary.
 
 ## Two-cohort robustness requirement
 
