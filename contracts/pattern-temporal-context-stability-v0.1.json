@@ -1,0 +1,105 @@
+{
+  "contract_id": "PATTERN_TEMPORAL_CONTEXT_STABILITY_V0_1",
+  "version": "v0.1",
+  "status": "STEP_7_IMPLEMENTED",
+  "purpose": "Assess whether a Step 6 OOS-confirmed behavioral pattern is stable across deterministic time windows and frozen context slices before it can be considered validated pattern evidence. Step 7 spends no new alpha and assigns no predictive weight.",
+  "scope": "GLOBAL_FOOTBALL_LEAGUE_AGNOSTIC",
+  "depends_on": {
+    "behavioral_state_features": "BEHAVIORAL_STATE_FEATURES_V0_1",
+    "pattern_discovery_candidates": "PATTERN_DISCOVERY_CANDIDATES_V0_1",
+    "pattern_candidate_confirmatory_freeze": "PATTERN_CANDIDATE_CONFIRMATORY_FREEZE_V0_1",
+    "pattern_confirmatory_oos": "PATTERN_CONFIRMATORY_OUT_OF_SAMPLE_EVALUATION_V0_1"
+  },
+  "evidence_lock": {
+    "exact_step6_corpus_fingerprint_required": true,
+    "post_step6_corpus_substitution_allowed": false,
+    "step6_candidate_result_fingerprint_required": true,
+    "step6_subject_observation_fingerprint_set_must_match": true,
+    "step6_reference_observation_fingerprint_set_must_match": true,
+    "new_significance_test_run": false,
+    "additional_alpha_spent": false
+  },
+  "temporal_stability": {
+    "method": "THREE_DETERMINISTIC_CHRONOLOGICAL_SUBJECT_CLUSTER_WINDOWS",
+    "window_count": 3,
+    "window_labels": ["EARLY", "MIDDLE", "LATE"],
+    "minimum_subject_opportunity_n_per_window": 10,
+    "minimum_reference_opportunity_n_per_window": 10,
+    "minimum_subject_match_cluster_n_per_window": 10,
+    "minimum_reference_match_cluster_n_per_window": 10,
+    "frozen_direction_required_in_every_ready_window": true,
+    "minimum_oriented_effect_each_window": 0.05,
+    "minimum_median_oriented_effect": 0.10,
+    "maximum_oriented_effect_range": 0.20,
+    "p_value_retesting_per_window_forbidden": true
+  },
+  "venue_context_stability": {
+    "all_context_candidate_requires_home_and_away_slices": true,
+    "minimum_subject_opportunity_n_per_venue_slice": 10,
+    "minimum_reference_opportunity_n_per_venue_slice": 10,
+    "minimum_subject_match_cluster_n_per_venue_slice": 10,
+    "minimum_reference_match_cluster_n_per_venue_slice": 10,
+    "minimum_oriented_effect_each_tested_venue_slice": 0.05,
+    "single_venue_frozen_candidate_may_validate_within_frozen_scope": true,
+    "single_venue_candidate_cross_venue_generalization_claim_allowed": false
+  },
+  "opponent_diversity": {
+    "minimum_unique_opponents": 10,
+    "maximum_single_opponent_share_of_subject_opportunity_clusters": 0.20,
+    "opponent_cluster_hhi_reported": true,
+    "opponent_diversity_is_blocking_stability_gate": true
+  },
+  "season_context": {
+    "minimum_subject_and_reference_clusters_per_testable_season": 5,
+    "cross_season_generalization_requires_at_least_two_testable_seasons": true,
+    "direction_consistency_required_if_cross_season_testable": true,
+    "single_season_pattern_may_validate_with_scope_limitation": true,
+    "single_season_cross_season_generalization_claim_allowed": false
+  },
+  "lifecycle": {
+    "step6_oos_fail_is_retained_and_not_reopened": true,
+    "step6_oos_waiting_is_not_stability_tested": true,
+    "step6_oos_pass_required_for_stability_assessment": true,
+    "stable_result_state": "VALIDATED_PATTERN_EVIDENCE_ZERO_WEIGHT",
+    "insufficient_coverage_state": "INSUFFICIENT_STABILITY_COVERAGE_RETAIN_OOS_PASS",
+    "temporal_failure_state": "REJECTED_TEMPORAL_STABILITY",
+    "venue_failure_state": "REJECTED_VENUE_CONTEXT_STABILITY",
+    "opponent_diversity_failure_state": "REJECTED_OPPONENT_DIVERSITY_STABILITY",
+    "cross_season_failure_state": "REJECTED_CROSS_SEASON_DIRECTION_STABILITY",
+    "failed_or_insufficient_evidence_retained": true
+  },
+  "decision_boundary": {
+    "pattern_validated_evidence_may_be_true_after_real_step6_pass_and_step7_stability_pass": true,
+    "decision_weight": 0,
+    "prediction_probability_mutation_allowed": false,
+    "model_lambda_mutation_allowed": false,
+    "automatic_pattern_promotion": false,
+    "automatic_model_retuning": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "real_evidence_boundary": {
+    "real_canonical_step6_pass_required_for_real_pattern_validation": true,
+    "synthetic_unit_test_rows_may_count_as_real_validation": false,
+    "step7_implementation_itself_claims_a_real_validated_pattern": false,
+    "current_real_status_until_real_step6_pass_exists": "NOT_RUN_WAITING_FOR_REAL_STEP6_OOS_PASS"
+  },
+  "integrity": {
+    "per_pattern_stability_result_fingerprint_required": true,
+    "family_stability_fingerprint_required": true,
+    "tamper_detection_required": true
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "market_data_used_as_behavioral_truth": false,
+    "bookmaker_data_used_as_behavioral_truth": false,
+    "new_alpha_spent": false,
+    "predictive_weight_assigned": false,
+    "automatic_pattern_promotion": false,
+    "automatic_model_retuning": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage": "STEP_8_PATTERN_PROMOTION_GOVERNANCE_AND_SHADOW_INTEGRATION"
+}
