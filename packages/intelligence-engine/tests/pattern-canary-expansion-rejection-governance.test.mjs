@@ -135,6 +135,22 @@ test('confirmation decisions routed before checkpoint freeze are rejected',()=>{
   assert.throws(()=>evaluatePatternCanaryExpansionEvidence({checkpoint,authorization:auth,checkpointSettlements:initial,confirmationDecisions:c.decisions,confirmationSettlements:c.settlements,evaluatedAt:'2026-03-10T00:00:00.000Z'}),/STEP11_CONFIRMATION_DECISION_MUST_FOLLOW_CHECKPOINT_FREEZE/);
 });
 
+test('post-kickoff confirmation routing is rejected even with a valid self-fingerprint',()=>{
+  const {auth,initial,checkpoint}=setupCheckpoint(); const c=confirmation(auth,30);
+  const {canary_decision_fingerprint,...raw}=c.decisions[0];
+  raw.routed_at=raw.kickoff_at;
+  const forged={...raw,canary_decision_fingerprint:sha256(raw)};
+  assert.throws(()=>evaluatePatternCanaryExpansionEvidence({checkpoint,authorization:auth,checkpointSettlements:initial,confirmationDecisions:[forged,...c.decisions.slice(1)],confirmationSettlements:c.settlements,evaluatedAt:'2026-03-10T00:00:00.000Z'}),/STEP11_POST_KICKOFF_CONFIRMATION_ROUTING_FORBIDDEN/);
+});
+
+test('confirmation settlement must follow kickoff even with a valid self-fingerprint',()=>{
+  const {auth,initial,checkpoint}=setupCheckpoint(); const c=confirmation(auth,30);
+  const {canary_settlement_fingerprint,...raw}=c.settlements[0];
+  raw.settled_at=c.decisions[0].kickoff_at;
+  const forged={...raw,canary_settlement_fingerprint:sha256(raw)};
+  assert.throws(()=>evaluatePatternCanaryExpansionEvidence({checkpoint,authorization:auth,checkpointSettlements:initial,confirmationDecisions:c.decisions,confirmationSettlements:[forged,...c.settlements.slice(1)],evaluatedAt:'2026-03-10T00:00:00.000Z'}),/STEP11_CONFIRMATION_SETTLEMENT_MUST_FOLLOW_KICKOFF/);
+});
+
 test('degraded second cohort requires rejection/rollback instead of expansion',()=>{
   const {auth,initial,checkpoint}=setupCheckpoint(); const c=confirmation(auth,30,{healthy:false});
   const e=evaluatePatternCanaryExpansionEvidence({checkpoint,authorization:auth,checkpointSettlements:initial,confirmationDecisions:c.decisions,confirmationSettlements:c.settlements,evaluatedAt:'2026-03-10T00:00:00.000Z'});
