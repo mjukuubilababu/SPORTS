@@ -1,0 +1,66 @@
+{
+  "contract_id": "PATTERN_SHADOW_FORWARD_MONITORING_PROMOTION_APPROVAL_V0_1",
+  "status": "STEP_9_IMPLEMENTED",
+  "purpose": "Require a new, post-Step-8 forward shadow cohort and explicit human governance approval before any validated pattern can advance from shadow-only evidence toward controlled canary activation.",
+  "inputs": {
+    "required_step8_state": "ELIGIBLE_FOR_MANUAL_GOVERNANCE_REVIEW_ZERO_WEIGHT",
+    "exact_step8_evaluation_fingerprint_required": true,
+    "exact_step8_settlement_cohort_frozen": true
+  },
+  "forward_monitoring": {
+    "step8_rows_may_be_reused": false,
+    "forward_shadow_prediction_must_be_generated_after_dossier_freeze": true,
+    "post_kickoff_prediction_or_activation_allowed": false,
+    "minimum_new_forward_settled_n": 30,
+    "minimum_new_forward_settled_n_basis": "P002_INDEPENDENT_VALIDATION_MIN_N",
+    "required_metrics": ["BRIER", "LOG_LOSS", "ECE", "VERIFIED_MARKET_CLV"],
+    "shadow_must_beat_champion_brier_overall": true,
+    "shadow_must_beat_champion_log_loss_overall": true,
+    "maximum_ece_degradation": 0.01,
+    "verified_market_benchmark_complete": true,
+    "verified_market_clv_must_be_positive": true,
+    "chronological_half_non_degradation_required": true,
+    "additional_alpha_spent": false
+  },
+  "approval": {
+    "automatic_approval": false,
+    "explicit_approver_required": true,
+    "explicit_rationale_required": true,
+    "allowed_decisions": ["APPROVE_CONTROLLED_CANARY", "REJECT_OR_CONTINUE_SHADOW"],
+    "approval_is_not_activation": true,
+    "approved_state": "CONTROLLED_CANARY_APPROVED_NOT_ACTIVATED_ZERO_WEIGHT",
+    "step9_decision_weight": 0,
+    "production_mutation_allowed": false
+  },
+  "rollback_policy_for_next_stage": {
+    "pre_registered": true,
+    "rollback_to_champion_on_provenance_or_fingerprint_failure": true,
+    "rollback_to_champion_on_post_kickoff_leakage": true,
+    "rollback_to_champion_on_brier_degradation": true,
+    "rollback_to_champion_on_log_loss_degradation": true,
+    "rollback_to_champion_on_ece_degradation_above": 0.01,
+    "rollback_to_champion_on_calibration_or_pattern_lineage_drift": true
+  },
+  "ownership": {
+    "step8_shadow_integration": "packages/intelligence-engine/src/pattern-promotion-shadow-integration.mjs",
+    "champion_challenger": "packages/intelligence-engine/src/champion-challenger.mjs",
+    "governed_learning_loop": "packages/intelligence-engine/src/governed-learning-loop.mjs",
+    "existing_owners_replaced": false
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_forward_evidence": false,
+    "real_step8_eligible_evaluation_required": true,
+    "real_post_freeze_forward_shadow_rows_required": true,
+    "real_human_approval_required_before_next_stage": true,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_STEP8_ELIGIBILITY_AND_NEW_FORWARD_SHADOW_EVIDENCE"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "automatic_retuning": false,
+    "automatic_pattern_promotion": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage": "STEP_10_CONTROLLED_PATTERN_CANARY_ACTIVATION_AND_ROLLBACK_ENFORCEMENT"
+}
