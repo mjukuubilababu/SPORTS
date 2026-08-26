@@ -153,6 +153,13 @@ test('Step 14 rejects Step 13 HOLD or non-graduation decision lineage', () => {
     state: 'STAGED_CANARY_HELD_AT_STEP12_AWAITING_NEW_EVIDENCE',
     decision: 'HOLD_STAGED_CANARY',
     candidate: null,
+    enforcement: {
+      step12_staged_canary_may_continue: true,
+      routing_fraction_may_increase_here: false,
+      probability_influence_may_increase_here: false,
+      retirement_routing_fraction: null,
+      retirement_probability_influence: null
+    },
     next_stage: 'CONTINUE_STEP12_STAGED_CANARY_MONITORING_AND_REQUIRE_NEW_PRE_HEALTH_MANIFEST_AND_DOSSIER_FOR_LATER_DECISION'
   });
   assert.throws(() => createZeroWeightChallengerProductionSafetyReview({
