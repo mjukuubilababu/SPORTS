@@ -1,0 +1,65 @@
+{
+  "contract_id": "PATTERN_PROMOTION_GOVERNANCE_SHADOW_INTEGRATION_V0_1",
+  "status": "STEP_8_IMPLEMENTED",
+  "purpose": "Integrate Step 7 validated behavioral-pattern evidence with the existing champion/challenger and governed-learning framework in shadow mode without changing the authoritative prediction path.",
+  "inputs": {
+    "required_step7_state": "VALIDATED_PATTERN_EVIDENCE_ZERO_WEIGHT",
+    "pattern_to_prediction_calibration": {
+      "required": true,
+      "verified": true,
+      "independent": true,
+      "minimum_sample_n": 30,
+      "bookmaker_odds_allowed_as_calibration_input": false,
+      "maximum_absolute_logit_shift": 0.35,
+      "maximum_absolute_probability_shift": 0.10
+    }
+  },
+  "shadow_boundary": {
+    "mode": "SHADOW_ONLY",
+    "champion_path_remains_authoritative": true,
+    "baseline_prediction_mutation_allowed": false,
+    "shadow_prediction_may_reach_decision_path": false,
+    "prediction_and_activation_must_be_pre_kickoff": true,
+    "settlement_must_be_post_kickoff": true,
+    "market_benchmark_may_be_used_for_governance_comparison": true,
+    "market_benchmark_may_be_used_as_prediction_input": false
+  },
+  "promotion_evidence": {
+    "minimum_settled_shadow_n": 100,
+    "required_metrics": ["BRIER", "LOG_LOSS", "ECE"],
+    "shadow_must_beat_champion_brier": true,
+    "shadow_must_beat_champion_log_loss": true,
+    "maximum_ece_degradation": 0.01,
+    "existing_champion_challenger_gate_reused": true,
+    "existing_governed_learning_loop_reused": true,
+    "manual_governance_review_required": true
+  },
+  "ownership": {
+    "champion_challenger": "packages/intelligence-engine/src/champion-challenger.mjs",
+    "governed_learning_loop": "packages/intelligence-engine/src/governed-learning-loop.mjs",
+    "calibrated_team_intelligence": "packages/intelligence-engine/src/calibrated-intelligence-adjustment.mjs",
+    "existing_owners_replaced": false
+  },
+  "decision_boundary": {
+    "step8_decision_weight": 0,
+    "automatic_pattern_promotion": false,
+    "automatic_retuning": false,
+    "production_mutation_allowed": false,
+    "eligible_for_manual_review_is_not_promotion": true
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_shadow_evidence": false,
+    "real_step7_validated_pattern_required": true,
+    "real_verified_pattern_calibration_required": true,
+    "real_settled_shadow_rows_required": true,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_STEP7_VALIDATION_CALIBRATION_AND_SHADOW_EVIDENCE"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "model_or_lambda_automatically_rewritten": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage": "STEP_9_PATTERN_SHADOW_FORWARD_MONITORING_AND_PROMOTION_APPROVAL"
+}
