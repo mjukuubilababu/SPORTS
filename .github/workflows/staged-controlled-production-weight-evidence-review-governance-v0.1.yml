@@ -1,0 +1,234 @@
+name: Staged Controlled Production Weight Evidence Review Governance v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+  push:
+    branches:
+      - feature/staged-controlled-production-weight-evidence-review-governance-v0.1
+      - import/decision-intelligence-v0.5-qualified-set
+
+permissions:
+  contents: read
+
+jobs:
+  validate-staged-controlled-production-weight-evidence-review-governance:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Resolve canonical comparison range
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          elif [[ "${GITHUB_REF_NAME}" == "feature/staged-controlled-production-weight-evidence-review-governance-v0.1" ]]; then
+            git fetch --no-tags origin import/decision-intelligence-v0.5-qualified-set:refs/remotes/origin/import/decision-intelligence-v0.5-qualified-set
+            BASE="$(git merge-base HEAD origin/import/decision-intelligence-v0.5-qualified-set)"
+            HEAD="${GITHUB_SHA}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${GITHUB_SHA}"
+          fi
+          git cat-file -e "$BASE^{commit}"
+          git cat-file -e "$HEAD^{commit}"
+          echo "STEP18_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "STEP18_HEAD=$HEAD" >> "$GITHUB_ENV"
+          echo "STEP18_COMPARISON_BASE=$BASE"
+          echo "STEP18_COMPARISON_HEAD=$HEAD"
+
+      - name: Enforce Step 18 introduction scope or protect Step 18 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$STEP18_BASE"
+          HEAD="$STEP18_HEAD"
+          mapfile -t rows < <(git diff --name-status "$BASE" "$HEAD")
+          owned=(
+            "contracts/staged-controlled-production-weight-evidence-review-governance-v0.1.json"
+            "packages/intelligence-engine/src/staged-controlled-production-weight-evidence-review-governance.mjs"
+            "packages/intelligence-engine/tests/staged-controlled-production-weight-evidence-review-governance.test.mjs"
+            "packages/intelligence-engine/docs/STAGED_CONTROLLED_PRODUCTION_WEIGHT_EVIDENCE_REVIEW_GOVERNANCE_V0_1.md"
+            ".github/workflows/staged-controlled-production-weight-evidence-review-governance-v0.1.yml"
+          )
+          if ! git cat-file -e "$BASE:contracts/staged-controlled-production-weight-evidence-review-governance-v0.1.json" 2>/dev/null; then
+            declare -A seen=()
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"; matched=false
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  [[ "$status" == "A" ]] || { echo "STEP18_INTRODUCTION_FILE_MUST_BE_ADDED: $row"; exit 1; }
+                  seen["$path"]=1; matched=true; break
+                fi
+              done
+              [[ "$matched" == true ]] || { echo "STEP18_UNEXPECTED_INTRODUCTION_CHANGE: $row"; exit 1; }
+            done
+            [[ "${#rows[@]}" -eq 5 ]] || { echo "STEP18_EXPECTED_EXACTLY_5_ADDITIONS"; exit 1; }
+            [[ "${#seen[@]}" -eq 5 ]] || { echo "STEP18_INTRODUCTION_FILE_SET_INCOMPLETE"; exit 1; }
+          else
+            for row in "${rows[@]}"; do
+              status="${row%%$'\t'*}"; path="${row#*$'\t'}"
+              for item in "${owned[@]}"; do
+                if [[ "$path" == "$item" ]]; then
+                  case "$status" in D|R*) echo "STEP18_OWNED_ARTIFACT_DELETION_OR_RENAME_FORBIDDEN: $row"; exit 1 ;; esac
+                fi
+              done
+            done
+          fi
+          echo "STEP18_SCOPE_GUARD=PASS"
+
+      - name: Validate Step 17-18 contracts, P002 and Gate6 ownership
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s17=json.loads(Path('contracts/staged-controlled-production-weight-activation-monitoring-v0.1.json').read_text())
+          s18=json.loads(Path('contracts/staged-controlled-production-weight-evidence-review-governance-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          g6=json.loads(Path('packages/gate6/gate6_manifest.json').read_text())
+          assert s17['status']=='STEP_17_IMPLEMENTED'
+          assert s17['next_stage_on_healthy_evidence']=='STEP_18_STAGED_CONTROLLED_PRODUCTION_WEIGHT_EVIDENCE_REVIEW_AND_GOVERNANCE'
+          assert s18['contract_id']=='STAGED_CONTROLLED_PRODUCTION_WEIGHT_EVIDENCE_REVIEW_GOVERNANCE_V0_1'
+          assert s18['status']=='STEP_18_IMPLEMENTED'
+          assert s18['inputs']['required_step17_health_state']=='STAGED_CONTROLLED_WEIGHT_HEALTHY_CONTINUE_CAPITAL_LOCKED'
+          assert s18['inputs']['pre_health_step17_staged_evidence_cohort_manifest_required'] is True
+          assert s18['inputs']['step17_health_must_be_reproduced_from_manifest_bound_cohort'] is True
+          assert s18['evidence_binding']['minimum_settled_n']==30
+          assert s18['evidence_binding']['same_metric_cohort_substitution_allowed'] is False
+          assert s18['evidence_binding']['historical_unbound_step17_health_eligible_for_governance'] is False
+          assert s18['weight_governance_boundary']['absolute_maximum_staged_decision_weight']==0.10
+          assert s18['weight_governance_boundary']['maximum_weight_multiplier_per_governed_stage']==2
+          assert s18['weight_governance_boundary']['maximum_absolute_probability_shift']==0.02
+          assert s18['weight_governance_boundary']['probability_shift_cap_increased'] is False
+          assert s18['weight_governance_boundary']['weight_change_applied_in_step18'] is False
+          assert s18['weight_governance_boundary']['authorization_above_0_10_allowed'] is False
+          assert s18['authorization_boundary']['authorization_is_weight_activation'] is False
+          assert s18['authorization_boundary']['authorization_at_absolute_maximum_weight_allowed'] is False
+          assert s18['retirement_boundary']['rollback_target']=='CHAMPION_ONLY'
+          assert s18['retirement_boundary']['production_decision_weight_after_retirement']==0
+          assert s18['retirement_boundary']['probability_influence_after_retirement']==0
+          assert s18['governance']['p002_changed'] is False
+          assert s18['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert s18['governance']['gate6_capital_lock_preserved'] is True
+          assert s18['governance']['real_money']=='NO'
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          assert p002['independent_validation_min_n']==30
+          assert g6['gate']=='Gate 6 — Capital & Risk Engine'
+          assert 'LOCKED' in g6['capital_modes']
+          print('STEP17_TO_STEP18_CONTRACT_CHAIN=PASS')
+          print('STEP18_PRE_HEALTH_COHORT_MANIFEST_REQUIRED=PASS')
+          print('STEP18_EXACT_HEALTH_REPRODUCTION_REQUIRED=PASS')
+          print('STEP18_MAX_STAGED_WEIGHT_10_PERCENT=PASS')
+          print('STEP18_PROBABILITY_SHIFT_CAP_2PP=PASS')
+          print('STEP18_NO_AUTOMATIC_WEIGHT_CHANGE=PASS')
+          print('STEP18_CAPITAL_EXECUTION_LOCKED=PASS')
+          print('GATE6_CAPITAL_OWNER_PRESERVED=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run Step 10 regression
+        run: node --test packages/intelligence-engine/tests/controlled-pattern-canary-activation-rollback.test.mjs
+      - name: Run Step 11 regression
+        run: node --test packages/intelligence-engine/tests/pattern-canary-expansion-rejection-governance.test.mjs
+      - name: Run Step 12 regression
+        run: node --test packages/intelligence-engine/tests/staged-pattern-canary-expansion-activation-monitoring.test.mjs
+      - name: Run Step 13 regression
+        run: node --test packages/intelligence-engine/tests/pattern-canary-graduation-retirement-governance.test.mjs
+      - name: Run Step 14 regression
+        run: node --test packages/intelligence-engine/tests/zero-weight-challenger-promotion-authorization-production-safety-review.test.mjs
+      - name: Run Step 15 regression
+        run: node --test packages/intelligence-engine/tests/controlled-production-activation-emergency-rollback.test.mjs
+      - name: Run Step 16 regression
+        run: node --test packages/intelligence-engine/tests/controlled-production-evidence-review-weight-governance.test.mjs
+      - name: Run Step 17 regression
+        run: node --test packages/intelligence-engine/tests/staged-controlled-production-weight-activation-monitoring.test.mjs
+      - name: Run Step 18 tests
+        run: node --test packages/intelligence-engine/tests/staged-controlled-production-weight-evidence-review-governance.test.mjs
+
+      - name: Compare full intelligence-engine regression against canonical base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$STEP18_BASE"
+          HEAD="$STEP18_HEAD"
+          mkdir -p artifacts/staged-controlled-production-weight-evidence-review-governance-v0.1
+          rm -rf /tmp/step18-base /tmp/step18-head
+          git worktree add --detach /tmp/step18-base "$BASE"
+          git worktree add --detach /tmp/step18-head "$HEAD"
+          set +e
+          (cd /tmp/step18-base/packages/intelligence-engine && npm test) > /tmp/step18-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/step18-head/packages/intelligence-engine && npm test) > /tmp/step18-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s\n' "$BASE_RC" > /tmp/step18-base.rc
+          printf '%s\n' "$HEAD_RC" > /tmp/step18-head.rc
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
+          glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          def failures(path):
+            out=[]
+            for line in Path(path).read_text(errors='replace').splitlines():
+              t=line.strip(); m=tap.match(t) or glyph.match(t)
+              if m: out.append(m.group(1).strip())
+            return sorted(set(out))
+          brc=int(Path('/tmp/step18-base.rc').read_text()); hrc=int(Path('/tmp/step18-head.rc').read_text())
+          base=failures('/tmp/step18-base.log'); head=failures('/tmp/step18-head.log')
+          if brc!=0 and not base: raise SystemExit('STEP18_UNPARSED_CANONICAL_BASE_TEST_FAILURE_DEBT')
+          if hrc!=0 and not head: raise SystemExit('STEP18_UNPARSED_HEAD_TEST_FAILURE_DEBT')
+          if brc!=hrc: raise SystemExit('STEP18_NPM_TEST_EXIT_CODE_CHANGED')
+          if base!=head: raise SystemExit('STEP18_REGRESSION_FAILURE_SET_CHANGED')
+          summary={'comparison':'CANONICAL_BASE_VS_STEP18_HEAD','node_version':'20','base_npm_test_rc':brc,'head_npm_test_rc':hrc,'base_failure_n':len(base),'head_failure_n':len(head),'base_failures':base,'head_failures':head,'new_failure_names':sorted(set(head)-set(base)),'removed_failure_names':sorted(set(base)-set(head)),'failure_name_delta_zero':base==head}
+          Path('artifacts/staged-controlled-production-weight-evidence-review-governance-v0.1/REGRESSION_BASELINE.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+          echo "STEP18_REGRESSION_DELTA=0"
+
+      - name: Write Step 18 evidence
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          root=Path('artifacts/staged-controlled-production-weight-evidence-review-governance-v0.1')
+          root.mkdir(parents=True,exist_ok=True)
+          regression=json.loads((root/'REGRESSION_BASELINE.json').read_text())
+          evidence={
+            'artifact':'Staged_Controlled_Production_Weight_Evidence_Review_Governance_v0.1',
+            'step':'STEP_18_STAGED_CONTROLLED_PRODUCTION_WEIGHT_EVIDENCE_REVIEW_AND_GOVERNANCE',
+            'overall':{'TEST_AUTHORED':True,'TEST_EXECUTED':True,'TEST_PASS':True,'STEP_18_IMPLEMENTATION_COMPLETE':True,'ADDED_FILES':5,'MODIFIED_EXISTING_FILES':0,'DELETED_EXISTING_FILES':0,'REGRESSION_DELTA_ZERO':regression['failure_name_delta_zero']},
+            'capabilities':{'PRE_HEALTH_STEP17_COHORT_MANIFEST_REQUIRED':True,'EXACT_STEP17_HEALTH_REPRODUCTION_REQUIRED':True,'MIN_SETTLED_N':30,'SAME_METRIC_COHORT_SUBSTITUTION_ALLOWED':False,'MAX_WEIGHT_MULTIPLIER_PER_GOVERNED_STAGE':2,'ABSOLUTE_MAX_STAGED_DECISION_WEIGHT':0.10,'MAX_ABSOLUTE_PROBABILITY_SHIFT':0.02,'AUTHORIZATION_AT_MAX_WEIGHT_ALLOWED':False,'AUTOMATIC_WEIGHT_INCREASE':False,'CAPITAL_EXECUTION_ALLOWED':False,'RETIREMENT_ROLLBACK_TARGET':'CHAMPION_ONLY','RETIREMENT_WEIGHT':0,'RETIREMENT_PROBABILITY_INFLUENCE':0},
+            'real_evidence_status':{'REAL_STEP18_REVIEW_EXECUTED_IN_CI':False,'SYNTHETIC_TEST_FIXTURES_ONLY':True,'SYNTHETIC_RESULTS_COUNT_AS_REAL_STEP18_EVIDENCE':False,'REAL_STEP18_AUTHORIZATION_CLAIMED':False,'CURRENT_REAL_STATUS':'NOT_RUN_WAITING_FOR_REAL_MANIFEST_BOUND_HEALTHY_STEP17_EVIDENCE'},
+            'regression_baseline':regression,
+            'governance':{'P002_UNCHANGED':True,'GATE1_TO_GATE6_OWNERSHIP_CHANGED':False,'GATE6_CAPITAL_OWNER_PRESERVED':True,'CHAMPION_REPLACEMENT_AUTHORIZED':False,'AUTOMATIC_PROMOTION':False,'AUTOMATIC_RETUNING':False,'CAPITAL_EFFECT':'NONE','REAL_MONEY':'NO'},
+            'hashes':{'contract_sha256':sha('contracts/staged-controlled-production-weight-evidence-review-governance-v0.1.json'),'runtime_sha256':sha('packages/intelligence-engine/src/staged-controlled-production-weight-evidence-review-governance.mjs'),'test_sha256':sha('packages/intelligence-engine/tests/staged-controlled-production-weight-evidence-review-governance.test.mjs'),'docs_sha256':sha('packages/intelligence-engine/docs/STAGED_CONTROLLED_PRODUCTION_WEIGHT_EVIDENCE_REVIEW_GOVERNANCE_V0_1.md'),'p002_sha256':sha('contracts/p002-frozen-rules.json'),'gate6_manifest_sha256':sha('packages/gate6/gate6_manifest.json')},
+            'next_stage_on_authorization':'STEP_19_NEXT_STAGED_CONTROLLED_PRODUCTION_WEIGHT_ACTIVATION_AND_MONITORING'
+          }
+          (root/'TEST_EVIDENCE.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print(json.dumps(evidence,indent=2))
+          PY
+
+      - name: Upload Step 18 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: staged-controlled-production-weight-evidence-review-governance-v0.1-evidence
+          path: artifacts/staged-controlled-production-weight-evidence-review-governance-v0.1
