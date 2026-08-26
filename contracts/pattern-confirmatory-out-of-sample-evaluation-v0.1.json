@@ -1,0 +1,105 @@
+{
+  "contract_id": "PATTERN_CONFIRMATORY_OUT_OF_SAMPLE_EVALUATION_V0_1",
+  "version": "v0.1",
+  "status": "STEP_6_IMPLEMENTED",
+  "purpose": "Evaluate the complete Step 5 frozen pattern family on disjoint post-freeze behavioral evidence with opportunity-specific N gates, match-cluster-aware inference, preregistered directional hypotheses, practical-effect replication, Holm-Bonferroni family-wise error control, and zero decision weight.",
+  "scope": "GLOBAL_FOOTBALL_LEAGUE_AGNOSTIC",
+  "depends_on": {
+    "behavioral_state_features": "BEHAVIORAL_STATE_FEATURES_V0_1",
+    "pattern_discovery_candidates": "PATTERN_DISCOVERY_CANDIDATES_V0_1",
+    "pattern_candidate_confirmatory_freeze": "PATTERN_CANDIDATE_CONFIRMATORY_FREEZE_V0_1"
+  },
+  "real_evidence_boundary": {
+    "real_canonical_frozen_candidate_batch_required_for_real_result": true,
+    "real_post_freeze_disjoint_behavioral_corpus_required_for_real_result": true,
+    "synthetic_unit_test_rows_may_count_as_real_confirmation": false,
+    "step6_implementation_itself_claims_a_real_confirmatory_pass": false,
+    "absence_of_real_frozen_batch_or_disjoint_evidence_state": "NOT_RUN_WAITING_FOR_REAL_EVIDENCE"
+  },
+  "sample_governance": {
+    "subject_match_n_min": 30,
+    "subject_metric_opportunity_n_min": 30,
+    "reference_metric_opportunity_n_min": 30,
+    "subject_independent_match_cluster_n_min": 30,
+    "reference_independent_match_cluster_n_min": 30,
+    "cluster_unit": "CANONICAL_MATCH_ID",
+    "cluster_minimum_is_additive_safety_gate_not_p002_weakening": true,
+    "all_frozen_hypotheses_must_be_ready_before_family_alpha_spend": true
+  },
+  "estimand_and_test": {
+    "primary_estimand": "PROPORTION_DIFFERENCE_SUBJECT_MINUS_DISJOINT_REFERENCE",
+    "direction": "FROZEN_PER_STEP5_CANDIDATE",
+    "raw_test_method": "ONE_SIDED_MATCH_CLUSTER_ROBUST_SCORE_CR1_NORMAL",
+    "null_variance": "POOLED_NULL_RATE_WITH_MATCH_CLUSTER_CR1_SANDWICH",
+    "effect_interval": "MATCH_CLUSTER_ROBUST_CR1_NORMAL_95",
+    "minimum_practical_effect_absolute": 0.10,
+    "minimum_practical_effect_percentage_points": 10,
+    "pass_requires_frozen_direction_replication": true,
+    "pass_requires_practical_effect_floor": true,
+    "pass_requires_holm_rejection": true
+  },
+  "multiple_testing": {
+    "family_definition": "ALL_STEP4_CANDIDATES_IN_FROZEN_STEP5_BATCH",
+    "familywise_alpha": 0.05,
+    "method": "HOLM_BONFERRONI",
+    "raw_p_value_order": "ASCENDING_WITH_PATTERN_ID_TIEBREAK",
+    "alpha_spent_only_when_entire_family_ready": true,
+    "retesting_different_corpus_after_alpha_spend_allowed": false,
+    "idempotent_reuse_of_same_tested_result_allowed": true
+  },
+  "evidence_handling": {
+    "pre_freeze_rows_may_remain_in_corpus_but_are_excluded": true,
+    "step4_discovery_and_reference_match_ids_may_remain_in_corpus_but_are_excluded": true,
+    "direct_subject_match_counterpart_may_enter_reference": false,
+    "same_league_required": true,
+    "same_venue_context_required": true,
+    "step3_descriptive_source_required": true,
+    "step3_predictive_weight_required": 0,
+    "market_or_bookmaker_data_used_as_behavioral_truth": false,
+    "excluded_rows_are_retained_for_audit": true
+  },
+  "result_states": [
+    "WAITING_FOR_CONFIRMATORY_MIN_N",
+    "OUT_OF_SAMPLE_CONFIRMED_PENDING_STABILITY",
+    "REJECTED_OOS_DIRECTION_NOT_REPLICATED",
+    "REJECTED_OOS_PRACTICAL_EFFECT_NOT_MET",
+    "REJECTED_OOS_HOLM_SIGNIFICANCE_NOT_MET"
+  ],
+  "failure_learning": {
+    "failed_candidate_deleted": false,
+    "failed_candidate_rewritten": false,
+    "failed_candidate_evidence_retained": true,
+    "failed_result_may_be_used_as_future_governed_learning_evidence": true,
+    "automatic_retuning_from_failure": false
+  },
+  "decision_boundary": {
+    "out_of_sample_confirmation_is_final_pattern_validation": false,
+    "pattern_validated_in_step6": false,
+    "decision_weight": 0,
+    "automatic_signal_injection": false,
+    "automatic_probability_or_lambda_mutation": false,
+    "automatic_pattern_promotion": false,
+    "next_required_stage_after_pass": "STEP_7_PATTERN_TEMPORAL_AND_CONTEXT_STABILITY"
+  },
+  "integrity": {
+    "source_step5_freeze_fingerprint_required": true,
+    "source_discovery_fingerprint_required": true,
+    "source_corpus_fingerprint_required": true,
+    "per_candidate_result_fingerprint_required": true,
+    "family_evaluation_fingerprint_required": true,
+    "tamper_detection_required": true
+  },
+  "governance": {
+    "p002_changed": false,
+    "p002_discovery_min_n": 30,
+    "p002_independent_validation_min_n": 30,
+    "gate1_to_gate6_ownership_changed": false,
+    "market_data_used": false,
+    "predictive_weight_assigned": false,
+    "automatic_model_retuning": false,
+    "automatic_pattern_promotion": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage": "STEP_7_PATTERN_TEMPORAL_AND_CONTEXT_STABILITY"
+}
