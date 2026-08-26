@@ -1,0 +1,98 @@
+{
+  "contract_id": "STAGED_CONTROLLED_PRODUCTION_WEIGHT_ACTIVATION_MONITORING_V0_1",
+  "status": "STEP_17_IMPLEMENTED",
+  "purpose": "Apply only an exact Step 16 manually authorized next production-weight stage, preserve the champion and Gate6 capital lock, exclude reviewed evidence from the new stage, monitor the incremental weight effect against both champion and the previous-weight counterfactual, and fail closed to champion-only on integrity or performance degradation.",
+  "inputs": {
+    "required_step16_decision": "AUTHORIZE_NEXT_CONTROLLED_WEIGHT_STAGE_NOT_APPLIED",
+    "required_step16_state": "NEXT_CONTROLLED_PRODUCTION_WEIGHT_STAGE_AUTHORIZED_NOT_APPLIED",
+    "required_step16_next_stage": "STEP_17_STAGED_CONTROLLED_PRODUCTION_WEIGHT_ACTIVATION_AND_MONITORING",
+    "exact_step16_evidence_review_required": true,
+    "exact_step16_weight_governance_decision_required": true,
+    "exact_step16_pre_health_manifest_required": true,
+    "exact_step15_base_activation_required": true,
+    "activation_must_follow_step16_decision": true
+  },
+  "activation_boundary": {
+    "target_weight_must_exceed_current_weight": true,
+    "target_weight_must_not_exceed_step16_authorized_ceiling": true,
+    "absolute_maximum_staged_decision_weight": 0.10,
+    "maximum_absolute_probability_shift": 0.02,
+    "probability_shift_cap_increased": false,
+    "champion_remains_primary_fallback": true,
+    "champion_replacement_authorized": false,
+    "capital_execution_authorized": false,
+    "automatic_weight_ramp": false,
+    "automatic_retuning": false,
+    "deployment_reference_required": true,
+    "kill_switch_reference_required": true
+  },
+  "new_evidence_firewall": {
+    "step16_reviewed_manifest_keys_may_reappear_in_step17_evidence": false,
+    "step16_reviewed_evidence_reuse_for_training": false,
+    "step16_reviewed_evidence_reuse_for_retuning": false,
+    "new_predictions_must_follow_step17_activation": true,
+    "new_predictions_must_precede_event_start": true,
+    "new_settlements_must_follow_event_start": true,
+    "additional_alpha_spent_in_step17": false
+  },
+  "prospective_monitoring": {
+    "minimum_new_staged_settled_n": 30,
+    "minimum_n_basis": "P002_INDEPENDENT_VALIDATION_MIN_N",
+    "staged_brier_non_degradation_vs_champion_required": true,
+    "staged_log_loss_non_degradation_vs_champion_required": true,
+    "maximum_staged_ece_degradation_vs_champion": 0.01,
+    "staged_brier_non_degradation_vs_previous_weight_required": true,
+    "staged_log_loss_non_degradation_vs_previous_weight_required": true,
+    "maximum_staged_ece_degradation_vs_previous_weight": 0.01,
+    "previous_weight_counterfactual_preserved_per_decision": true,
+    "automatic_next_weight_increase": false
+  },
+  "health_states": [
+    "STAGED_CONTROLLED_WEIGHT_HEALTH_ACCUMULATING_CAPITAL_LOCKED",
+    "STAGED_CONTROLLED_WEIGHT_HEALTHY_CONTINUE_CAPITAL_LOCKED",
+    "STAGED_CONTROLLED_WEIGHT_ROLLBACK_TO_CHAMPION_REQUIRED"
+  ],
+  "emergency_rollback": {
+    "rollback_target": "CHAMPION_ONLY",
+    "production_decision_weight_after_rollback": 0,
+    "probability_influence_after_rollback": 0,
+    "same_staged_activation_reactivation_allowed": false,
+    "performance_degradation_after_minimum_n_requires_rollback": true,
+    "immediate_signals": [
+      "PROVENANCE_OR_FINGERPRINT_FAILURE",
+      "POST_EVENT_START_LEAKAGE",
+      "CALIBRATION_OR_LINEAGE_DRIFT",
+      "OBSERVABILITY_OR_KILL_PATH_FAILURE",
+      "DEPLOYMENT_REVERSIBILITY_FAILURE",
+      "GATE6_CAPITAL_LOCK_VIOLATION",
+      "STEP16_AUTHORIZATION_OR_REVIEW_DRIFT",
+      "STAGED_WEIGHT_BOUNDARY_VIOLATION",
+      "MANUAL_KILL_SWITCH"
+    ]
+  },
+  "ownership": {
+    "step15_base_activation_owner": "packages/intelligence-engine/src/controlled-production-activation-emergency-rollback.mjs",
+    "step16_weight_governance_owner": "packages/intelligence-engine/src/controlled-production-evidence-review-weight-governance.mjs",
+    "step17_staged_weight_activation_monitoring_owner": "packages/intelligence-engine/src/staged-controlled-production-weight-activation-monitoring.mjs",
+    "gate6_capital_and_risk_owner": "packages/gate6",
+    "existing_owners_replaced": false
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_step17_evidence": false,
+    "real_step16_authorization_required": true,
+    "real_new_step17_prospective_evidence_required": true,
+    "real_step17_activation_claimed_by_implementation": false,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_STEP16_AUTHORIZATION_AND_NEW_STAGED_WEIGHT_EVIDENCE"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "gate6_capital_lock_preserved": true,
+    "champion_replacement_authorized": false,
+    "automatic_promotion": false,
+    "automatic_retuning": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage_on_healthy_evidence": "STEP_18_STAGED_CONTROLLED_PRODUCTION_WEIGHT_EVIDENCE_REVIEW_AND_GOVERNANCE"
+}
