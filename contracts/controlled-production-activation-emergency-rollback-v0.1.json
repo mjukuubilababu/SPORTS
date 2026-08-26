@@ -1,0 +1,103 @@
+{
+  "contract_id": "CONTROLLED_PRODUCTION_ACTIVATION_EMERGENCY_ROLLBACK_V0_1",
+  "status": "STEP_15_IMPLEMENTED",
+  "purpose": "Activate a Step 14 approved challenger with tightly bounded production prediction influence, keep capital execution locked, collect new prospective evidence, and fail closed to champion-only output on emergency rollback signals.",
+  "inputs": {
+    "required_step14_decision": "APPROVE_FOR_CONTROLLED_PRODUCTION_ACTIVATION_NOT_ACTIVATED",
+    "required_step14_state": "ZERO_WEIGHT_CHALLENGER_APPROVED_FOR_CONTROLLED_PRODUCTION_ACTIVATION_NOT_ACTIVATED",
+    "exact_step14_safety_review_required": true,
+    "exact_step14_authorization_required": true,
+    "all_step14_safety_controls_must_pass": true,
+    "step14_candidate_weight_must_equal_zero": true,
+    "activation_must_follow_step14_authorization": true
+  },
+  "activation_boundary": {
+    "maximum_initial_production_decision_weight": 0.05,
+    "minimum_production_decision_weight_exclusive": 0,
+    "maximum_absolute_probability_shift": 0.02,
+    "probability_shift_cap_increased_from_canary": false,
+    "champion_remains_primary_fallback": true,
+    "champion_replacement_authorized": false,
+    "capital_execution_authorized": false,
+    "automatic_weight_ramp": false,
+    "automatic_retuning": false,
+    "same_authorization_multi_activation_allowed": false,
+    "kill_switch_must_be_armed_before_activation": true,
+    "deployment_reference_required": true,
+    "kill_switch_reference_required": true
+  },
+  "prediction_boundary": {
+    "production_prediction_mutation_allowed": true,
+    "mutation_is_weighted_blend_only": true,
+    "generated_before_event_start_required": true,
+    "generated_after_activation_required": true,
+    "post_event_start_prediction_mutation_allowed": false,
+    "capital_execution_allowed": false,
+    "real_money": "NO"
+  },
+  "prospective_health": {
+    "minimum_settled_n": 30,
+    "minimum_n_basis": "P002_INDEPENDENT_VALIDATION_MIN_N",
+    "brier_non_degradation_required": true,
+    "log_loss_non_degradation_required": true,
+    "maximum_ece_degradation": 0.01,
+    "settlement_must_follow_event_start": true,
+    "new_prospective_evidence_required": true,
+    "graduation_evidence_reuse_as_new_production_proof": false,
+    "additional_alpha_spent_in_step15": false
+  },
+  "emergency_rollback": {
+    "kill_switch_armed_at_activation": true,
+    "rollback_target": "CHAMPION_ONLY",
+    "production_decision_weight_after_rollback": 0,
+    "probability_influence_after_rollback": 0,
+    "same_activation_reactivation_allowed": false,
+    "new_governed_authorization_required_for_future_attempt": true,
+    "immediate_signals": [
+      "PROVENANCE_OR_FINGERPRINT_FAILURE",
+      "POST_EVENT_START_LEAKAGE",
+      "CALIBRATION_OR_LINEAGE_DRIFT",
+      "OBSERVABILITY_OR_KILL_PATH_FAILURE",
+      "DEPLOYMENT_REVERSIBILITY_FAILURE",
+      "GATE6_CAPITAL_LOCK_VIOLATION",
+      "MANUAL_KILL_SWITCH"
+    ],
+    "performance_degradation_after_minimum_n_requires_rollback": true
+  },
+  "health_states": [
+    "CONTROLLED_PRODUCTION_HEALTH_ACCUMULATING_CAPITAL_LOCKED",
+    "CONTROLLED_PRODUCTION_HEALTHY_CONTINUE_BOUNDED_CAPITAL_LOCKED",
+    "CONTROLLED_PRODUCTION_ROLLBACK_TO_CHAMPION_REQUIRED"
+  ],
+  "ownership": {
+    "step14_safety_owner": "packages/intelligence-engine/src/zero-weight-challenger-promotion-authorization-production-safety-review.mjs",
+    "step15_activation_and_rollback_owner": "packages/intelligence-engine/src/controlled-production-activation-emergency-rollback.mjs",
+    "gate6_capital_and_risk_owner": "packages/gate6",
+    "existing_owners_replaced": false
+  },
+  "evaluation_firewall": {
+    "step12_step13_graduation_evidence_may_be_reused_for_training": false,
+    "step12_step13_graduation_evidence_may_be_reused_for_retuning": false,
+    "step12_step13_graduation_evidence_counts_as_new_step15_prospective_evidence": false,
+    "step15_settlements_are_new_prospective_evidence": true,
+    "automatic_weight_increase_from_step15_health": false
+  },
+  "real_evidence_boundary": {
+    "synthetic_unit_test_rows_may_count_as_real_step15_evidence": false,
+    "real_step14_approval_required": true,
+    "real_prospective_step15_settlements_required": true,
+    "real_step15_activation_claimed_by_implementation": false,
+    "current_real_status": "NOT_RUN_WAITING_FOR_REAL_STEP14_APPROVAL_AND_PROSPECTIVE_CONTROLLED_PRODUCTION_EVIDENCE"
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "gate6_capital_lock_preserved": true,
+    "champion_replacement_authorized": false,
+    "automatic_promotion": false,
+    "automatic_retuning": false,
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "next_stage_on_healthy_evidence": "STEP_16_CONTROLLED_PRODUCTION_EVIDENCE_REVIEW_AND_WEIGHT_GOVERNANCE"
+}
