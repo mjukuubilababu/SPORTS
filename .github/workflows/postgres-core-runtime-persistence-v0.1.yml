@@ -1,0 +1,144 @@
+name: PostgreSQL Core Runtime Persistence v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/prediction-api/**'
+      - 'packages/infrastructure/**/migrations/*.sql'
+      - 'scripts/verify_postgres_migrations.py'
+      - 'scripts/verify_unified.py'
+      - 'contracts/postgres-core-runtime-persistence-v0.1.json'
+      - 'docs/postgres-core-runtime-persistence-v0.1.md'
+      - 'manifests/postgres-core-runtime-persistence-v0.1.json'
+      - '.github/workflows/postgres-core-runtime-persistence-v0.1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-core-persistence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: decision_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d decision_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/decision_test
+      PREDICTION_PERSISTENCE_MODE: postgres
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Confirm PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+          pg_isready -h localhost -p 5432 -U postgres -d decision_test
+
+      - name: Apply prediction persistence migration
+        run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/prediction-api/migrations/0015_prediction_snapshots_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('prediction_snapshots_v01')::text")" = "prediction_snapshots_v01"
+
+      - name: Install Prediction API dependencies
+        working-directory: packages/prediction-api
+        run: npm install --no-audit --no-fund
+
+      - name: Run Prediction API tests against real PostgreSQL
+        working-directory: packages/prediction-api
+        run: npm run verify
+
+      - name: Verify persisted rows and immutable trigger
+        run: |
+          row_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM prediction_snapshots_v01")"
+          test "$row_count" -ge 2
+          set +e
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE prediction_snapshots_v01 SET market=market WHERE snapshot_id=(SELECT snapshot_id FROM prediction_snapshots_v01 LIMIT 1)"
+          mutation_status=$?
+          set -e
+          if [ "$mutation_status" -eq 0 ]; then
+            echo "immutable prediction snapshot mutation unexpectedly succeeded"
+            exit 1
+          fi
+          echo "immutable trigger rejected UPDATE as required"
+
+      - name: Re-run existing PostgreSQL migration assurance
+        run: python scripts/verify_postgres_migrations.py
+
+      - name: Run intelligence engine regression
+        working-directory: packages/intelligence-engine
+        run: |
+          node --test tests/model-probability-orchestrator.test.mjs
+          node --test tests/outcome-1x2.test.mjs
+
+      - name: Run unified repository verifier
+        run: python scripts/verify_unified.py
+
+      - name: Write persistence verification evidence
+        run: |
+          mkdir -p artifacts/postgres-core-persistence
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          existing=json.loads(Path('artifacts/migrations/postgres-migration-verification.json').read_text())
+          unified=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          report={
+            'version':'v0.1',
+            'decision':'PASS',
+            'database':'PostgreSQL 16 ephemeral CI',
+            'prediction_snapshots_table':'prediction_snapshots_v01',
+            'prematch_and_live_runtime_writes_verified':True,
+            'idempotent_retry_verified':True,
+            'different_payload_same_request_rejected':True,
+            'immutable_update_rejected':True,
+            'existing_postgres_migration_assurance':existing['decision'],
+            'unified_core_assurance':unified['core_integrated_assurance'],
+            'capital_state':'LOCKED',
+            'real_money':'NO'
+          }
+          assert existing['decision']=='PASS'
+          assert unified['core_integrated_assurance']=='PROMOTE'
+          assert unified['capital_assurance']=='LOCKED'
+          Path('artifacts/postgres-core-persistence/verification.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Upload PostgreSQL core persistence evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-core-runtime-persistence-v0.1
+          path: |
+            artifacts/postgres-core-persistence/verification.json
+            artifacts/migrations/postgres-migration-verification.json
+            artifacts/unified-verification-report.json
+            contracts/postgres-core-runtime-persistence-v0.1.json
+            manifests/postgres-core-runtime-persistence-v0.1.json
+          if-no-files-found: error

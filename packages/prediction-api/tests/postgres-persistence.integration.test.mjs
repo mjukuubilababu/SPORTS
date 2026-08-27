@@ -1,0 +1,88 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { createPredictionApiServer } from '../src/server.mjs';
+import { createPostgresPredictionPersistence } from '../src/postgres-persistence.mjs';
+import { createPreMatchOutcomeSnapshot } from '../../intelligence-engine/src/outcome-1x2.mjs';
+
+const databaseUrl=process.env.TEST_DATABASE_URL || '';
+
+async function listen(server){
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  return `http://127.0.0.1:${server.address().port}`;
+}
+
+function model(overrides={}){
+  return {
+    modelVersion:'POISSON_V1',eventId:'PG-E1',market:'TOTAL_3_5',selection:'UNDER',probability:0.6,
+    usesMarketOdds:false,frozenAt:'2026-08-26T15:00:00Z',source:'MODEL_SNAPSHOT',snapshotId:'PG-S1',snapshotSha256:'a'.repeat(64),
+    correlationFamily:'POISSON_FAMILY',baseWeight:1,validation:1,calibration:1,freshness:1,drift:1,availability:1,...overrides
+  };
+}
+
+function prematchPayload(){
+  return {eventId:'PG-E1',market:'TOTAL_3_5',selection:'UNDER',kickoffAt:'2026-08-26T19:00:00Z',models:[model()],offeredOdds:1.9,confidence:{score:0.9,criticalBlocks:[]}};
+}
+
+function livePayload(){
+  const preMatchSnapshot=createPreMatchOutcomeSnapshot({
+    signalId:'PG-LIVE-SIGNAL-1',eventId:'PG-LIVE-E1',modelVersion:'POISSON_V1',featureVersion:'FEATURE_V1',
+    homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T17:55:00Z',frozenAt:'2026-08-26T18:00:00Z'
+  });
+  return {
+    preMatchSnapshot,
+    live:{
+      eventId:'PG-LIVE-E1',minute:61,homeScore:1,awayScore:0,observedAt:'2026-08-26T19:21:00Z',
+      evidence:[{type:'LIVE_SCORE_TIME_PROVIDER_SNAPSHOT',provider:'API_FOOTBALL',providerFixtureId:2001,verified:true,sourceFixtureSha256:'b'.repeat(64)}]
+    }
+  };
+}
+
+test('Prediction API persists prematch and live snapshots in PostgreSQL with idempotency', {skip:!databaseUrl}, async t=>{
+  const persistence=await createPostgresPredictionPersistence({connectionString:databaseUrl,max:2});
+  t.after(async()=>{await persistence.close();});
+  const health=await persistence.healthCheck();
+  assert.equal(health.status,'ok');
+  assert.equal(health.table,'prediction_snapshots_v01');
+
+  const server=createPredictionApiServer({persistence});
+  const base=await listen(server);
+  t.after(async()=>{if(server.listening)await new Promise(resolve=>server.close(resolve));});
+
+  const requestId=`pg-prematch-${randomUUID()}`;
+  const input=prematchPayload();
+  const first=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json','x-request-id':requestId},body:JSON.stringify(input)});
+  const firstBody=await first.json();
+  assert.equal(first.status,200);
+  assert.equal(first.headers.get('x-persistence-mode'),'POSTGRES');
+  assert.equal(firstBody.eventId,'PG-E1');
+
+  const stored=await persistence.getByRequest({requestId,endpoint:'/v1/predict'});
+  assert.equal(stored.event_id,'PG-E1');
+  assert.equal(stored.snapshot_type,'PREMATCH');
+  assert.equal(stored.capital_state,'LOCKED');
+  assert.equal(stored.real_money,'NO');
+  assert.equal(stored.prediction_payload.eventId,'PG-E1');
+  assert.equal(stored.input_payload.offeredOdds,1.9);
+
+  const duplicate=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json','x-request-id':requestId},body:JSON.stringify(input)});
+  assert.equal(duplicate.status,200);
+  const sameRow=await persistence.getByRequest({requestId,endpoint:'/v1/predict'});
+  assert.equal(sameRow.snapshot_id,stored.snapshot_id);
+
+  const changed=structuredClone(input);changed.offeredOdds=2.2;
+  const conflict=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json','x-request-id':requestId},body:JSON.stringify(changed)});
+  const conflictBody=await conflict.json();
+  assert.equal(conflict.status,409);
+  assert.equal(conflictBody.error,'PERSISTENCE_IDEMPOTENCY_CONFLICT');
+
+  const liveRequestId=`pg-live-${randomUUID()}`;
+  const live=await fetch(`${base}/v1/predict/live`,{method:'POST',headers:{'content-type':'application/json','x-request-id':liveRequestId},body:JSON.stringify(livePayload())});
+  assert.equal(live.status,200);
+  const liveStored=await persistence.getByRequest({requestId:liveRequestId,endpoint:'/v1/predict/live'});
+  assert.equal(liveStored.snapshot_type,'LIVE');
+  assert.equal(liveStored.market,'1X2');
+  assert.equal(liveStored.parent_signal_id,'PG-LIVE-SIGNAL-1');
+  assert.equal(liveStored.model_version,'POISSON_V1');
+  assert.equal(liveStored.feature_version,'FEATURE_V1');
+});

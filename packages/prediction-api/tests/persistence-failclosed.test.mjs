@@ -1,0 +1,51 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createPredictionApiServer } from '../src/server.mjs';
+
+function payload(){
+  return {
+    eventId:'FAIL-CLOSED-E1',market:'TOTAL_3_5',selection:'UNDER',kickoffAt:'2026-08-26T19:00:00Z',offeredOdds:1.9,
+    confidence:{score:0.9,criticalBlocks:[]},
+    models:[{
+      modelVersion:'POISSON_V1',eventId:'FAIL-CLOSED-E1',market:'TOTAL_3_5',selection:'UNDER',probability:0.6,
+      usesMarketOdds:false,frozenAt:'2026-08-26T18:00:00Z',source:'MODEL_SNAPSHOT',snapshotId:'FAIL-S1',snapshotSha256:'a'.repeat(64),
+      correlationFamily:'POISSON_FAMILY',baseWeight:1,validation:1,calibration:1,freshness:1,drift:1,availability:1
+    }]
+  };
+}
+
+async function withServer(persistence,fn){
+  const server=createPredictionApiServer({persistence});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try{return await fn(`http://127.0.0.1:${server.address().port}`);}finally{await new Promise(resolve=>server.close(resolve));}
+}
+
+test('configured persistence failure blocks prediction response',async()=>{
+  const persistence={
+    mode:'POSTGRES',
+    async healthCheck(){return {status:'ok',mode:'POSTGRES'};},
+    async persistPrediction(){throw Object.assign(new Error('POSTGRES_PERSISTENCE_WRITE_FAILED'),{statusCode:503});}
+  };
+  await withServer(persistence,async base=>{
+    const response=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload())});
+    const body=await response.json();
+    assert.equal(response.status,503);
+    assert.equal(body.error,'POSTGRES_PERSISTENCE_WRITE_FAILED');
+    assert.equal(body.capitalState,'LOCKED');
+    assert.equal(body.realMoney,'NO');
+  });
+});
+
+test('health endpoint fails closed when configured PostgreSQL is unavailable',async()=>{
+  const persistence={
+    mode:'POSTGRES',
+    async healthCheck(){throw Object.assign(new Error('POSTGRES_PERSISTENCE_UNAVAILABLE'),{statusCode:503});},
+    async persistPrediction(){throw new Error('should not run');}
+  };
+  await withServer(persistence,async base=>{
+    const response=await fetch(`${base}/health`);
+    const body=await response.json();
+    assert.equal(response.status,503);
+    assert.equal(body.error,'POSTGRES_PERSISTENCE_UNAVAILABLE');
+  });
+});

@@ -2,6 +2,7 @@ import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { orchestrateModelProbabilities } from '../../intelligence-engine/src/model-probability-orchestrator.mjs';
 import { predictLive1X2 } from '../../intelligence-engine/src/live-outcome.mjs';
+import { createPostgresPredictionPersistence } from './postgres-persistence.mjs';
 
 const API_VERSION='PREDICTION_HTTP_API_V0_1';
 const LIVE_API_VERSION='PREDICTION_LIVE_HTTP_API_V0_1';
@@ -111,18 +112,30 @@ function publicLivePrediction(result){
   };
 }
 
-export function createPredictionApiServer(){
+async function persistIfConfigured(persistence,{requestId,endpoint,input,output}){
+  if(!persistence)return null;
+  return persistence.persistPrediction({requestId,endpoint,input,output});
+}
+
+export function createPredictionApiServer({persistence=null}={}){
   return http.createServer(async(req,res)=>{
-    const requestId=req.headers['x-request-id'] || randomUUID();
+    const requestId=String(req.headers['x-request-id'] || randomUUID());
     res.setHeader('x-request-id',requestId);
+    res.setHeader('x-persistence-mode',persistence?.mode || 'DISABLED');
     try{
       if(req.method==='GET' && req.url==='/health'){
-        return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,capitalState:'LOCKED',realMoney:'NO'});
+        if(!persistence){
+          return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:{mode:'DISABLED',status:'disabled'},capitalState:'LOCKED',realMoney:'NO'});
+        }
+        const health=await persistence.healthCheck();
+        return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:health,capitalState:'LOCKED',realMoney:'NO'});
       }
       if(req.method==='POST' && req.url==='/v1/predict'){
         const body=await readJson(req);
         const result=orchestrateModelProbabilities(body);
-        return json(res,200,publicPrediction(result));
+        const output=publicPrediction(result);
+        await persistIfConfigured(persistence,{requestId,endpoint:'/v1/predict',input:body,output});
+        return json(res,200,output);
       }
       if(req.method==='POST' && req.url==='/v1/predict/live'){
         const body=await readJson(req);
@@ -139,7 +152,9 @@ export function createPredictionApiServer(){
           maxAdditionalGoals:live.maxAdditionalGoals ?? 8,
           evidence:live.evidence
         });
-        return json(res,200,publicLivePrediction(result));
+        const output=publicLivePrediction(result);
+        await persistIfConfigured(persistence,{requestId,endpoint:'/v1/predict/live',input:body,output});
+        return json(res,200,output);
       }
       return json(res,404,{error:'NOT_FOUND',requestId});
     }catch(error){
@@ -149,10 +164,30 @@ export function createPredictionApiServer(){
   });
 }
 
-export function startPredictionApi({port=Number(process.env.PORT || 8080),host=process.env.HOST || '0.0.0.0'}={}){
-  const server=createPredictionApiServer();
-  server.listen(port,host,()=>console.log(JSON.stringify({apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,host,port,capitalState:'LOCKED',realMoney:'NO'})));
+function resolvePersistenceMode(){
+  const explicit=String(process.env.PREDICTION_PERSISTENCE_MODE || '').trim().toLowerCase();
+  if(explicit){
+    if(!['postgres','disabled'].includes(explicit))throw Object.assign(new Error('PREDICTION_PERSISTENCE_MODE_INVALID'),{statusCode:500});
+    return explicit;
+  }
+  return process.env.DATABASE_URL?'postgres':'disabled';
+}
+
+export async function startPredictionApi({port=Number(process.env.PORT || 8080),host=process.env.HOST || '0.0.0.0',persistence=null}={}){
+  const mode=persistence?.mode?'postgres':resolvePersistenceMode();
+  const activePersistence=persistence || (mode==='postgres'?await createPostgresPredictionPersistence():null);
+  if(activePersistence)await activePersistence.healthCheck();
+  const server=createPredictionApiServer({persistence:activePersistence});
+  server.listen(port,host,()=>console.log(JSON.stringify({apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,host,port,persistenceMode:activePersistence?.mode || 'DISABLED',capitalState:'LOCKED',realMoney:'NO'})));
+  if(activePersistence?.close){
+    server.once('close',()=>{Promise.resolve(activePersistence.close()).catch(error=>console.error(JSON.stringify({error:'POSTGRES_PERSISTENCE_CLOSE_FAILED',message:error.message})));});
+  }
   return server;
 }
 
-if(import.meta.url===`file://${process.argv[1]}`) startPredictionApi();
+if(import.meta.url===`file://${process.argv[1]}`){
+  startPredictionApi().catch(error=>{
+    console.error(JSON.stringify({error:error.message || 'STARTUP_FAILED',capitalState:'LOCKED',realMoney:'NO'}));
+    process.exitCode=1;
+  });
+}

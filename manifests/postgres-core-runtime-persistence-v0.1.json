@@ -1,0 +1,18 @@
+{
+  "manifest": "postgres-core-runtime-persistence-v0.1",
+  "canonical_component": "packages/prediction-api",
+  "migration": "packages/prediction-api/migrations/0015_prediction_snapshots_v0_1.sql",
+  "runtime_adapter": "packages/prediction-api/src/postgres-persistence.mjs",
+  "runtime_entrypoint": "packages/prediction-api/src/server.mjs",
+  "table": "prediction_snapshots_v01",
+  "persistence_mode": "POSTGRES_WHEN_DATABASE_URL_OR_EXPLICIT_MODE_CONFIGURED",
+  "fail_closed": true,
+  "immutable_snapshots": true,
+  "idempotency_conflict_fail_closed": true,
+  "prematch_persistence": true,
+  "live_persistence": true,
+  "production_database_provisioned_by_repository": false,
+  "requires_external_database_url_for_deployment": true,
+  "capital_effect": "NONE",
+  "real_money": "NO"
+}

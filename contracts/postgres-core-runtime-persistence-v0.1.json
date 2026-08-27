@@ -1,0 +1,41 @@
+{
+  "contract": "postgres-core-runtime-persistence",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "purpose": "Connect the canonical Prediction HTTP API to durable PostgreSQL persistence without changing prediction logic, P002, Gate6, or capital authority.",
+  "database": {
+    "engine": "PostgreSQL",
+    "ci_service_version": "16",
+    "client": "pg@8.23.0",
+    "connection_env": "DATABASE_URL",
+    "runtime_mode_env": "PREDICTION_PERSISTENCE_MODE",
+    "runtime_modes": ["postgres", "disabled"],
+    "table": "prediction_snapshots_v01"
+  },
+  "write_paths": ["POST /v1/predict", "POST /v1/predict/live"],
+  "readiness": {
+    "health_checks_database": true,
+    "postgres_mode_fails_startup_when_database_unavailable": true,
+    "prediction_response_requires_successful_persistence_when_postgres_mode_is_active": true
+  },
+  "immutability": {
+    "append_only": true,
+    "update_forbidden": true,
+    "delete_forbidden": true,
+    "input_sha256_bound": true,
+    "output_sha256_bound": true
+  },
+  "idempotency": {
+    "key": ["request_id", "endpoint"],
+    "same_request_same_payload": "ALREADY_PERSISTED",
+    "same_request_different_payload": "PERSISTENCE_IDEMPOTENCY_CONFLICT"
+  },
+  "governance": {
+    "prediction_logic_changed": false,
+    "p002_changed": false,
+    "gate6_authority_changed": false,
+    "capital_effect": "NONE",
+    "capital_state": "LOCKED",
+    "real_money": "NO"
+  }
+}
