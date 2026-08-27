@@ -10,7 +10,12 @@
     "authoritative_truth_owner": "GATE1"
   },
   "lineage": {
-    "chain": ["SOURCE_PROVENANCE", "FEATURE_SNAPSHOT", "MODEL_SNAPSHOT", "FROZEN_SIGNAL_OR_PREDICTION"],
+    "chain": [
+      "SOURCE_PROVENANCE",
+      "FEATURE_SNAPSHOT",
+      "MODEL_SNAPSHOT",
+      "FROZEN_SIGNAL_OR_PREDICTION"
+    ],
     "exact_fingerprints": true,
     "event_bound_database_foreign_keys": true,
     "prematch_only": true,
@@ -19,7 +24,11 @@
   "postgres": {
     "minimum_ci_version": 16,
     "migration": "packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql",
-    "tables": ["reference_model_snapshots_v01", "reference_model_feature_lineage_v01", "reference_frozen_signal_snapshots_v01"],
+    "tables": [
+      "reference_model_snapshots_v01",
+      "reference_model_feature_lineage_v01",
+      "reference_frozen_signal_snapshots_v01"
+    ],
     "append_only": true,
     "exact_replay_idempotent": true,
     "changed_identity_replay_rejected": true,
@@ -35,5 +44,6 @@
     "real_money": "NO",
     "automatic_promotion": false,
     "automatic_retuning": false
-  }
+  },
+  "review_status": "CI_REQUIRED_BEFORE_MERGE"
 }
