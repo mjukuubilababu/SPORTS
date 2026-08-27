@@ -116,7 +116,26 @@ jobs:
           node --test tests/outcome-1x2.test.mjs
 
       - name: Run unified repository verifier
+        id: unified
+        continue-on-error: true
         run: python scripts/verify_unified.py
+
+      - name: Enforce unified repository verifier with diagnostics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          failed=[{
+            'name':item['name'],
+            'returncode':item['returncode'],
+            'stdout':item.get('stdout','')[-2000:],
+            'stderr':item.get('stderr','')[-2000:]
+          } for item in report['results'] if not item['passed']]
+          print(json.dumps({'failed':failed},indent=2))
+          assert report['core_integrated_assurance']=='PROMOTE', f"UNIFIED_VERIFIER_BLOCK failed={[x['name'] for x in failed]}"
+          assert report['capital_assurance']=='LOCKED'
+          PY
 
       - name: Write runtime evidence verification artifact
         run: |
