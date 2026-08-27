@@ -53,9 +53,9 @@ jobs:
           assert c['governance']['automatic_retuning'] is False
           print('FEATURE_MODEL_SIGNAL_GOVERNANCE=PASS')
           PY
-          if [ "\${{ github.event_name }}" = "pull_request" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             allowed='^(\.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.yml|contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.json|packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1\.sql|packages/reference-e2e/src/postgres-feature-model-signal-lineage\.mjs|packages/reference-e2e/tests/postgres-feature-model-signal-lineage\.integration\.mjs)$'
-            unexpected="$(git diff --name-only "\${{ github.event.pull_request.base.sha }}...HEAD" | grep -Ev "$allowed" || true)"
+            unexpected="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -Ev "$allowed" || true)"
             test -z "$unexpected"
           fi
       - name: Apply PostgreSQL migration chain twice
