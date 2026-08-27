@@ -1,0 +1,23 @@
+{
+  "manifest_id": "postgres-stage-checkpoint-crash-recovery-v0.1",
+  "status": "IMPLEMENTED_AWAITING_CI",
+  "canonical_base": "759d9736759e81d6cc3ad83760d58edda74bfc5f",
+  "files": [
+    "packages/reference-e2e/src/orchestrator.mjs",
+    "packages/reference-e2e/src/audit.mjs",
+    "packages/reference-e2e/src/postgres-checkpoint-recovery.mjs",
+    "packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql",
+    "packages/reference-e2e/tests/postgres-checkpoint-recovery.integration.mjs",
+    ".github/workflows/postgres-stage-checkpoint-crash-recovery-v0.1.yml",
+    "contracts/postgres-stage-checkpoint-crash-recovery-v0.1.json",
+    "docs/postgres-stage-checkpoint-crash-recovery-v0.1.md",
+    "manifests/postgres-stage-checkpoint-crash-recovery-v0.1.json"
+  ],
+  "governance": {
+    "P002": "UNCHANGED",
+    "Gate6": "UNCHANGED_AND_AUTHORITATIVE",
+    "capital": "LOCKED",
+    "real_money": "NO"
+  },
+  "real_status": "NO_PRODUCTION_DATABASE_OR_REAL_MATCH_RUNTIME_RECOVERY_EVIDENCE_YET"
+}

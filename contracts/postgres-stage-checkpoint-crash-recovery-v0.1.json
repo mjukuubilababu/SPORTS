@@ -1,0 +1,63 @@
+{
+  "contract_id": "POSTGRES_STAGE_CHECKPOINT_CRASH_RECOVERY_V0_1",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "scope": "reference-e2e durable stage checkpointing and restart recovery",
+  "source_of_truth": "existing reference-e2e stage functions and state machine",
+  "stage_order": [
+    "INGEST",
+    "FEATURE",
+    "MODEL",
+    "PATTERN",
+    "DECISION",
+    "RISK",
+    "EXECUTION",
+    "START",
+    "SETTLEMENT",
+    "EVALUATION",
+    "ASSURANCE"
+  ],
+  "persistence": {
+    "database": "PostgreSQL",
+    "checkpoint_table": "reference_stage_checkpoints_v01",
+    "checkpoint_commit_boundary": "one committed immutable checkpoint after each completed legal stage",
+    "checkpoint_chain": "SHA-256 chained by previous_checkpoint_fingerprint",
+    "binds": [
+      "correlation_id",
+      "stage_sequence",
+      "stage",
+      "state",
+      "run_input_hash",
+      "artifact identity and SHA-256 when present",
+      "audit event identity and SHA-256 when present",
+      "trace entry",
+      "duplicate execution state"
+    ],
+    "mutation": "UPDATE and DELETE rejected by database trigger"
+  },
+  "recovery": {
+    "strategy": "hydrate exact durable prefix and continue from first incomplete stage",
+    "recompute_completed_stages": false,
+    "input_conflict": "fail closed",
+    "checkpoint_gap_or_order_conflict": "fail closed",
+    "artifact_or_audit_hash_conflict": "fail closed",
+    "legacy_completed_archive_without_checkpoint_prefix": "ineligible for automatic checkpoint recovery",
+    "finalization": "completed ASSURED result is archived through existing PostgreSQL Runtime Evidence Persistence v0.1"
+  },
+  "invariants": {
+    "prediction_logic_changed": false,
+    "model_logic_changed": false,
+    "P002_changed": false,
+    "Gate6_authority_changed": false,
+    "automatic_capital_execution": false,
+    "capital_state": "LOCKED",
+    "real_money": "NO"
+  },
+  "explicit_non_goals": [
+    "distributed multi-worker lease ownership",
+    "automatic takeover of an actively running healthy process",
+    "production database credential provisioning",
+    "capital authorization",
+    "model retuning"
+  ]
+}

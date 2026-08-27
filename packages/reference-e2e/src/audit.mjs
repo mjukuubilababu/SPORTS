@@ -11,6 +11,22 @@ export class AuditLog {
     const event=deepFreeze({...base,eventHash:sha256(base)});
     this.#events.push(event); return event;
   }
+  hydrate(events) {
+    if(this.#events.length!==0) throw new Error('AUDIT_HYDRATE_REQUIRES_EMPTY_LOG');
+    if(!Array.isArray(events)) throw new Error('AUDIT_HYDRATE_EVENTS_REQUIRED');
+    let previousHash='GENESIS';
+    for(let sequence=0;sequence<events.length;sequence+=1){
+      const candidate=structuredClone(events[sequence]);
+      const {eventHash,...base}=candidate;
+      if(candidate.sequence!==sequence || candidate.previousHash!==previousHash || sha256(base)!==eventHash){
+        throw new Error(`AUDIT_HYDRATE_CHAIN_INVALID:${sequence}`);
+      }
+      const event=deepFreeze(candidate);
+      this.#events.push(event);
+      previousHash=event.eventHash;
+    }
+    return this;
+  }
   list(){ return [...this.#events]; }
   verifyChain(){
     let prev='GENESIS';
