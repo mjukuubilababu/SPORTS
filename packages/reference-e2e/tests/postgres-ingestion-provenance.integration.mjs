@@ -431,7 +431,7 @@ test('cross-event feature lineage is rejected by application persistence and Pos
     });
     await assert.rejects(
       pool.query(
-        'INSERT INTO reference_feature_provenance_lineage_v01(lineage_id,feature_id,event_id,feature_name,feature_version,feature_fingerprint,source_provenance_id,source_evidence_fingerprint,lineage_fingerprint,created_at,capital_state,real_money) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,\\'LOCKED\\',\\'NO\\')',
+        'INSERT INTO reference_feature_provenance_lineage_v01(lineage_id,feature_id,event_id,feature_name,feature_version,feature_fingerprint,source_provenance_id,source_evidence_fingerprint,lineage_fingerprint,created_at,capital_state,real_money) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,\'LOCKED\',\'NO\')',
         [direct.lineageId,direct.featureId,direct.eventId,direct.featureName,direct.featureVersion,direct.featureFingerprint,prepared.provenanceId,prepared.evidenceFingerprint,direct.lineageFingerprint,direct.createdAt]
       ),
       (error) => error?.code === '23503'
@@ -460,7 +460,7 @@ test('settlement variants are rejected after normalization in JS and by PostgreS
     for (const [index, evidenceKind] of variants.entries()) {
       await assert.rejects(
         pool.query(
-          'INSERT INTO reference_ingestion_observations_v01(provenance_id,observation_id,event_id,evidence_kind,source,source_type,observed_at,available_at,captured_at,prediction_cutoff,is_verified,pre_match_eligible,source_payload_fingerprint,evidence_fingerprint,payload_json,capital_state,real_money) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,\\'LOCKED\\',\\'NO\\')',
+          'INSERT INTO reference_ingestion_observations_v01(provenance_id,observation_id,event_id,evidence_kind,source,source_type,observed_at,available_at,captured_at,prediction_cutoff,is_verified,pre_match_eligible,source_payload_fingerprint,evidence_fingerprint,payload_json,capital_state,real_money) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,\'LOCKED\',\'NO\')',
           [prepared.provenanceId + '-' + index,prepared.observationId + '-' + index,prepared.eventId,evidenceKind,prepared.source,prepared.sourceType,prepared.observedAt,prepared.availableAt,prepared.capturedAt,prepared.predictionCutoff,prepared.isVerified,prepared.preMatchEligible,prepared.sourcePayloadFingerprint,prepared.evidenceFingerprint,JSON.stringify(prepared.payload)]
         ),
         (error) => error?.code === '23514'
