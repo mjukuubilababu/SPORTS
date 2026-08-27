@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -186,9 +187,12 @@ def _nonnegative_int(value: object, name: str) -> int:
     if isinstance(value, bool):
         raise ValueError(f"{name}_INTEGER_REQUIRED")
     try:
-        parsed = int(float(str(value)))
+        numeric = float(str(value))
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name}_INTEGER_REQUIRED") from exc
+    if not math.isfinite(numeric) or not numeric.is_integer():
+        raise ValueError(f"{name}_INTEGER_REQUIRED")
+    parsed = int(numeric)
     if parsed < 0:
         raise ValueError(f"{name}_NONNEGATIVE_REQUIRED")
     return parsed

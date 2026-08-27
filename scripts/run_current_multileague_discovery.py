@@ -130,6 +130,7 @@ def verify_epl_secondary(summary, espn_rows, observed, observed_dt):
         reconciliation=reconcile_espn_sdp(espn_rows,sdp_rows)
         full_window=(
             bool(espn_rows)
+            and summary['request_failure_n']==0
             and reconciliation['reconciled_n']==len(espn_rows)
             and reconciliation['reconciled_n']==len(sdp_rows)
             and reconciliation['unmatched_espn_n']==0

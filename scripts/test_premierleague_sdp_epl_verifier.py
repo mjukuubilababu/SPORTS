@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "packages" / "gate1"))
 
 from premierleague_sdp_epl_verifier import parse_sdp_matches, reconcile_espn_sdp
+import run_current_multileague_discovery as discovery
 
 OBSERVED = "2026-08-25T00:00:00Z"
 URL = "https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=2026"
@@ -74,6 +75,9 @@ def main() -> int:
     bad = sdp_match(period="FullTime", hg=None, ag=1)
     expect_error(lambda: parse_sdp_matches({"data": [bad]}, observed_at=OBSERVED, source_url=URL), "HOME_SCORE_INTEGER_REQUIRED")
 
+    bad = sdp_match(period="FullTime", hg="1.5", ag=1)
+    expect_error(lambda: parse_sdp_matches({"data": [bad]}, observed_at=OBSERVED, source_url=URL), "HOME_SCORE_INTEGER_REQUIRED")
+
     bad = sdp_match()
     bad["competitionId"] = 10
     expect_error(lambda: parse_sdp_matches({"data": [bad]}, observed_at=OBSERVED, source_url=URL), "COMPETITION_MISMATCH")
@@ -103,6 +107,31 @@ def main() -> int:
 
     duplicate = {"data": [copy.deepcopy(sdp_match(match_id=1001)), copy.deepcopy(sdp_match(match_id=1001))]}
     expect_error(lambda: parse_sdp_matches(duplicate, observed_at=OBSERVED, source_url=URL), "MATCH_DUPLICATE")
+
+    # Matching rows from a partial ESPN request window must remain discovery-only.
+    original_fetch_json = discovery.fetch_json
+    try:
+        discovery.fetch_json = lambda _url: {"data": [sdp_match()]}
+        summary = {
+            "request_failure_n": 1,
+            "availability": "AVAILABLE_SECONDARY_DISCOVERY",
+            "provider": "ESPN_SITE_SCOREBOARD",
+            "source_class": "SECONDARY_DISCOVERY",
+            "discovery_only": True,
+            "strict_gate1_eligible": False,
+            "strict_gate1_rows_n": 0,
+        }
+        result = discovery.verify_epl_secondary(
+            summary,
+            [espn_row()],
+            OBSERVED,
+            discovery.datetime.fromisoformat(OBSERVED.replace("Z", "+00:00")),
+        )
+        assert result["cross_source_verification"]["full_window_reconciled"] is False
+        assert result["strict_gate1_eligible"] is False
+        assert result["discovery_only"] is True
+    finally:
+        discovery.fetch_json = original_fetch_json
 
     print("PREMIERLEAGUE_SDP_EPL_VERIFIER=PASS")
     return 0
