@@ -1,0 +1,18 @@
+{
+  "name": "PostgreSQL Run Lease Ownership Fencing v0.1",
+  "version": "v0.1",
+  "base_capability": "PostgreSQL Stage Checkpoint & Crash Recovery v0.1",
+  "runtime_module": "packages/reference-e2e/src/postgres-run-lease-fencing.mjs",
+  "migration": "packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql",
+  "integration_test": "packages/reference-e2e/tests/postgres-run-lease-fencing.integration.mjs",
+  "invariants": [
+    "one unexpired owner per correlation",
+    "takeover only after expiry",
+    "takeover increments fencing token",
+    "stale token cannot insert checkpoints or final evidence",
+    "checkpoint fence receipts are immutable",
+    "lease event history is immutable and hash chained",
+    "capital remains LOCKED",
+    "real money remains NO"
+  ]
+}

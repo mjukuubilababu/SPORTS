@@ -1,0 +1,14 @@
+{
+  "contract_id": "POSTGRES_RUN_LEASE_OWNERSHIP_FENCING_V0_1",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "purpose": "Prevent concurrent or stale workers from extending the same PostgreSQL checkpoint/evidence lineage.",
+  "database": "PostgreSQL",
+  "tables": ["reference_run_leases_v01","reference_run_lease_events_v01","reference_checkpoint_fence_receipts_v01"],
+  "ownership": {"single_active_worker_per_correlation":true,"lease_expiry_required_for_takeover":true,"fencing_token_monotonic_on_takeover":true,"same_worker_active_acquire_is_idempotent":true,"renewal_requires_current_worker_and_token":true,"successful_completion_releases_lease":true,"failure_or_crash_does_not_release_lease":true},
+  "database_fencing": {"checkpoint_insert":true,"artifact_archive_insert":true,"audit_archive_insert":true,"completed_run_archive_insert":true,"missing_or_stale_session_fence_rejected":true},
+  "evidence": {"lease_event_history_immutable":true,"lease_event_hash_chain":"SHA-256","checkpoint_fence_receipt_immutable":true,"checkpoint_receipt_binds_worker_and_fencing_token":true,"historical_pre_lease_checkpoints_not_backfilled":true},
+  "recovery": {"completed_prefix_reused":true,"stale_worker_cannot_resume_after_takeover":true,"new_owner_resumes_first_incomplete_stage":true},
+  "governance": {"p002_changed":false,"model_probability_changed":false,"gate6_authority_changed":false,"capital_state":"LOCKED","real_money":"NO"},
+  "production_database_provisioned_by_repository": false
+}
