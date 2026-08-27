@@ -40,7 +40,7 @@ async function assertFeature(client,model,ref){
   const q=await client.query("SELECT f.event_id,o.captured_at,o.pre_match_eligible FROM reference_feature_provenance_lineage_v01 f JOIN reference_ingestion_observations_v01 o ON o.provenance_id=f.source_provenance_id AND o.evidence_fingerprint=f.source_evidence_fingerprint AND o.event_id=f.event_id WHERE f.lineage_id=$1 AND f.feature_fingerprint=$2",[ref.featureLineageId,ref.featureFingerprint]);
   const r=q.rows[0];
   if(q.rowCount!==1||r.event_id!==model.eventId)throw fail('POSTGRES_MODEL_FEATURE_CROSS_EVENT_OR_MISSING');
-  if(r.pre_match_eligible!==true||Date.parse(dbIso(r.captured_at))>=Date.parse(model.kickoffAt))throw fail('POSTGRES_MODEL_FEATURE_POST_KICKOFF_OR_INELIGIBLE');
+  if(r.pre_match_eligible!==true||Date.parse(dbIso(r.captured_at))>Date.parse(model.frozenAt))throw fail('POSTGRES_MODEL_FEATURE_POST_KICKOFF_OR_INELIGIBLE');
 }
 
 async function insertModel(client,m){

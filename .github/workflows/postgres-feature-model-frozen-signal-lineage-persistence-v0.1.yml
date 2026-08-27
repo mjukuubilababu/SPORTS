@@ -5,6 +5,7 @@ on:
     branches: [import/decision-intelligence-v0.5-qualified-set]
     paths:
       - 'packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql'
+      - 'packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql'
       - 'packages/reference-e2e/src/postgres-feature-model-signal-lineage.mjs'
       - 'packages/reference-e2e/tests/postgres-feature-model-signal-lineage.integration.mjs'
       - 'contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0.1.json'
@@ -53,18 +54,32 @@ jobs:
           assert c['governance']['automatic_retuning'] is False
           print('FEATURE_MODEL_SIGNAL_GOVERNANCE=PASS')
           PY
-          if [ "\${{ github.event_name }}" = "pull_request" ]; then
-            allowed='^(\.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.yml|contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.json|packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1\.sql|packages/reference-e2e/src/postgres-feature-model-signal-lineage\.mjs|packages/reference-e2e/tests/postgres-feature-model-signal-lineage\.integration\.mjs)$'
-            unexpected="$(git diff --name-only "\${{ github.event.pull_request.base.sha }}...HEAD" | grep -Ev "$allowed" || true)"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            allowed='^(\.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.yml|contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.json|packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1\.sql|packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1\.sql|packages/reference-e2e/src/postgres-feature-model-signal-lineage\.mjs|packages/reference-e2e/tests/postgres-feature-model-signal-lineage\.integration\.mjs)$'
+            unexpected="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -Ev "$allowed" || true)"
             test -z "$unexpected"
           fi
       - name: Apply PostgreSQL migration chain twice
         run: |
           set -euo pipefail
-          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql; do
+          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql; do
             psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
           done
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql
+      - name: Verify existing-schema upgrade path
+        run: |
+          set -euo pipefail
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          ALTER TABLE reference_model_feature_lineage_v01 DROP CONSTRAINT reference_model_feature_model_event_fk;
+          ALTER TABLE reference_model_snapshots_v01 DROP CONSTRAINT reference_model_snapshots_id_event_uq;
+          ALTER TABLE reference_model_feature_lineage_v01
+            ADD CONSTRAINT reference_model_feature_lineage_v01_model_snapshot_id_fkey
+            FOREIGN KEY(model_snapshot_id) REFERENCES reference_model_snapshots_v01(model_snapshot_id);
+          SQL
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM pg_constraint WHERE conname='reference_model_feature_model_event_fk'")" = "1"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM pg_constraint WHERE conname='reference_model_snapshots_id_event_uq'")" = "1"
       - name: Install reference E2E dependencies
         working-directory: packages/reference-e2e
         run: npm install --no-audit --no-fund --no-package-lock
