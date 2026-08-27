@@ -6,6 +6,9 @@ on:
       - import/decision-intelligence-v0.5-qualified-set
     paths:
       - 'packages/prediction-api/**'
+      - 'packages/reference-e2e/migrations/0008_frozen_signal_prediction_api_reference_v0_1.sql'
+      - 'packages/reference-e2e/src/postgres-ingestion-provenance.mjs'
+      - 'packages/reference-e2e/src/postgres-feature-model-signal-lineage.mjs'
       - 'packages/intelligence-engine/src/model-probability-orchestrator.mjs'
       - 'packages/intelligence-engine/src/probabilistic-brain.mjs'
       - 'packages/intelligence-engine/src/live-outcome.mjs'
@@ -26,7 +29,17 @@ permissions:
 jobs:
   verify-api:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: decision_test}
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U postgres -d decision_test"
+          --health-interval=5s --health-timeout=5s --health-retries=12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/decision_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,6 +48,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Apply PostgreSQL lineage and prediction migrations
+        run: |
+          set -euo pipefail
+          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql packages/reference-e2e/migrations/0008_frozen_signal_prediction_api_reference_v0_1.sql packages/prediction-api/migrations/0015_prediction_snapshots_v0_1.sql packages/prediction-api/migrations/0016_prediction_frozen_signal_lineage_v0_1.sql; do
+            psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0008_frozen_signal_prediction_api_reference_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/prediction-api/migrations/0016_prediction_frozen_signal_lineage_v0_1.sql
+      - name: Install API dependencies
+        working-directory: packages/prediction-api
+        run: npm install --no-audit --no-fund --no-package-lock
       - name: Run API tests
         working-directory: packages/prediction-api
         run: npm run verify
