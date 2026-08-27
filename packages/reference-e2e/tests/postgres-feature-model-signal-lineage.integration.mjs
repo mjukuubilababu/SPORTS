@@ -101,3 +101,37 @@ test('UPDATE and DELETE are rejected for all new immutable tables',{skip:!connec
     }
   }finally{await pool.end();}
 });
+
+
+test('DB rejects an event-A model linked through a row claiming event B feature lineage',{skip:!connectionString},async()=>{
+  const pool=new Pool({connectionString});const a=fixture('MODEL-A');const b=fixture('FEATURE-B');
+  try{
+    const featureA=await seed(pool,a);const featureB=await seed(pool,b);
+    const modelA=prepareModelSnapshot(modelInput(a,featureA));
+    await archiveFeatureModelSignalBundle({client:pool,models:[modelInput(a,featureA)]});
+    await assert.rejects(
+      pool.query("INSERT INTO reference_model_feature_lineage_v01(model_snapshot_id,feature_sequence,event_id,feature_lineage_id,feature_fingerprint,link_fingerprint,capital_state,real_money) VALUES($1,1,$2,$3,$4,$5,'LOCKED','NO')",[modelA.modelSnapshotId,b.eventId,featureB.lineageId,featureB.featureFingerprint,'3'.repeat(64)]),
+      error=>error?.code==='23503'
+    );
+  }finally{await pool.end();}
+});
+
+test('evidence captured after model freeze but before kickoff is rejected by app and DB',{skip:!connectionString},async()=>{
+  const pool=new Pool({connectionString});const data=fixture('AFTER-FREEZE');
+  data.observation.capturedAt='2026-08-28T13:30:00.000Z';
+  data.observation.predictionCutoff='2026-08-28T14:00:00.000Z';
+  try{
+    const feature=await seed(pool,data);
+    const input=modelInput(data,feature,{modelSnapshotId:'MODEL-AFTER-FREEZE',frozenAt:'2026-08-28T13:00:00.000Z'});
+    await assert.rejects(
+      archiveFeatureModelSignalBundle({client:pool,models:[input]}),
+      /POSTGRES_MODEL_FEATURE_POST_KICKOFF_OR_INELIGIBLE/
+    );
+    const model=prepareModelSnapshot(input);
+    await pool.query("INSERT INTO reference_model_snapshots_v01(model_snapshot_id,event_id,model_version,model_fingerprint,model_payload_fingerprint,model_payload,kickoff_at,frozen_at,capital_state,real_money) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,$8,'LOCKED','NO')",[model.modelSnapshotId,model.eventId,model.modelVersion,model.modelFingerprint,model.modelPayloadFingerprint,JSON.stringify(model.payload),model.kickoffAt,model.frozenAt]);
+    await assert.rejects(
+      pool.query("INSERT INTO reference_model_feature_lineage_v01(model_snapshot_id,feature_sequence,event_id,feature_lineage_id,feature_fingerprint,link_fingerprint,capital_state,real_money) VALUES($1,0,$2,$3,$4,$5,'LOCKED','NO')",[model.modelSnapshotId,model.eventId,feature.lineageId,feature.featureFingerprint,'4'.repeat(64)]),
+      error=>error?.code==='P0001'
+    );
+  }finally{await pool.end();}
+});
