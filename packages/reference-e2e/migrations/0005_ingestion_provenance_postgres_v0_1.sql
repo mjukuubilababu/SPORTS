@@ -4,7 +4,10 @@ CREATE TABLE IF NOT EXISTS reference_ingestion_observations_v01(
   event_id text NOT NULL,
   entity_type text,
   entity_id text,
-  evidence_kind text NOT NULL CHECK(evidence_kind NOT IN ('SETTLEMENT','PREDICTION_SETTLEMENT')),
+  evidence_kind text NOT NULL CHECK(
+    evidence_kind = upper(btrim(evidence_kind))
+    AND evidence_kind NOT IN ('SETTLEMENT','PREDICTION_SETTLEMENT')
+  ),
   provider text,
   source text NOT NULL,
   source_type text NOT NULL,
@@ -23,6 +26,7 @@ CREATE TABLE IF NOT EXISTS reference_ingestion_observations_v01(
   real_money text NOT NULL CHECK(real_money='NO'),
   UNIQUE(event_id, observation_id),
   UNIQUE(provenance_id, evidence_fingerprint),
+  UNIQUE(provenance_id, evidence_fingerprint, event_id),
   CHECK(available_at >= observed_at),
   CHECK(captured_at >= available_at),
   CHECK(
@@ -54,8 +58,8 @@ CREATE TABLE IF NOT EXISTS reference_feature_provenance_lineage_v01(
   capital_state text NOT NULL CHECK(capital_state='LOCKED'),
   real_money text NOT NULL CHECK(real_money='NO'),
   UNIQUE(feature_id, source_provenance_id, source_evidence_fingerprint),
-  FOREIGN KEY(source_provenance_id, source_evidence_fingerprint)
-    REFERENCES reference_ingestion_observations_v01(provenance_id, evidence_fingerprint)
+  FOREIGN KEY(source_provenance_id, source_evidence_fingerprint, event_id)
+    REFERENCES reference_ingestion_observations_v01(provenance_id, evidence_fingerprint, event_id)
 );
 
 CREATE INDEX IF NOT EXISTS reference_feature_lineage_event_idx
