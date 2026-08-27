@@ -115,6 +115,10 @@ jobs:
           node --test tests/model-probability-orchestrator.test.mjs
           node --test tests/outcome-1x2.test.mjs
 
+      - name: Install Prediction API dependencies for unified verifier
+        working-directory: packages/prediction-api
+        run: npm install --no-audit --no-fund
+
       - name: Run unified repository verifier
         id: unified
         continue-on-error: true
