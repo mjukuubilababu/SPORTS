@@ -1,0 +1,208 @@
+name: PostgreSQL Runtime Evidence Persistence v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/reference-e2e/**'
+      - 'contracts/postgres-runtime-evidence-persistence-v0.1.json'
+      - 'docs/postgres-runtime-evidence-persistence-v0.1.md'
+      - 'manifests/postgres-runtime-evidence-persistence-v0.1.json'
+      - '.github/workflows/postgres-runtime-evidence-persistence-v0.1.yml'
+      - 'scripts/verify_postgres_migrations.py'
+      - 'scripts/verify_unified.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-runtime-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: decision_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d decision_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/decision_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Confirm PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+          pg_isready -h localhost -p 5432 -U postgres -d decision_test
+
+      - name: Apply runtime evidence migration
+        run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('reference_artifacts_v01')::text")" = "reference_artifacts_v01"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('reference_audit_events_v01')::text")" = "reference_audit_events_v01"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('reference_evidence_runs_v01')::text")" = "reference_evidence_runs_v01"
+
+      - name: Install reference E2E dependencies
+        working-directory: packages/reference-e2e
+        run: npm install --no-audit --no-fund --no-package-lock
+
+      - name: Preserve existing reference E2E behavior
+        working-directory: packages/reference-e2e
+        env:
+          REFERENCE_EVIDENCE_PERSISTENCE_MODE: disabled
+        run: npm run verify
+
+      - name: Run PostgreSQL evidence integration test
+        working-directory: packages/reference-e2e
+        run: npm run test:postgres
+
+      - name: Run configured E2E through PostgreSQL archive
+        working-directory: packages/reference-e2e
+        env:
+          REFERENCE_EVIDENCE_PERSISTENCE_MODE: postgres
+        run: npm run e2e
+
+      - name: Verify PostgreSQL evidence rows and immutable triggers
+        run: |
+          artifact_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_artifacts_v01")"
+          audit_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_audit_events_v01")"
+          run_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_evidence_runs_v01")"
+          test "$artifact_count" -ge 10
+          test "$audit_count" -ge 10
+          test "$run_count" -ge 1
+          set +e
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE reference_artifacts_v01 SET artifact_type=artifact_type WHERE artifact_id=(SELECT artifact_id FROM reference_artifacts_v01 LIMIT 1)"
+          mutation_status=$?
+          set -e
+          if [ "$mutation_status" -eq 0 ]; then
+            echo "immutable reference evidence mutation unexpectedly succeeded"
+            exit 1
+          fi
+          echo "immutable trigger rejected UPDATE as required"
+
+      - name: Re-run existing PostgreSQL migration assurance
+        run: python scripts/verify_postgres_migrations.py
+
+      - name: Run intelligence engine regression
+        working-directory: packages/intelligence-engine
+        run: |
+          node --test tests/model-probability-orchestrator.test.mjs
+          node --test tests/outcome-1x2.test.mjs
+
+      - name: Install Prediction API dependencies for unified verifier
+        working-directory: packages/prediction-api
+        run: npm install --no-audit --no-fund
+
+      - name: Apply Prediction API persistence migration for unified verifier
+        run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/prediction-api/migrations/0015_prediction_snapshots_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('prediction_snapshots_v01')::text")" = "prediction_snapshots_v01"
+
+      - name: Run unified repository verifier
+        id: unified
+        continue-on-error: true
+        run: python scripts/verify_unified.py
+
+      - name: Enforce unified repository verifier with diagnostics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          failed=[{
+            'name':item['name'],
+            'returncode':item['returncode'],
+            'stdout':item.get('stdout','')[-2000:],
+            'stderr':item.get('stderr','')[-2000:]
+          } for item in report['results'] if not item['passed']]
+          print(json.dumps({'failed':failed},indent=2))
+          assert report['core_integrated_assurance']=='PROMOTE', f"UNIFIED_VERIFIER_BLOCK failed={[x['name'] for x in failed]}"
+          assert report['capital_assurance']=='LOCKED'
+          PY
+
+      - name: Write runtime evidence verification artifact
+        run: |
+          mkdir -p artifacts/postgres-runtime-evidence
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def scalar(sql):
+              return subprocess.check_output(
+                  ['psql', 'postgresql://postgres:postgres@localhost:5432/decision_test', '-qAt', '-c', sql],
+                  text=True
+              ).strip()
+
+          existing=json.loads(Path('artifacts/migrations/postgres-migration-verification.json').read_text())
+          unified=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          report={
+            'version':'v0.1',
+            'decision':'PASS',
+            'database':'PostgreSQL 16 ephemeral CI',
+            'tables':[
+              'reference_artifacts_v01',
+              'reference_audit_events_v01',
+              'reference_evidence_runs_v01'
+            ],
+            'artifact_rows':int(scalar('SELECT count(*) FROM reference_artifacts_v01')),
+            'audit_rows':int(scalar('SELECT count(*) FROM reference_audit_events_v01')),
+            'run_rows':int(scalar('SELECT count(*) FROM reference_evidence_runs_v01')),
+            'exact_replay_idempotency_verified':True,
+            'conflicting_replay_rejected':True,
+            'audit_chain_verified':True,
+            'immutable_update_and_delete_rejected':True,
+            'completed_result_requires_commit':True,
+            'mid_run_stage_checkpointing':False,
+            'existing_postgres_migration_assurance':existing['decision'],
+            'unified_core_assurance':unified['core_integrated_assurance'],
+            'capital_state':'LOCKED',
+            'real_money':'NO'
+          }
+          assert report['artifact_rows'] >= 10
+          assert report['audit_rows'] >= 10
+          assert report['run_rows'] >= 1
+          assert existing['decision']=='PASS'
+          assert unified['core_integrated_assurance']=='PROMOTE'
+          assert unified['capital_assurance']=='LOCKED'
+          Path('artifacts/postgres-runtime-evidence/verification.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Upload PostgreSQL runtime evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-runtime-evidence-persistence-v0.1
+          path: |
+            artifacts/postgres-runtime-evidence/verification.json
+            artifacts/migrations/postgres-migration-verification.json
+            artifacts/unified-verification-report.json
+            contracts/postgres-runtime-evidence-persistence-v0.1.json
+            manifests/postgres-runtime-evidence-persistence-v0.1.json
+          if-no-files-found: error
