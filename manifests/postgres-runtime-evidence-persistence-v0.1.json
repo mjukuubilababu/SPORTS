@@ -1,0 +1,26 @@
+{
+  "manifest": "postgres-runtime-evidence-persistence-v0.1",
+  "base_canonical_sha": "8d39b664eb7835a9f61a3c733d1769fe1d6caac3",
+  "scope": "reference-e2e completed-run durable PostgreSQL evidence archive",
+  "files": {
+    "contract": "contracts/postgres-runtime-evidence-persistence-v0.1.json",
+    "migration": "packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql",
+    "adapter": "packages/reference-e2e/src/postgres-evidence.mjs",
+    "integration_test": "packages/reference-e2e/tests/postgres-evidence.integration.mjs",
+    "runtime_entry": "packages/reference-e2e/scripts/run-e2e.mjs",
+    "package": "packages/reference-e2e/package.json",
+    "documentation": "docs/postgres-runtime-evidence-persistence-v0.1.md",
+    "workflow": ".github/workflows/postgres-runtime-evidence-persistence-v0.1.yml"
+  },
+  "invariants": [
+    "PostgreSQL is an evidence archive, not a second decision engine.",
+    "No completed postgres-mode result returns before the evidence transaction commits.",
+    "The existing ArtifactStore and AuditLog semantics remain intact.",
+    "Every completed archive binds exactly ten canonical reference artifact hashes and the ordered audit hash chain.",
+    "Exact replay is idempotent; evidence substitution or rewrite fails closed.",
+    "UPDATE and DELETE are rejected at the database layer.",
+    "P002, Gate6, model logic, decision logic and capital authority are unchanged.",
+    "Capital remains LOCKED and real money remains NO."
+  ],
+  "known_boundary": "v0.1 archives completed ASSURED runs atomically; it does not yet checkpoint every stage during an in-progress run."
+}

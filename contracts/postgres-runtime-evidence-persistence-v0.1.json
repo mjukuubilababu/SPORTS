@@ -1,0 +1,78 @@
+{
+  "contract": "postgres-runtime-evidence-persistence",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "purpose": "Durably archive completed canonical reference E2E artifacts and hash-chained audit evidence in PostgreSQL without changing prediction, decision, P002, Gate6, or capital authority.",
+  "source_runtime": {
+    "package": "packages/reference-e2e",
+    "orchestrator": "runVerticalSlice",
+    "store": "ArtifactStore",
+    "audit": "AuditLog",
+    "artifact_types": [
+      "event",
+      "feature",
+      "prediction",
+      "pattern",
+      "decision",
+      "risk",
+      "execution",
+      "settlement",
+      "evaluation",
+      "assurance"
+    ]
+  },
+  "database": {
+    "engine": "PostgreSQL",
+    "ci_service_version": "16",
+    "client": "pg@8.23.0",
+    "connection_env": [
+      "DATABASE_URL",
+      "TEST_DATABASE_URL"
+    ],
+    "runtime_mode_env": "REFERENCE_EVIDENCE_PERSISTENCE_MODE",
+    "runtime_modes": [
+      "postgres",
+      "disabled"
+    ],
+    "tables": [
+      "reference_artifacts_v01",
+      "reference_audit_events_v01",
+      "reference_evidence_runs_v01"
+    ]
+  },
+  "durability": {
+    "database_preflight_before_vertical_slice": true,
+    "completed_run_transactional_archive": true,
+    "result_returned_only_after_commit": true,
+    "artifact_payload_sha256_verified_on_readback": true,
+    "audit_hash_chain_verified_before_write": true,
+    "exact_artifact_set_bound_to_run": true,
+    "exact_audit_chain_head_bound_to_run": true,
+    "archive_fingerprint_bound_to_exact_artifact_and_audit_sets": true,
+    "idempotent_exact_replay": true,
+    "changed_replay_same_identity_rejected": true,
+    "mid_run_stage_checkpointing": false
+  },
+  "immutability": {
+    "append_only": true,
+    "update_forbidden": true,
+    "delete_forbidden": true,
+    "database_triggers": true
+  },
+  "compatibility": {
+    "existing_in_memory_artifact_store_preserved": true,
+    "existing_hash_chained_audit_log_preserved": true,
+    "existing_sqlite_reference_test_migration_preserved": true,
+    "disabled_mode_preserves_existing_e2e_behavior": true
+  },
+  "governance": {
+    "prediction_logic_changed": false,
+    "decision_logic_changed": false,
+    "p002_changed": false,
+    "gate6_authority_changed": false,
+    "capital_effect": "NONE",
+    "capital_state": "LOCKED",
+    "real_money": "NO"
+  },
+  "real_status": "IMPLEMENTED_CODE_AND_REAL_POSTGRESQL_CI_REQUIRED; PRODUCTION_DATABASE_CREDENTIALS_NOT_PROVISIONED_BY_REPOSITORY"
+}
