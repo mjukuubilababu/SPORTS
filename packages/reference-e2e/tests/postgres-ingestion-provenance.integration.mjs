@@ -344,3 +344,163 @@ test('settlement-enriched Match Memory cannot enter the pre-match provenance mat
     await pool.end();
   }
 });
+
+
+test('pg.Pool transactions use one checked-out PoolClient and release it', { skip: !connectionString }, async () => {
+  const pool = new Pool({ connectionString });
+  const data = fixture();
+  let connectCount = 0;
+  let releaseCount = 0;
+  const guardedPool = {
+    get totalCount() { return pool.totalCount; },
+    query() { throw new Error('POOL_QUERY_MUST_NOT_BE_USED_INSIDE_TRANSACTION'); },
+    async connect() {
+      connectCount += 1;
+      const client = await pool.connect();
+      const release = client.release.bind(client);
+      client.release = () => { releaseCount += 1; release(); };
+      return client;
+    }
+  };
+  try {
+    await archiveIngestionProvenanceBundle({
+      client: guardedPool,
+      observations: [data.statsInput, data.marketInput],
+      featureLineage: [data.lineageInput],
+      matchMemory: data.matchMemory
+    });
+    assert.equal(connectCount, 1);
+    assert.equal(releaseCount, 1);
+  } finally {
+    await pool.end();
+  }
+});
+
+test('Match Memory rejects altered payload, timestamp, source, verification, and eligibility with reused provenance_id', { skip: !connectionString }, async () => {
+  const pool = new Pool({ connectionString });
+  const data = fixture();
+  try {
+    await archiveIngestionProvenanceBundle({ client: pool, observations: [data.statsInput] });
+    const variants = [
+      ['payload', { value: { xg: 9.99, shots_on_target: 99 } }],
+      ['timestamp', { observed_at: '2026-08-26T08:59:59.000Z' }],
+      ['source', { source: 'ALTERED_SOURCE' }],
+      ['verification', { is_verified: false }],
+      ['eligibility', { available_at: '2026-08-26T10:00:01.000Z' }]
+    ];
+    for (const [label, changes] of variants) {
+      const alteredMemory = buildCanonicalMatchMemory({
+        truthRecord: data.truthRecord,
+        observations: [{ ...data.memoryObservation, ...changes }],
+        marketSnapshots: [],
+        predictionSettlements: [],
+        predictionCutoff: data.cutoff,
+        materializedAt: '2026-08-27T08:10:00.000Z'
+      });
+      await assert.rejects(
+        archiveIngestionProvenanceBundle({ client: pool, matchMemory: alteredMemory }),
+        /POSTGRES_MATCH_MEMORY_OBSERVATION_PROVENANCE_NOT_EXACT/,
+        label
+      );
+    }
+  } finally {
+    await pool.end();
+  }
+});
+
+test('cross-event feature lineage is rejected by application persistence and PostgreSQL FK', { skip: !connectionString }, async () => {
+  const pool = new Pool({ connectionString });
+  const data = fixture();
+  const prepared = prepareIngestionObservation(data.statsInput);
+  const crossEvent = {
+    ...data.lineageInput,
+    lineageId: 'LINEAGE-CROSS-EVENT-APP-001',
+    featureId: 'FEATURE-CROSS-EVENT-APP-001',
+    eventId: 'MATCH-DIFFERENT-EVENT-001'
+  };
+  try {
+    await archiveIngestionProvenanceBundle({ client: pool, observations: [data.statsInput] });
+    await assert.rejects(
+      archiveIngestionProvenanceBundle({ client: pool, featureLineage: [crossEvent] }),
+      /POSTGRES_INGESTION_PROVENANCE_REFERENCE_CONFLICT/
+    );
+    const direct = prepareFeatureProvenanceLineage({
+      ...crossEvent,
+      lineageId: 'LINEAGE-CROSS-EVENT-DB-001',
+      featureId: 'FEATURE-CROSS-EVENT-DB-001'
+    });
+    await assert.rejects(
+      pool.query(
+        'INSERT INTO reference_feature_provenance_lineage_v01(lineage_id,feature_id,event_id,feature_name,feature_version,feature_fingerprint,source_provenance_id,source_evidence_fingerprint,lineage_fingerprint,created_at,capital_state,real_money) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,\\'LOCKED\\',\\'NO\\')',
+        [direct.lineageId,direct.featureId,direct.eventId,direct.featureName,direct.featureVersion,direct.featureFingerprint,prepared.provenanceId,prepared.evidenceFingerprint,direct.lineageFingerprint,direct.createdAt]
+      ),
+      (error) => error?.code === '23503'
+    );
+  } finally {
+    await pool.end();
+  }
+});
+
+test('settlement variants are rejected after normalization in JS and by PostgreSQL', { skip: !connectionString }, async () => {
+  const pool = new Pool({ connectionString });
+  const data = fixture();
+  const variants = [' settlement ', 'SeTtLeMeNt', ' prediction_settlement ', 'Prediction_Settlement'];
+  try {
+    for (const evidenceKind of variants) {
+      assert.throws(
+        () => prepareIngestionObservation({ ...data.marketInput, evidenceKind }),
+        /POSTGRES_INGESTION_SETTLEMENT_BOUNDARY_VIOLATION/
+      );
+    }
+    const prepared = prepareIngestionObservation({
+      ...data.marketInput,
+      provenanceId: 'PROV-DB-SETTLEMENT-001',
+      observationId: 'OBS-DB-SETTLEMENT-001'
+    });
+    for (const [index, evidenceKind] of variants.entries()) {
+      await assert.rejects(
+        pool.query(
+          'INSERT INTO reference_ingestion_observations_v01(provenance_id,observation_id,event_id,evidence_kind,source,source_type,observed_at,available_at,captured_at,prediction_cutoff,is_verified,pre_match_eligible,source_payload_fingerprint,evidence_fingerprint,payload_json,capital_state,real_money) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,\\'LOCKED\\',\\'NO\\')',
+          [prepared.provenanceId + '-' + index,prepared.observationId + '-' + index,prepared.eventId,evidenceKind,prepared.source,prepared.sourceType,prepared.observedAt,prepared.availableAt,prepared.capturedAt,prepared.predictionCutoff,prepared.isVerified,prepared.preMatchEligible,prepared.sourcePayloadFingerprint,prepared.evidenceFingerprint,JSON.stringify(prepared.payload)]
+        ),
+        (error) => error?.code === '23514'
+      );
+    }
+  } finally {
+    await pool.end();
+  }
+});
+
+test('all provenance tables reject UPDATE and DELETE while exact replay remains idempotent', { skip: !connectionString }, async () => {
+  const pool = new Pool({ connectionString });
+  const data = fixture();
+  try {
+    const first = await archiveIngestionProvenanceBundle({
+      client: pool, observations: [data.statsInput, data.marketInput],
+      featureLineage: [data.lineageInput], matchMemory: data.matchMemory
+    });
+    const replay = await archiveIngestionProvenanceBundle({
+      client: pool, observations: [data.statsInput, data.marketInput],
+      featureLineage: [data.lineageInput], matchMemory: data.matchMemory
+    });
+    assert.equal(replay.bundleFingerprint, first.bundleFingerprint);
+    const mutations = [
+      ['reference_ingestion_observations_v01', 'provenance_id', data.statsInput.provenanceId],
+      ['reference_feature_provenance_lineage_v01', 'lineage_id', prepareFeatureProvenanceLineage(data.lineageInput).lineageId],
+      ['reference_match_memory_materializations_v01', 'memory_fingerprint', data.matchMemory.memory_fingerprint],
+      ['reference_match_memory_evidence_links_v01', 'memory_fingerprint', data.matchMemory.memory_fingerprint]
+    ];
+    for (const [table, key, value] of mutations) {
+      await assert.rejects(
+        pool.query('UPDATE ' + table + ' SET capital_state=capital_state WHERE ' + key + '=$1', [value]),
+        /reference ingestion provenance is immutable/i
+      );
+      await assert.rejects(
+        pool.query('DELETE FROM ' + table + ' WHERE ' + key + '=$1', [value]),
+        /reference ingestion provenance is immutable/i
+      );
+    }
+  } finally {
+    await pool.end();
+  }
+});
