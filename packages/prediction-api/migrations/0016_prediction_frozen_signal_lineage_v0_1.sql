@@ -1,3 +1,16 @@
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname='prediction_snapshots_id_event_uq'
+       AND conrelid='prediction_snapshots_v01'::regclass
+  ) THEN
+    ALTER TABLE prediction_snapshots_v01
+      ADD CONSTRAINT prediction_snapshots_id_event_uq UNIQUE(snapshot_id,event_id);
+  END IF;
+END;
+$$;
+
 CREATE TABLE IF NOT EXISTS prediction_snapshot_frozen_signal_lineage_v01(
   prediction_snapshot_id uuid PRIMARY KEY,
   event_id text NOT NULL,
@@ -7,7 +20,8 @@ CREATE TABLE IF NOT EXISTS prediction_snapshot_frozen_signal_lineage_v01(
   persisted_at timestamptz NOT NULL DEFAULT now(),
   capital_state text NOT NULL CHECK(capital_state='LOCKED'),
   real_money text NOT NULL CHECK(real_money='NO'),
-  FOREIGN KEY(prediction_snapshot_id) REFERENCES prediction_snapshots_v01(snapshot_id),
+  FOREIGN KEY(prediction_snapshot_id,event_id)
+    REFERENCES prediction_snapshots_v01(snapshot_id,event_id),
   FOREIGN KEY(frozen_signal_snapshot_id,frozen_signal_fingerprint,event_id)
     REFERENCES reference_frozen_signal_snapshots_v01(signal_snapshot_id,signal_fingerprint,event_id)
 );
