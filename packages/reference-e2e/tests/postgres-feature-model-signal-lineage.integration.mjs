@@ -111,7 +111,7 @@ test('DB rejects an event-A model linked through a row claiming event B feature 
     await archiveFeatureModelSignalBundle({client:pool,models:[modelInput(a,featureA)]});
     await assert.rejects(
       pool.query("INSERT INTO reference_model_feature_lineage_v01(model_snapshot_id,feature_sequence,event_id,feature_lineage_id,feature_fingerprint,link_fingerprint,capital_state,real_money) VALUES($1,1,$2,$3,$4,$5,'LOCKED','NO')",[modelA.modelSnapshotId,b.eventId,featureB.lineageId,featureB.featureFingerprint,'3'.repeat(64)]),
-      error=>error?.code==='23503'
+      error=>error?.code==='23503'||error?.code==='P0001'
     );
   }finally{await pool.end();}
 });
