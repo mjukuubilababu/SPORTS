@@ -1,0 +1,233 @@
+name: PostgreSQL Ingestion Provenance Persistence v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql'
+      - 'packages/reference-e2e/src/postgres-ingestion-provenance.mjs'
+      - 'packages/reference-e2e/tests/postgres-ingestion-provenance.integration.mjs'
+      - 'contracts/postgres-ingestion-provenance-persistence-v0.1.json'
+      - '.github/workflows/postgres-ingestion-provenance-persistence-v0.1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-ingestion-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: decision_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d decision_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/decision_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Scope guard
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          python - "$BASE" <<'PY'
+          import subprocess, sys
+          base=sys.argv[1]
+          allowed={
+            '.github/workflows/postgres-ingestion-provenance-persistence-v0.1.yml',
+            'contracts/postgres-ingestion-provenance-persistence-v0.1.json',
+            'packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql',
+            'packages/reference-e2e/src/postgres-ingestion-provenance.mjs',
+            'packages/reference-e2e/tests/postgres-ingestion-provenance.integration.mjs',
+          }
+          changed=[]
+          for line in subprocess.check_output(['git','diff','--name-status',f'{base}...HEAD'],text=True).splitlines():
+            parts=line.split('\t')
+            status=parts[0]
+            paths=parts[1:]
+            if status.startswith(('D','R')):
+              raise SystemExit(f'POSTGRES_INGESTION_PROVENANCE_DESTRUCTIVE_CHANGE_FORBIDDEN: {line}')
+            changed.extend(paths)
+          unexpected=sorted(set(changed)-allowed)
+          if unexpected:
+            raise SystemExit(f'POSTGRES_INGESTION_PROVENANCE_SCOPE_VIOLATION: {unexpected}')
+          print(f'POSTGRES_INGESTION_PROVENANCE_SCOPE=PASS files={sorted(set(changed))}')
+          PY
+
+      - name: Validate contracts and frozen governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('contracts/postgres-ingestion-provenance-persistence-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          runtime=json.loads(Path('contracts/postgres-runtime-evidence-persistence-v0.1.json').read_text())
+          memory=json.loads(Path('contracts/canonical-match-memory-v0.1.json').read_text())
+          assert c['contract']=='postgres-ingestion-provenance-persistence'
+          assert c['version']=='v0.1'
+          assert c['status']=='IMPLEMENTED'
+          assert c['owner']['package']=='packages/reference-e2e'
+          assert c['owner']['parallel_truth_store'] is False
+          assert c['owner']['authoritative_truth_owner']=='GATE1'
+          assert c['ingestion_observation']['settlement_allowed'] is False
+          assert c['feature_lineage']['exact_source_reference'] is True
+          assert c['match_memory']['prediction_settlements_in_this_store'] is False
+          assert c['governance']['p002_changed'] is False
+          assert c['governance']['gate1_to_gate6_ownership_changed'] is False
+          assert c['governance']['capital_authority']=='GATE6'
+          assert c['governance']['capital_state']=='LOCKED'
+          assert c['governance']['real_money']=='NO'
+          assert runtime['contract']=='postgres-runtime-evidence-persistence'
+          assert memory['memory_semantics']['authoritative_truth_owner']=='GATE1'
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          print('POSTGRES_INGESTION_PROVENANCE_CONTRACT=PASS')
+          print('P002_UNCHANGED=PASS')
+          print('GATE6_CAPITAL_OWNER_UNCHANGED=PASS')
+          PY
+
+      - name: Confirm PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          pg_isready -h localhost -p 5432 -U postgres -d decision_test
+
+      - name: Apply existing reference persistence chain and ingestion provenance migration
+        run: |
+          set -euo pipefail
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql
+          for table in \
+            reference_ingestion_observations_v01 \
+            reference_feature_provenance_lineage_v01 \
+            reference_match_memory_materializations_v01 \
+            reference_match_memory_evidence_links_v01; do
+            test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('$table')::text")" = "$table"
+          done
+          echo 'POSTGRES_INGESTION_PROVENANCE_MIGRATION_IDEMPOTENT=PASS'
+
+      - name: Install reference E2E dependencies
+        working-directory: packages/reference-e2e
+        run: npm install --no-audit --no-fund --no-package-lock
+
+      - name: Preserve reference E2E behavior
+        working-directory: packages/reference-e2e
+        env:
+          REFERENCE_EVIDENCE_PERSISTENCE_MODE: disabled
+        run: |
+          npm test
+          npm run e2e
+
+      - name: Run PostgreSQL persistence regressions and ingestion provenance integration
+        working-directory: packages/reference-e2e
+        run: |
+          node --test \
+            tests/postgres-evidence.integration.mjs \
+            tests/postgres-checkpoint-recovery.integration.mjs \
+            tests/postgres-run-lease-fencing.integration.mjs \
+            tests/postgres-ingestion-provenance.integration.mjs
+
+      - name: Run Canonical Match Memory regression
+        run: node packages/intelligence-engine/tests/canonical-match-memory.test.mjs
+
+      - name: Verify immutable DB boundaries
+        run: |
+          set -euo pipefail
+          observation_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01")"
+          lineage_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_feature_provenance_lineage_v01")"
+          memory_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_match_memory_materializations_v01")"
+          link_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_match_memory_evidence_links_v01")"
+          test "$observation_count" -ge 2
+          test "$lineage_count" -ge 1
+          test "$memory_count" -ge 1
+          test "$link_count" -ge 2
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE evidence_kind IN ('SETTLEMENT','PREDICTION_SETTLEMENT')")" = "0"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE pre_match_eligible AND (NOT is_verified OR prediction_cutoff IS NULL OR available_at > prediction_cutoff OR captured_at > prediction_cutoff)")" = "0"
+          echo 'POSTGRES_INGESTION_NO_HINDSIGHT_DB_BOUNDARY=PASS'
+
+      - name: Write verification artifact
+        run: |
+          mkdir -p artifacts/postgres-ingestion-provenance
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          url='postgresql://postgres:postgres@localhost:5432/decision_test'
+          def scalar(sql):
+            return subprocess.check_output(['psql',url,'-qAt','-c',sql],text=True).strip()
+          report={
+            'version':'v0.1',
+            'decision':'PASS',
+            'database':'PostgreSQL 16 ephemeral CI',
+            'tables':[
+              'reference_ingestion_observations_v01',
+              'reference_feature_provenance_lineage_v01',
+              'reference_match_memory_materializations_v01',
+              'reference_match_memory_evidence_links_v01'
+            ],
+            'observation_rows':int(scalar('SELECT count(*) FROM reference_ingestion_observations_v01')),
+            'feature_lineage_rows':int(scalar('SELECT count(*) FROM reference_feature_provenance_lineage_v01')),
+            'match_memory_rows':int(scalar('SELECT count(*) FROM reference_match_memory_materializations_v01')),
+            'match_memory_evidence_link_rows':int(scalar('SELECT count(*) FROM reference_match_memory_evidence_links_v01')),
+            'exact_replay_idempotency_verified':True,
+            'changed_replay_rejected':True,
+            'transaction_rollback_on_bad_lineage_verified':True,
+            'immutable_update_delete_rejected':True,
+            'observed_available_captured_persisted_semantics_separate':True,
+            'pre_match_eligibility_recomputed_fail_closed':True,
+            'feature_lineage_exact_fingerprint_fk':True,
+            'match_memory_gate1_truth_owner_preserved':True,
+            'settlement_separate_from_pre_match_provenance':True,
+            'p002_changed':False,
+            'gate6_capital_owner_changed':False,
+            'capital_state':'LOCKED',
+            'real_money':'NO'
+          }
+          assert report['observation_rows'] >= 2
+          assert report['feature_lineage_rows'] >= 1
+          assert report['match_memory_rows'] >= 1
+          assert report['match_memory_evidence_link_rows'] >= 2
+          Path('artifacts/postgres-ingestion-provenance/verification.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Upload PostgreSQL ingestion provenance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-ingestion-provenance-persistence-v0.1
+          path: |
+            artifacts/postgres-ingestion-provenance/verification.json
+            contracts/postgres-ingestion-provenance-persistence-v0.1.json
+          if-no-files-found: error

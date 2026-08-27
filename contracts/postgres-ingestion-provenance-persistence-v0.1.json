@@ -1,0 +1,106 @@
+{
+  "contract": "postgres-ingestion-provenance-persistence",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "purpose": "Extend the existing canonical PostgreSQL reference evidence persistence owner so raw/normalized ingestion evidence, exact feature lineage, and canonical Match Memory materializations are durably immutable without creating a parallel truth store or changing prediction, validation, execution, P002, or Gate6 ownership.",
+  "owner": {
+    "package": "packages/reference-e2e",
+    "extends": "postgres-runtime-evidence-persistence-v0.1",
+    "parallel_truth_store": false,
+    "authoritative_truth_owner": "GATE1",
+    "match_memory_role": "DERIVED_IMMUTABLE_MATERIALIZED_VIEW"
+  },
+  "postgres": {
+    "minimum_ci_version": 16,
+    "migration": "packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql",
+    "tables": [
+      "reference_ingestion_observations_v01",
+      "reference_feature_provenance_lineage_v01",
+      "reference_match_memory_materializations_v01",
+      "reference_match_memory_evidence_links_v01"
+    ],
+    "append_only": true,
+    "update_delete_rejected_by_db_trigger": true,
+    "transactional_bundle_archive": true,
+    "exact_replay_idempotent": true,
+    "changed_replay_same_identity_rejected": true
+  },
+  "ingestion_observation": {
+    "required_semantics": [
+      "event_id",
+      "observation_id",
+      "provenance_id",
+      "evidence_kind",
+      "source",
+      "source_type",
+      "observed_at",
+      "available_at",
+      "captured_at",
+      "is_verified",
+      "source_payload"
+    ],
+    "timestamp_policy": {
+      "observed_at": "source observation time",
+      "available_at": "time the evidence became available to the system",
+      "captured_at": "time this system captured the evidence",
+      "persisted_at": "database commit-side persistence timestamp",
+      "missing_timestamp_guessing": false,
+      "ordering": "observed_at <= available_at <= captured_at",
+      "pre_match_eligible_requires": [
+        "is_verified=true",
+        "prediction_cutoff present",
+        "available_at <= prediction_cutoff",
+        "captured_at <= prediction_cutoff"
+      ]
+    },
+    "fingerprints": {
+      "source_payload_fingerprint": "SHA-256 of the exact supplied source payload",
+      "evidence_fingerprint": "SHA-256 over immutable identity, source, timestamp, verification, eligibility, and source-payload fingerprint fields"
+    },
+    "settlement_allowed": false,
+    "reason": "post-event settlement must remain separate from pre-match ingestion evidence"
+  },
+  "feature_lineage": {
+    "exact_source_reference": true,
+    "database_fk_binds": [
+      "source_provenance_id",
+      "source_evidence_fingerprint"
+    ],
+    "feature_payload_fingerprint": "SHA-256",
+    "lineage_fingerprint": "SHA-256",
+    "source_substitution_without_fingerprint_change": false
+  },
+  "match_memory": {
+    "canonical_verification_required": true,
+    "source_truth_record_fingerprint_required": true,
+    "memory_fingerprint_required": true,
+    "memory_payload_fingerprint_required": true,
+    "exact_evidence_links_required": true,
+    "observation_link_resolution": "provenance_id",
+    "market_snapshot_link_resolution": "event_id + provider + source_payload_fingerprint",
+    "prediction_settlements_in_this_store": false,
+    "new_versions_append_instead_of_mutate": true
+  },
+  "failure_policy": {
+    "partial_bundle_commit": false,
+    "foreign_key_lineage_failure": "ROLLBACK",
+    "missing_match_memory_provenance": "ROLLBACK",
+    "same_identity_changed_payload": "REJECT",
+    "settlement_boundary_violation": "REJECT",
+    "governance_boundary_violation": "REJECT"
+  },
+  "governance": {
+    "prediction_validation_execution_separate": true,
+    "no_hindsight": true,
+    "automatic_training_from_persistence": false,
+    "automatic_retuning_from_persistence": false,
+    "automatic_pattern_promotion": false,
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "capital_authority": "GATE6",
+    "capital_state": "LOCKED",
+    "capital_effect": "NONE",
+    "real_money": "NO"
+  },
+  "real_status": "CODE_IMPLEMENTED_REQUIRES_REAL_POSTGRES_CI_AND_EXPLICIT_CALLER_INTEGRATION; NO_PRODUCTION_DATABASE_CREDENTIALS_PROVISIONED"
+}
