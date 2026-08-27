@@ -1,0 +1,49 @@
+{
+  "contract": "postgres-feature-model-frozen-signal-lineage-persistence",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "owner": {
+    "package": "packages/reference-e2e",
+    "extends": "postgres-ingestion-provenance-persistence-v0.1",
+    "parallel_feature_store": false,
+    "parallel_prediction_api_store": false,
+    "authoritative_truth_owner": "GATE1"
+  },
+  "lineage": {
+    "chain": [
+      "SOURCE_PROVENANCE",
+      "FEATURE_SNAPSHOT",
+      "MODEL_SNAPSHOT",
+      "FROZEN_SIGNAL_OR_PREDICTION"
+    ],
+    "exact_fingerprints": true,
+    "event_bound_database_foreign_keys": true,
+    "prematch_only": true,
+    "settlement_separate": true
+  },
+  "postgres": {
+    "minimum_ci_version": 16,
+    "migration": "packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql",
+    "tables": [
+      "reference_model_snapshots_v01",
+      "reference_model_feature_lineage_v01",
+      "reference_frozen_signal_snapshots_v01"
+    ],
+    "append_only": true,
+    "exact_replay_idempotent": true,
+    "changed_identity_replay_rejected": true,
+    "transactional_bundle": true,
+    "dedicated_pool_client": true
+  },
+  "governance": {
+    "p002_changed": false,
+    "prediction_validation_execution_separate": true,
+    "gate1_truth_owner": true,
+    "capital_authority": "GATE6",
+    "capital_state": "LOCKED",
+    "real_money": "NO",
+    "automatic_promotion": false,
+    "automatic_retuning": false
+  },
+  "review_status": "CI_REQUIRED_BEFORE_MERGE"
+}
