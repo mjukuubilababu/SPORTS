@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS reference_model_snapshots_v01(
   capital_state text NOT NULL CHECK(capital_state='LOCKED'),
   real_money text NOT NULL CHECK(real_money='NO'),
   UNIQUE(model_snapshot_id, model_fingerprint, event_id),
-  UNIQUE(model_snapshot_id, event_id),
+  CONSTRAINT reference_model_snapshots_id_event_uq UNIQUE(model_snapshot_id, event_id),
   CHECK(frozen_at < kickoff_at)
 );
 
@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS reference_model_feature_lineage_v01(
   capital_state text NOT NULL CHECK(capital_state='LOCKED'),
   real_money text NOT NULL CHECK(real_money='NO'),
   PRIMARY KEY(model_snapshot_id, feature_sequence),
-  FOREIGN KEY(model_snapshot_id, event_id)
+  CONSTRAINT reference_model_feature_model_event_fk
+    FOREIGN KEY(model_snapshot_id, event_id)
     REFERENCES reference_model_snapshots_v01(model_snapshot_id, event_id),
   FOREIGN KEY(feature_lineage_id, feature_fingerprint, event_id)
     REFERENCES reference_feature_provenance_lineage_v01(lineage_id, feature_fingerprint, event_id)
@@ -78,7 +79,7 @@ BEGIN
   SELECT frozen_at INTO model_frozen
     FROM reference_model_snapshots_v01
    WHERE model_snapshot_id=NEW.model_snapshot_id AND event_id=NEW.event_id;
-  IF source_event IS NULL OR source_event <> NEW.event_id OR source_eligible IS NOT TRUE OR source_captured > model_frozen THEN
+  IF model_frozen IS NULL OR source_event IS NULL OR source_event <> NEW.event_id OR source_eligible IS NOT TRUE OR source_captured > model_frozen THEN
     RAISE EXCEPTION 'model feature lineage must use exact eligible pre-kickoff source evidence';
   END IF;
   RETURN NEW;
