@@ -61,7 +61,7 @@ export function prepareIngestionObservation(input) {
   text('EVENT_ID', input.eventId);
   text('SOURCE', input.source);
   text('SOURCE_TYPE', input.sourceType);
-  const evidenceKind = text('EVIDENCE_KIND', input.evidenceKind).toUpperCase();
+  const evidenceKind = text('EVIDENCE_KIND', input.evidenceKind).trim().toUpperCase();
   if (['SETTLEMENT', 'PREDICTION_SETTLEMENT'].includes(evidenceKind)) {
     throw fail('POSTGRES_INGESTION_SETTLEMENT_BOUNDARY_VIOLATION');
   }
@@ -259,32 +259,49 @@ async function insertLineage(client, row) {
   await verifyLineage(client, row);
 }
 
+function rawMemoryObservationFingerprint(observation) {
+  const {
+    pre_match_eligible: _preMatchEligible,
+    pre_match_eligibility_reason: _preMatchEligibilityReason,
+    ...sourceObservation
+  } = observation;
+  return sha256(sourceObservation);
+}
+
 async function resolveMemoryRefs(client, memory) {
   const eventId = memory.identity.match_id;
   const refs = [];
   for (const observation of memory.evidence.observations ?? []) {
     text('MATCH_MEMORY_PROVENANCE_ID', observation.provenance_id);
     const result = await client.query(
-      'SELECT provenance_id,event_id,evidence_fingerprint FROM reference_ingestion_observations_v01 WHERE provenance_id=$1',
+      `SELECT provenance_id,event_id,evidence_fingerprint,source_payload_fingerprint,pre_match_eligible
+         FROM reference_ingestion_observations_v01 WHERE provenance_id=$1`,
       [observation.provenance_id]
     );
-    if (result.rowCount !== 1 || result.rows[0].event_id !== eventId) {
-      throw fail(`POSTGRES_MATCH_MEMORY_OBSERVATION_PROVENANCE_MISSING:${observation.provenance_id}`);
+    const row = result.rows[0];
+    const memoryPayloadFingerprint = rawMemoryObservationFingerprint(observation);
+    if (result.rowCount !== 1 || row.event_id !== eventId ||
+        row.source_payload_fingerprint !== memoryPayloadFingerprint ||
+        row.pre_match_eligible !== observation.pre_match_eligible) {
+      throw fail(`POSTGRES_MATCH_MEMORY_OBSERVATION_PROVENANCE_NOT_EXACT:${observation.provenance_id}`);
     }
-    refs.push({ evidenceRole:'OBSERVATION', sourceProvenanceId:result.rows[0].provenance_id,
-      sourceEvidenceFingerprint:result.rows[0].evidence_fingerprint });
+    refs.push({ evidenceRole:'OBSERVATION', sourceProvenanceId:row.provenance_id,
+      sourceEvidenceFingerprint:row.evidence_fingerprint });
   }
   for (const snapshot of memory.evidence.market_snapshots ?? []) {
     hash('MATCH_MEMORY_MARKET_SOURCE_PAYLOAD_FINGERPRINT', snapshot.source_payload_fingerprint);
     const result = await client.query(
-      `SELECT provenance_id,evidence_fingerprint FROM reference_ingestion_observations_v01
+      `SELECT provenance_id,evidence_fingerprint,pre_match_eligible FROM reference_ingestion_observations_v01
         WHERE event_id=$1 AND evidence_kind='MARKET_SNAPSHOT' AND source_payload_fingerprint=$2
           AND provider IS NOT DISTINCT FROM $3`,
       [eventId, snapshot.source_payload_fingerprint, snapshot.provider ?? null]
     );
-    if (result.rowCount !== 1) throw fail(`POSTGRES_MATCH_MEMORY_MARKET_PROVENANCE_NOT_EXACT:${snapshot.snapshot_id ?? 'UNKNOWN'}`);
-    refs.push({ evidenceRole:'MARKET_SNAPSHOT', sourceProvenanceId:result.rows[0].provenance_id,
-      sourceEvidenceFingerprint:result.rows[0].evidence_fingerprint });
+    const row = result.rows[0];
+    if (result.rowCount !== 1 || row.pre_match_eligible !== snapshot.pre_match_eligible) {
+      throw fail(`POSTGRES_MATCH_MEMORY_MARKET_PROVENANCE_NOT_EXACT:${snapshot.snapshot_id ?? 'UNKNOWN'}`);
+    }
+    refs.push({ evidenceRole:'MARKET_SNAPSHOT', sourceProvenanceId:row.provenance_id,
+      sourceEvidenceFingerprint:row.evidence_fingerprint });
   }
   return refs.map((row, evidenceSequence) => ({ ...row, evidenceSequence }));
 }
