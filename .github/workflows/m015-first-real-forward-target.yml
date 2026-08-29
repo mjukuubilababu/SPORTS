@@ -31,7 +31,7 @@ jobs:
       - name: Verify canonical forward ledger lifecycle
         run: python scripts/run_m015_forward_evidence_ledger.py
 
-      - name: Verify frozen first target identity
+      - name: Verify first target lifecycle identity
         run: |
           python - <<'PY'
           import json
@@ -40,13 +40,27 @@ jobs:
           l=json.loads(Path('packages/gate4/data/m015-forward-evidence-ledger-v0.1.json').read_text())
           assert len(l['entries']) == 1
           e=l['entries'][0]
-          assert e['state'] == 'SIGNAL_FROZEN'
           assert e['match_id'] == c['match_id']
           assert e['candidate_fingerprint_sha256'] == c['candidate_fingerprint_sha256']
           assert e['model_probability'] == c['model_probability']
-          assert l['summary']['frozen_pending_settlement'] == 1
-          assert l['summary']['settled_independent_n'] == 0
-          print('M015_FIRST_REAL_TARGET_FROZEN_STATE=PASS')
+          assert e['feature_snapshot_id'] == c['feature_snapshot_id']
+          assert e['training_state_fingerprint'] == c['training_state_fingerprint']
+          if e['state'] == 'SIGNAL_FROZEN':
+              assert e['governance']['settlement_pending'] is True
+              assert l['summary']['frozen_pending_settlement'] == 1
+              assert l['summary']['settled_independent_n'] == 0
+              print('M015_FIRST_REAL_TARGET_FROZEN_STATE=PASS')
+          elif e['state'] == 'SETTLED':
+              assert e['result_verified'] is True
+              assert e['final_score'] == {'home': 2, 'away': 2}
+              assert e['total_goals'] == 4
+              assert e['outcome_u35'] == 0
+              assert e['governance']['settlement_pending'] is False
+              assert l['summary']['frozen_pending_settlement'] == 0
+              assert l['summary']['settled_independent_n'] == 1
+              print('M015_FIRST_REAL_TARGET_SETTLED_STATE=PASS')
+          else:
+              raise AssertionError(f"Unexpected lifecycle state: {e['state']}")
           PY
 
       - name: Upload target evidence
