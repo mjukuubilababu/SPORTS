@@ -92,10 +92,12 @@ def validate_frozen_anchor(*, candidate: Dict, frozen_snapshot: Dict, forward_le
 
     entries = [entry for entry in forward_ledger.get("entries", []) if entry.get("match_id") == match_id]
     if len(entries) != 1:
-        raise ValueError("M015_MOVEMENT_EXPECTED_ONE_FROZEN_LEDGER_ENTRY")
+        raise ValueError("M015_MOVEMENT_EXPECTED_ONE_LEDGER_ENTRY")
     entry = entries[0]
-    if entry.get("state") != "SIGNAL_FROZEN":
-        raise ValueError("M015_MOVEMENT_LEDGER_ENTRY_NOT_FROZEN")
+    if entry.get("state") not in {"SIGNAL_FROZEN", "SETTLED"}:
+        raise ValueError("M015_MOVEMENT_LEDGER_ENTRY_LIFECYCLE_INVALID")
+    if entry.get("state") == "SETTLED" and entry.get("result_verified") is not True:
+        raise ValueError("M015_MOVEMENT_SETTLED_ENTRY_NOT_VERIFIED")
     market = entry.get("market_snapshot") or {}
     exact_fields = (
         "provider", "observed_at", "o35", "u35", "fair_u35_probability",
@@ -121,6 +123,7 @@ def validate_frozen_anchor(*, candidate: Dict, frozen_snapshot: Dict, forward_le
         "candidate_fingerprint_sha256": candidate["candidate_fingerprint_sha256"],
         "prediction_fingerprint_sha256": entry["prediction_fingerprint_sha256"],
         "entry_fingerprint_sha256": entry["entry_fingerprint_sha256"],
+        "ledger_lifecycle_state": entry["state"],
     }
 
 
@@ -211,4 +214,5 @@ def validate_market_path(*, path: Dict, candidate: Dict, frozen_snapshot: Dict, 
         "evaluation_benchmark_replaced": False,
         "decision_weight": 0.0,
         "automatic_promotion": False,
+        "ledger_lifecycle_state": anchor["ledger_lifecycle_state"],
     }

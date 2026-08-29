@@ -22,23 +22,36 @@ def load(path: Path) -> dict:
 def main() -> int:
     candidate, snapshot, ledger, path = load(CANDIDATE), load(SNAPSHOT), load(LEDGER), load(PATH)
     report = validate_market_path(path=path, candidate=candidate, frozen_snapshot=snapshot, forward_ledger=ledger)
-    if ledger.get("summary", {}).get("frozen_pending_settlement") != 1:
-        raise RuntimeError("M015_MOVEMENT_EXPECTED_ONE_PENDING_FROZEN_ROW")
-    if ledger.get("summary", {}).get("settled_independent_n") != 0:
-        raise RuntimeError("M015_MOVEMENT_MUST_NOT_SETTLE_OR_INCREMENT_N")
+    entries = [e for e in ledger.get("entries", []) if e.get("match_id") == candidate.get("match_id")]
+    if len(entries) != 1:
+        raise RuntimeError("M015_MOVEMENT_EXPECTED_ONE_LIFECYCLE_ROW")
+    lifecycle_state = entries[0].get("state")
+    if lifecycle_state == "SIGNAL_FROZEN":
+        if ledger.get("summary", {}).get("frozen_pending_settlement") != 1 or ledger.get("summary", {}).get("settled_independent_n") != 0:
+            raise RuntimeError("M015_MOVEMENT_FROZEN_LEDGER_SUMMARY_INVALID")
+        settlement_pending = True
+    elif lifecycle_state == "SETTLED":
+        if ledger.get("summary", {}).get("frozen_pending_settlement") != 0 or ledger.get("summary", {}).get("settled_independent_n") != 1:
+            raise RuntimeError("M015_MOVEMENT_SETTLED_LEDGER_SUMMARY_INVALID")
+        if entries[0].get("result_verified") is not True:
+            raise RuntimeError("M015_MOVEMENT_SETTLED_RESULT_NOT_VERIFIED")
+        settlement_pending = False
+    else:
+        raise RuntimeError("M015_MOVEMENT_LEDGER_LIFECYCLE_STATE_INVALID")
 
     output = {
         "report_version": "M015_MARKET_MOVEMENT_AUDIT_REPORT_V0_1",
         "classification": "POST_FREEZE_PREKICKOFF_RESEARCH_CONTEXT_ONLY",
         "audit": report,
         "latest_observation": path["observations"][-1] if path.get("observations") else None,
+        "current_forward_lifecycle_state": lifecycle_state,
         "governance": {
             "pr65_evaluation_benchmark_remains_authoritative": True,
             "movement_observation_does_not_replace_benchmark": True,
             "movement_observation_does_not_modify_forward_ledger": True,
             "movement_observation_does_not_increment_independent_n": True,
             "movement_observation_does_not_rewrite_model_probability": True,
-            "settlement_pending": True,
+            "settlement_pending": settlement_pending,
             "decision_weight": 0.0,
             "automatic_promotion": False,
         },
@@ -50,8 +63,9 @@ def main() -> int:
             "AUDIT_VALID": report["audit_valid"],
             "OBSERVATION_N": report["observation_n"],
             "EVALUATION_BENCHMARK_LOCKED": report["evaluation_benchmark_locked"],
-            "FORWARD_LEDGER_MODIFIED": report["forward_ledger_modified"],
-            "INDEPENDENT_N_INCREMENTED": report["independent_n_incremented"],
+            "FORWARD_LEDGER_MODIFIED_BY_MOVEMENT": report["forward_ledger_modified"],
+            "INDEPENDENT_N_INCREMENTED_BY_MOVEMENT": report["independent_n_incremented"],
+            "CURRENT_FORWARD_LIFECYCLE_STATE": lifecycle_state,
         },
         "runtime": output,
     }
@@ -66,6 +80,7 @@ def main() -> int:
         "audit": report,
         "ledger_pending": ledger["summary"]["frozen_pending_settlement"],
         "independent_n": ledger["summary"]["settled_independent_n"],
+        "lifecycle_state": lifecycle_state,
     }, indent=2))
     return 0
 

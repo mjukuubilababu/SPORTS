@@ -1,0 +1,30 @@
+{
+  "artifact": "M015_SEATTLE_CHICAGO_SETTLEMENT_V0_1",
+  "match_id": "MLS-2026-2026-08-29-089a841f1890",
+  "fixture": "Seattle Sounders FC vs Chicago Fire FC",
+  "kickoff_at": "2026-08-29T20:30:00Z",
+  "final_score": {"home": 2, "away": 2},
+  "total_goals": 4,
+  "market": "U3.5",
+  "outcome_u35": 0,
+  "result_verified": true,
+  "settlement_source": {
+    "provider": "ESPN",
+    "source_reference": "https://www.espn.com/soccer/odds/_/gameId/761755",
+    "status": "FT",
+    "verified_at": "2026-08-29T22:55:14Z"
+  },
+  "frozen_prediction_fingerprint_sha256": "ac5b7f59bd9bfc1f334d1684cdfffbe63c8c31c9c721c380d82b03fcffa09dd5",
+  "candidate_fingerprint_sha256": "c0a8b21c0b059faff8621843e41891afd345ed1764528923bc7c4933c9283199",
+  "model_probability_preserved": 0.6512982350607462,
+  "market_probability_preserved": 0.5993369038510584,
+  "settlement_fingerprint_sha256": "e4439f46cf1fdbaa46c84933f960a51ed294e4871903bdb7bce30e8ac61b90df",
+  "independent_validation_n_before_settlement": 0,
+  "independent_validation_n_after_settlement": 1,
+  "independent_validation_min_n": 30,
+  "validation_state_after_settlement": "WAITING_FOR_INDEPENDENT_MIN_N",
+  "decision_weight": 0.0,
+  "automatic_promotion": false,
+  "retuning_performed": false,
+  "p002_changed": false
+}

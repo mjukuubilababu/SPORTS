@@ -8,7 +8,7 @@
   "entries": [
     {
       "protocol_version": "M015_PROSPECTIVE_FORWARD_VALIDATION_V0_1",
-      "state": "SIGNAL_FROZEN",
+      "state": "SETTLED",
       "challenger_id": "M015-FORWARD-CHALLENGER-V0.1",
       "model_id": "M015",
       "model_version": "REGULARIZED_POISSON_GLM_GATE2_COMPONENTS_V0_1",
@@ -84,16 +84,32 @@
         "market_used_as_model_input": false,
         "market_used_as_benchmark_only": true,
         "prediction_frozen_pre_kickoff": true,
-        "settlement_pending": true,
+        "settlement_pending": false,
         "decision_weight": 0.0,
         "automatic_promotion": false
       },
-      "entry_fingerprint_sha256": "9573975e9f6ecfbc40e09aef3a3bf1e9db23e447f5ae5f6bc09a7d005b79eee2"
+      "settled_at": "2026-08-29T22:55:14Z",
+      "result_verified": true,
+      "final_score": {
+        "home": 2,
+        "away": 2
+      },
+      "total_goals": 4,
+      "outcome_u35": 0,
+      "settlement_source": {
+        "provider": "ESPN",
+        "source_type": "VERIFIED_FINAL_SCORE_WEB",
+        "source_reference": "https://www.espn.com/soccer/odds/_/gameId/761755",
+        "verified_at": "2026-08-29T22:55:14Z",
+        "status": "FT"
+      },
+      "settlement_fingerprint_sha256": "e4439f46cf1fdbaa46c84933f960a51ed294e4871903bdb7bce30e8ac61b90df",
+      "entry_fingerprint_sha256": "cacef70e48ef8a7d3583f6bed7077e474abea6086b26d41535d56422a3c80451"
     }
   ],
   "summary": {
-    "frozen_pending_settlement": 1,
-    "settled_independent_n": 0
+    "frozen_pending_settlement": 0,
+    "settled_independent_n": 1
   },
   "governance": {
     "append_only": true,
