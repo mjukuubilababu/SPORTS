@@ -210,3 +210,22 @@ test('attestation rejects a feature snapshot created after model freeze',async()
   const changed={...row,feature_created_at:createdAt,lineage_fingerprint:sha256Json(featureCore)};
   await assert.rejects(persistenceFor(changed).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
+
+
+test('prematch attestation binds request kickoff to model and signal kickoff',async()=>{
+  const row=attestationRow();
+  const inputPayload={...row.input_payload,kickoffAt:'2026-08-26T20:00:00.000Z'};
+  const predictionPayload=deterministicPredictionOutput('/v1/predict',inputPayload);
+  const changed={...row,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  await assert.rejects(persistenceFor(changed).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+test('attestation requires source capture before feature creation',async()=>{
+  const row=attestationRow();
+  const capturedAt='2026-08-26T14:06:00.000Z';
+  const sourceCore={provenanceId:row.source_provenance_id,observationId:row.observation_id,eventId:row.event_id,entityType:row.entity_type,entityId:row.entity_id,evidenceKind:row.evidence_kind,provider:row.provider,source:row.source,sourceType:row.source_type,sourceUrl:row.source_url,observedAt:iso(row.observed_at),availableAt:iso(row.available_at),capturedAt,predictionCutoff:iso(row.prediction_cutoff),isVerified:true,preMatchEligible:true,sourcePayloadFingerprint:row.source_payload_fingerprint};
+  const sourceEvidenceFingerprint=sha256Json(sourceCore);
+  const featureCore={lineageId:row.feature_lineage_id,featureId:row.feature_id,eventId:row.event_id,featureName:row.feature_name,featureVersion:row.feature_version,featureFingerprint:row.feature_fingerprint,sourceProvenanceId:row.source_provenance_id,sourceEvidenceFingerprint,createdAt:iso(row.feature_created_at)};
+  const changed={...row,source_captured_at:capturedAt,evidence_fingerprint:sourceEvidenceFingerprint,source_evidence_fingerprint:sourceEvidenceFingerprint,lineage_fingerprint:sha256Json(featureCore)};
+  await assert.rejects(persistenceFor(changed).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
