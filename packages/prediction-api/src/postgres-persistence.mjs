@@ -10,6 +10,7 @@ export function sha256Json(value){return createHash('sha256').update(JSON.string
 export function sha256ReferencePayload(value){return createHash('sha256').update(typeof value==='string'?value:JSON.stringify(stable(value))).digest('hex');}
 function persistenceError(message,statusCode=503,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function exactHash(value){return typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);}
+export function canonicalInputTimestamp(value){const epoch=Date.parse(value);return Number.isFinite(epoch)?new Date(epoch).toISOString():null;}
 
 function freezeDeterministic(value){if(!value||typeof value!=='object'||Object.isFrozen(value))return value;for(const child of Object.values(value))freezeDeterministic(child);return Object.freeze(value);}
 export function deterministicPredictionOutput(endpoint,input){
@@ -131,7 +132,7 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
           ?sameEvent(first.input_payload?.live?.eventId)&&sameEvent(first.input_payload?.preMatchSnapshot?.eventId)
           :sameEvent(first.input_payload?.eventId??first.input_payload?.preMatchSnapshot?.eventId);
         const predictionSemantics=sameEvent(first.prediction_payload?.eventId)&&first.prediction_payload?.capitalState==='LOCKED'&&first.prediction_payload?.realMoney==='NO'&&inputEventMatches&&declaredLineage?.frozenSignalSnapshotId===first.frozen_signal_snapshot_id&&declaredLineage?.frozenSignalFingerprint===first.frozen_signal_fingerprint;
-        const requestKickoff=first.snapshot_type!=='PREMATCH'||(Number.isFinite(Date.parse(first.input_payload?.kickoffAt))&&dbIso(first.input_payload.kickoffAt)===dbIso(first.model_kickoff_at));
+        const requestKickoff=first.snapshot_type!=='PREMATCH'||(canonicalInputTimestamp(first.input_payload?.kickoffAt)===dbIso(first.model_kickoff_at));
         let deterministicOutput=false,projectionMetadata=false;
         try{const expectedOutput=deterministicPredictionOutput(first.endpoint,first.input_payload);deterministicOutput=sha256Json(expectedOutput)===first.output_sha256&&String(expectedOutput.market??'1X2')===first.market&&(expectedOutput.selection==null?null:String(expectedOutput.selection))===first.selection;projectionMetadata=first.snapshot_type!=='LIVE'||(canonicalEvent(expectedOutput.audit.featureVersion)===first.prediction_feature_version&&first.prediction_source_observed_at!==null&&dbIso(first.prediction_source_observed_at)===dbIso(expectedOutput.audit.observedAt));}catch{}
         const consumedModels=first.input_payload?.models,reportedModels=first.prediction_payload?.audit?.modelSnapshots,consumedModel=consumedModels?.[0];
