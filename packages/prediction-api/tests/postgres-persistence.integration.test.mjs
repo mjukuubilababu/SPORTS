@@ -29,6 +29,7 @@ function lineageFixture(eventId,prefix,kickoffAt){
 }
 const PREMATCH_LINEAGE=lineageFixture('PG-E1','PREMATCH','2026-08-26T19:00:00.000Z');
 const LIVE_LINEAGE=lineageFixture('PG-LIVE-E1','LIVE','2026-08-26T19:00:00.000Z');
+const LIVE_ALT_LINEAGE=lineageFixture('PG-LIVE-E1','LIVE_ALT','2026-08-26T19:00:00.000Z');
 async function seedLineage(pool,item){
   await archiveIngestionProvenanceBundle({client:pool,observations:[item.observation],featureLineage:[item.featureInput]});
   await archiveFeatureModelSignalBundle({client:pool,models:[item.modelInput],signals:[item.signalInput]});
@@ -65,6 +66,7 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   const seedPool=new Pool({connectionString:databaseUrl});
   await seedLineage(seedPool,PREMATCH_LINEAGE);
   await seedLineage(seedPool,LIVE_LINEAGE);
+  await seedLineage(seedPool,LIVE_ALT_LINEAGE);
   await seedPool.end();
   const persistence=await createPostgresPredictionPersistence({connectionString:databaseUrl,max:2});
   t.after(async()=>{await persistence.close();});
@@ -106,7 +108,7 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(conflictBody.error,'PERSISTENCE_IDEMPOTENCY_CONFLICT');
 
   const mismatchedLive=livePayload();
-  mismatchedLive.persistenceLineage=PREMATCH_LINEAGE.persistenceLineage;
+  mismatchedLive.persistenceLineage=LIVE_ALT_LINEAGE.persistenceLineage;
   const mismatchResponse=await fetch(`${base}/v1/predict/live`,{method:'POST',headers:{'content-type':'application/json','x-request-id':`pg-live-mismatch-${randomUUID()}`},body:JSON.stringify(mismatchedLive)});
   assert.equal(mismatchResponse.status,409);
   assert.equal((await mismatchResponse.json()).error,'PERSISTENCE_LIVE_PARENT_SIGNAL_LINEAGE_NOT_EXACT');
