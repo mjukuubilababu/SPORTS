@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { createPredictionApiServer } from '../src/server.mjs';
 import { createPostgresPredictionPersistence } from '../src/postgres-persistence.mjs';
+import { createPredictionOutcomeValidationPersistence } from '../src/postgres-outcome-validation-persistence.mjs';
 import { createPreMatchOutcomeSnapshot } from '../../intelligence-engine/src/outcome-1x2.mjs';
 import { archiveIngestionProvenanceBundle, prepareIngestionObservation, prepareFeatureProvenanceLineage } from '../../reference-e2e/src/postgres-ingestion-provenance.mjs';
 import { archiveFeatureModelSignalBundle, prepareModelSnapshot, prepareFrozenSignal } from '../../reference-e2e/src/postgres-feature-model-signal-lineage.mjs';
@@ -115,6 +116,20 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(attestationBody.capitalOwner,'GATE6');
   assert.equal(attestationBody.predictionIsValidation,false);
   assert.equal(attestationBody.predictionIsExecution,false);
+
+  const outcomePool=new Pool({connectionString:databaseUrl,max:2});
+  t.after(async()=>{await outcomePool.end();});
+  const outcomePersistence=createPredictionOutcomeValidationPersistence(outcomePool);
+  const outcome={outcomeId:`OUT-${randomUUID()}`,predictionSnapshotId:stored.snapshot_id,eventId:'PG-E1',outcomeKind:'OFFICIAL_RESULT',homeGoals:2,awayGoals:1,officialSource:'OFFICIAL_RESULT_FEED',sourcePayload:{homeGoals:2,awayGoals:1,status:'FINAL'},occurredAt:'2026-08-26T21:00:00.000Z',observedAt:'2026-08-26T21:00:05.000Z'};
+  const validation={validationId:`VAL-${randomUUID()}`,validationPayload:{market:'TOTAL_3_5',selection:'UNDER',correct:true},validatedAt:'2026-08-26T21:00:06.000Z'};
+  const outcomeStored=await outcomePersistence.persist({outcome,validation});
+  assert.equal(outcomeStored.status,'PERSISTED');
+  assert.equal(outcomeStored.authorizesExecution,false);
+  assert.equal((await outcomePersistence.persist({outcome,validation})).status,'ALREADY_PERSISTED');
+  await assert.rejects(outcomePersistence.persist({outcome:{...outcome,sourcePayload:{homeGoals:9,awayGoals:1,status:'FINAL'}},validation}),/OUTCOME_IDEMPOTENCY_CONFLICT/);
+  await assert.rejects(outcomePersistence.persist({outcome:{...outcome,outcomeId:`OUT-CROSS-${randomUUID()}`,eventId:'OTHER-EVENT'},validation:{...validation,validationId:`VAL-CROSS-${randomUUID()}`}}),/OUTCOME_EXACT_PREDICTION_LINEAGE_REQUIRED/);
+  await assert.rejects(outcomePool.query('UPDATE prediction_outcomes_v01 SET official_source=official_source WHERE outcome_id=$1',[outcome.outcomeId]),/immutable/);
+  await assert.rejects(outcomePool.query('DELETE FROM prediction_validations_v01 WHERE validation_id=$1',[validation.validationId]),/immutable/);
 
   const duplicate=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json','x-request-id':requestId},body:JSON.stringify(input)});
   assert.equal(duplicate.status,200);
