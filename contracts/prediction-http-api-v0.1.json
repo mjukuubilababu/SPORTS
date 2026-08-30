@@ -64,7 +64,12 @@
       "truth_owner": "GATE1",
       "capital_owner": "GATE6",
       "capital_state": "LOCKED",
-      "real_money": "NO"
+      "real_money": "NO",
+      "all_persisted_fingerprints_recomputed": true,
+      "complete_contiguous_feature_set_required": true,
+      "model_and_signal_kickoff_must_match": true,
+      "model_freeze_must_not_follow_signal_freeze": true,
+      "feature_payload_upgrade_policy": "LEGACY_NULL_FAIL_CLOSED"
     }
   }
 }
