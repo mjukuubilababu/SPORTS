@@ -19,8 +19,7 @@
     "exact_fingerprints": true,
     "event_bound_database_foreign_keys": true,
     "prematch_only": true,
-    "settlement_separate": true,
-    "downstream_consumed_model_payload_attested": true
+    "settlement_separate": true
   },
   "postgres": {
     "minimum_ci_version": 16,
