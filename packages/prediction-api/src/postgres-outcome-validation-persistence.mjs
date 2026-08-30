@@ -2,6 +2,7 @@ import { sha256Json, sha256ReferencePayload, canonicalInputTimestamp } from './p
 
 function fail(message,statusCode=409,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function req(value,code){if(typeof value!=='string'||value.trim()==='')throw fail(code,400);return value.trim();}
+function uuid(value,code){const normalized=req(value,code).toLowerCase();if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(normalized))throw fail(code,400);return normalized;}
 function timestamp(value,code){const normalized=canonicalInputTimestamp(value);if(normalized===null)throw fail(code,400);return normalized;}
 function integer(value,code){if(!Number.isInteger(value)||value<0)throw fail(code,400);return value;}
 function snapshotPayload(value,code){try{return JSON.parse(JSON.stringify(value));}catch(cause){throw fail(code,400,cause);}}
@@ -10,11 +11,12 @@ export function preparePredictionOutcome(input){
   if(!input||typeof input!=='object'||Array.isArray(input))throw fail('OUTCOME_OBJECT_REQUIRED',400);
   const outcomeKind=req(input.outcomeKind,'OUTCOME_KIND_REQUIRED').toUpperCase();
   if(!['OFFICIAL_RESULT','VOID'].includes(outcomeKind))throw fail('OUTCOME_KIND_INVALID',400);
-  if(input.sourcePayload===undefined)throw fail('OUTCOME_SOURCE_PAYLOAD_REQUIRED',400);
+  if(input.sourcePayload===undefined||input.sourcePayload===null)throw fail('OUTCOME_SOURCE_PAYLOAD_REQUIRED',400);
   const sourcePayload=snapshotPayload(input.sourcePayload,'OUTCOME_SOURCE_PAYLOAD_INVALID');
+  if(!sourcePayload||typeof sourcePayload!=='object'||Array.isArray(sourcePayload))throw fail('OUTCOME_SOURCE_PAYLOAD_REQUIRED',400);
   const core={
     outcomeId:req(input.outcomeId,'OUTCOME_ID_REQUIRED'),
-    predictionSnapshotId:req(input.predictionSnapshotId,'OUTCOME_PREDICTION_ID_REQUIRED').toLowerCase(),
+    predictionSnapshotId:uuid(input.predictionSnapshotId,'OUTCOME_PREDICTION_ID_INVALID'),
     eventId:req(String(input.eventId??''),'OUTCOME_EVENT_ID_REQUIRED'),
     outcomeKind,
     homeGoals:outcomeKind==='VOID'?null:integer(input.homeGoals,'OUTCOME_HOME_GOALS_INVALID'),
