@@ -109,10 +109,11 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
         const temporal=dbIso(first.model_kickoff_at)===dbIso(first.signal_kickoff_at)&&new Date(first.model_frozen_at)<=new Date(first.signal_frozen_at)&&new Date(first.signal_frozen_at)<new Date(first.signal_kickoff_at)&&new Date(first.model_frozen_at)<new Date(first.model_kickoff_at);
         const liveParent=first.snapshot_type!=='LIVE'||first.parent_signal_id===first.frozen_signal_snapshot_id;
         const declaredLineage=first.input_payload?.persistenceLineage;
+        const sameEvent=value=>value!==null&&value!==undefined&&String(value)===first.event_id;
         const inputEventMatches=first.snapshot_type==='LIVE'
-          ?first.input_payload?.live?.eventId===first.event_id&&first.input_payload?.preMatchSnapshot?.eventId===first.event_id
-          :(first.input_payload?.eventId??first.input_payload?.preMatchSnapshot?.eventId)===first.event_id;
-        const predictionSemantics=first.prediction_payload?.eventId===first.event_id&&inputEventMatches&&declaredLineage?.frozenSignalSnapshotId===first.frozen_signal_snapshot_id&&declaredLineage?.frozenSignalFingerprint===first.frozen_signal_fingerprint;
+          ?sameEvent(first.input_payload?.live?.eventId)&&sameEvent(first.input_payload?.preMatchSnapshot?.eventId)
+          :sameEvent(first.input_payload?.eventId??first.input_payload?.preMatchSnapshot?.eventId);
+        const predictionSemantics=sameEvent(first.prediction_payload?.eventId)&&first.prediction_payload?.capitalState==='LOCKED'&&first.prediction_payload?.realMoney==='NO'&&inputEventMatches&&declaredLineage?.frozenSignalSnapshotId===first.frozen_signal_snapshot_id&&declaredLineage?.frozenSignalFingerprint===first.frozen_signal_fingerprint;
         if(!completeFeatures||!governed||!prematch||!hashes||!temporal||!liveParent||!predictionSemantics||!['FROZEN_SIGNAL','FROZEN_PREDICTION'].includes(first.signal_kind))throw persistenceError('PREDICTION_LINEAGE_ATTESTATION_FAILED',409);
         return Object.freeze({status:'ATTESTED',snapshotId:first.snapshot_id,eventId:first.event_id,snapshotType:first.snapshot_type,frozenSignalSnapshotId:first.frozen_signal_snapshot_id,frozenSignalFingerprint:first.frozen_signal_fingerprint,modelSnapshotId:first.model_snapshot_id,modelFingerprint:first.model_fingerprint,features:Object.freeze(result.rows.map(row=>Object.freeze({sequence:row.feature_sequence,featureLineageId:row.feature_lineage_id,featureFingerprint:row.feature_fingerprint,sourceProvenanceId:row.source_provenance_id,sourceEvidenceFingerprint:row.source_evidence_fingerprint}))),allFingerprintsRecomputed:true,completeFeatureSet:true,exactEventBound:true,prematchEvidenceOnly:true,settlementSeparate:true,authorizesValidation:false,authorizesExecution:false,capitalState:'LOCKED',realMoney:'NO'});
       }catch(error){if(error?.statusCode)throw error;throw persistenceError('POSTGRES_LINEAGE_ATTESTATION_READ_FAILED',503,error);}
