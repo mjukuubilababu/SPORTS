@@ -5,13 +5,14 @@ function req(value,code){if(typeof value!=='string'||value.trim()==='')throw fai
 function hash(value,code){if(typeof value!=='string'||!/^[0-9a-f]{64}$/.test(value))throw fail(code,400);return value;}
 function timestamp(value,code){const normalized=canonicalInputTimestamp(value);if(normalized===null)throw fail(code,400);return normalized;}
 function integer(value,code){if(!Number.isInteger(value)||value<0)throw fail(code,400);return value;}
+function snapshotPayload(value,code){try{return JSON.parse(JSON.stringify(value));}catch(cause){throw fail(code,400,cause);}}
 
 export function preparePredictionOutcome(input){
   if(!input||typeof input!=='object'||Array.isArray(input))throw fail('OUTCOME_OBJECT_REQUIRED',400);
   const outcomeKind=req(input.outcomeKind,'OUTCOME_KIND_REQUIRED').toUpperCase();
   if(!['OFFICIAL_RESULT','VOID'].includes(outcomeKind))throw fail('OUTCOME_KIND_INVALID',400);
-  const sourcePayload=input.sourcePayload;
-  if(sourcePayload===undefined)throw fail('OUTCOME_SOURCE_PAYLOAD_REQUIRED',400);
+  if(input.sourcePayload===undefined)throw fail('OUTCOME_SOURCE_PAYLOAD_REQUIRED',400);
+  const sourcePayload=snapshotPayload(input.sourcePayload,'OUTCOME_SOURCE_PAYLOAD_INVALID');
   const core={
     outcomeId:req(input.outcomeId,'OUTCOME_ID_REQUIRED'),
     predictionSnapshotId:req(input.predictionSnapshotId,'OUTCOME_PREDICTION_ID_REQUIRED').toLowerCase(),
@@ -30,7 +31,7 @@ export function preparePredictionOutcome(input){
 
 export function preparePredictionValidation(input,outcome){
   if(!input||typeof input!=='object'||Array.isArray(input))throw fail('VALIDATION_OBJECT_REQUIRED',400);
-  const validationPayload=input.validationPayload;
+  const validationPayload=snapshotPayload(input.validationPayload,'VALIDATION_PAYLOAD_INVALID');
   if(!validationPayload||typeof validationPayload!=='object'||Array.isArray(validationPayload))throw fail('VALIDATION_PAYLOAD_REQUIRED',400);
   const core={
     validationId:req(input.validationId,'VALIDATION_ID_REQUIRED'),
@@ -64,19 +65,19 @@ export function createPredictionOutcomeValidationPersistence(pool){
         if(Date.parse(outcome.occurredAt)<=Date.parse(lineage.rows[0].kickoff_at))throw fail('OUTCOME_MUST_FOLLOW_KICKOFF');
 
         const insertedOutcome=await client.query({text:`INSERT INTO prediction_outcomes_v01(outcome_id,prediction_snapshot_id,event_id,outcome_kind,home_goals,away_goals,official_source,source_payload,source_payload_fingerprint,outcome_fingerprint,occurred_at,observed_at,capital_state,real_money)
-          VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,'LOCKED','NO') ON CONFLICT(outcome_id) DO NOTHING RETURNING outcome_id`,values:[outcome.outcomeId,outcome.predictionSnapshotId,outcome.eventId,outcome.outcomeKind,outcome.homeGoals,outcome.awayGoals,outcome.officialSource,JSON.stringify(outcome.sourcePayload),outcome.sourcePayloadFingerprint,outcome.outcomeFingerprint,outcome.occurredAt,outcome.observedAt]});
+          VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,'LOCKED','NO') ON CONFLICT DO NOTHING RETURNING outcome_id`,values:[outcome.outcomeId,outcome.predictionSnapshotId,outcome.eventId,outcome.outcomeKind,outcome.homeGoals,outcome.awayGoals,outcome.officialSource,JSON.stringify(outcome.sourcePayload),outcome.sourcePayloadFingerprint,outcome.outcomeFingerprint,outcome.occurredAt,outcome.observedAt]});
         if(insertedOutcome.rowCount!==1){
-          const existing=await client.query('SELECT prediction_snapshot_id::text,event_id,outcome_fingerprint FROM prediction_outcomes_v01 WHERE outcome_id=$1',[outcome.outcomeId]);
+          const existing=await client.query('SELECT outcome_id,prediction_snapshot_id::text,event_id,outcome_fingerprint FROM prediction_outcomes_v01 WHERE outcome_id=$1 OR prediction_snapshot_id=$2',[outcome.outcomeId,outcome.predictionSnapshotId]);
           const row=existing.rows?.[0];
-          if(!row||row.prediction_snapshot_id!==outcome.predictionSnapshotId||row.event_id!==outcome.eventId||row.outcome_fingerprint!==outcome.outcomeFingerprint)throw fail('OUTCOME_IDEMPOTENCY_CONFLICT');
+          if(!row||row.outcome_id!==outcome.outcomeId||row.prediction_snapshot_id!==outcome.predictionSnapshotId||row.event_id!==outcome.eventId||row.outcome_fingerprint!==outcome.outcomeFingerprint)throw fail('OUTCOME_IDEMPOTENCY_CONFLICT');
         }
 
         const insertedValidation=await client.query({text:`INSERT INTO prediction_validations_v01(validation_id,prediction_snapshot_id,outcome_id,outcome_fingerprint,event_id,validation_payload,validation_payload_fingerprint,validation_fingerprint,validated_at,capital_state,real_money)
-          VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,'LOCKED','NO') ON CONFLICT(validation_id) DO NOTHING RETURNING validation_id`,values:[validation.validationId,validation.predictionSnapshotId,validation.outcomeId,validation.outcomeFingerprint,validation.eventId,JSON.stringify(validation.validationPayload),validation.validationPayloadFingerprint,validation.validationFingerprint,validation.validatedAt]});
+          VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,'LOCKED','NO') ON CONFLICT DO NOTHING RETURNING validation_id`,values:[validation.validationId,validation.predictionSnapshotId,validation.outcomeId,validation.outcomeFingerprint,validation.eventId,JSON.stringify(validation.validationPayload),validation.validationPayloadFingerprint,validation.validationFingerprint,validation.validatedAt]});
         if(insertedValidation.rowCount!==1){
-          const existing=await client.query('SELECT prediction_snapshot_id::text,outcome_id,outcome_fingerprint,event_id,validation_fingerprint FROM prediction_validations_v01 WHERE validation_id=$1',[validation.validationId]);
+          const existing=await client.query('SELECT validation_id,prediction_snapshot_id::text,outcome_id,outcome_fingerprint,event_id,validation_fingerprint FROM prediction_validations_v01 WHERE validation_id=$1 OR (prediction_snapshot_id=$2 AND outcome_id=$3)',[validation.validationId,validation.predictionSnapshotId,validation.outcomeId]);
           const row=existing.rows?.[0];
-          if(!row||row.prediction_snapshot_id!==validation.predictionSnapshotId||row.outcome_id!==validation.outcomeId||row.outcome_fingerprint!==validation.outcomeFingerprint||row.event_id!==validation.eventId||row.validation_fingerprint!==validation.validationFingerprint)throw fail('VALIDATION_IDEMPOTENCY_CONFLICT');
+          if(!row||row.validation_id!==validation.validationId||row.prediction_snapshot_id!==validation.predictionSnapshotId||row.outcome_id!==validation.outcomeId||row.outcome_fingerprint!==validation.outcomeFingerprint||row.event_id!==validation.eventId||row.validation_fingerprint!==validation.validationFingerprint)throw fail('VALIDATION_IDEMPOTENCY_CONFLICT');
         }
         await client.query('COMMIT');
         return Object.freeze({status:insertedOutcome.rowCount===1&&insertedValidation.rowCount===1?'PERSISTED':'ALREADY_PERSISTED',outcomeId:outcome.outcomeId,outcomeFingerprint:outcome.outcomeFingerprint,validationId:validation.validationId,validationFingerprint:validation.validationFingerprint,capitalState:'LOCKED',realMoney:'NO',authorizesExecution:false});
