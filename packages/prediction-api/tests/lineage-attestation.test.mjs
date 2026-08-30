@@ -182,3 +182,22 @@ test('attestation rejects a correctly hashed output not deterministically produc
   const predictionPayload={...row.prediction_payload,probability:0.99};
   await assert.rejects(persistenceFor({...row,prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
+
+
+test('live attestation rejects persisted inputs forbidden by canonical live validation',async()=>{
+  const preMatchSnapshot=liveSnapshot();
+  const row=attestationRow({signalPayload:preMatchSnapshot});
+  const validInput=liveInputFor(row,preMatchSnapshot);
+  const predictionPayload=deterministicPredictionOutput('/v1/predict/live',validInput);
+  const invalidInput={...validInput,live:{...validInput.live,homeRateMultiplier:2}};
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',input_payload:invalidInput,input_sha256:sha256Json(invalidInput),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+test('deterministic single-model WAIT snapshots remain attestable',async()=>{
+  const base=attestationRow();
+  const row=attestationRow({modelPayload:{...base.model_payload,baseWeight:0}});
+  assert.equal(row.prediction_payload.state,'WAIT');
+  assert.deepEqual(row.prediction_payload.audit.modelSnapshots,[]);
+  assert.equal((await persistenceFor(row).attestPredictionLineage({snapshotId:row.snapshot_id})).status,'ATTESTED');
+});
