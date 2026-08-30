@@ -70,7 +70,10 @@
       "model_and_signal_kickoff_must_match": true,
       "model_freeze_must_not_follow_signal_freeze": true,
       "feature_payload_upgrade_policy": "LEGACY_NULL_FAIL_CLOSED",
-      "reference_payload_hash_semantics": "RAW_STRING_OTHERWISE_STABLE_JSON"
+      "reference_payload_hash_semantics": "RAW_STRING_OTHERWISE_STABLE_JSON",
+      "prediction_payload_event_must_match_chain": true,
+      "input_event_must_match_chain": true,
+      "declared_input_lineage_must_match_joined_signal": true
     }
   }
 }
