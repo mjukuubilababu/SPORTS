@@ -57,7 +57,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION enforce_prediction_validation_temporal_lineage() RETURNS trigger AS $
 DECLARE outcome_observed timestamptz;
@@ -70,7 +70,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS prediction_outcomes_temporal_guard ON prediction_outcomes_v01;
 CREATE TRIGGER prediction_outcomes_temporal_guard BEFORE INSERT ON prediction_outcomes_v01
@@ -122,7 +122,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION enforce_prediction_validation_temporal_lineage() RETURNS trigger AS $
 DECLARE outcome_observed timestamptz;
@@ -135,7 +135,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS prediction_outcomes_temporal_guard ON prediction_outcomes_v01;
 CREATE TRIGGER prediction_outcomes_temporal_guard BEFORE INSERT ON prediction_outcomes_v01
