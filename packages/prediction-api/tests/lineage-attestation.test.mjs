@@ -266,6 +266,13 @@ test('live attestation binds declared feature version to joined feature lineage'
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
+test('live replay rejects a falsy event ID exactly like the HTTP path',()=>{
+  const row=attestationRow({eventId:'0'});
+  const preMatchSnapshot=liveSnapshot(0);
+  const inputPayload=liveInputFor({...row,event_id:0},preMatchSnapshot);
+  assert.throws(()=>deterministicPredictionOutput('/v1/predict/live',inputPayload),/LIVE_INPUT_NOT_CANONICAL/);
+});
+
 test('prematch attestation binds consumed payload freeze time to model lineage',async()=>{
   const base=attestationRow();
   const row=attestationRow({modelPayload:{...base.model_payload,frozenAt:'2026-08-26T15:06:00.000Z'}});
