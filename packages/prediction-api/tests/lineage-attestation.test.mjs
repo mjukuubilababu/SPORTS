@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { createPredictionPersistenceFromPool, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
 
 const iso=value=>new Date(value).toISOString();
-function attestationRow({payloadJson={value:1},featurePayload={rating:0.8},modelPayload={lambda:2.4},signalPayload={market:'1X2'},snapshotId='abcdefab-cdef-4abc-8def-abcdefabcdef'}={}){
-  const eventId='ATTEST-E1',modelSnapshotId='MODEL-ATTEST',featureLineageId='FEATURE-LINEAGE-ATTEST';
+function attestationRow({payloadJson={value:1},featurePayload={rating:0.8},modelPayload={lambda:2.4},signalPayload={market:'1X2'},snapshotId='abcdefab-cdef-4abc-8def-abcdefabcdef',eventId='ATTEST-E1'}={}){
+  const modelSnapshotId='MODEL-ATTEST',featureLineageId='FEATURE-LINEAGE-ATTEST';
   const sourcePayloadFingerprint=sha256ReferencePayload(payloadJson);
   const sourceCore={provenanceId:'PROV-ATTEST',observationId:'OBS-ATTEST',eventId,entityType:'MATCH',entityId:eventId,evidenceKind:'MODEL_INPUT',provider:null,source:'TEST',sourceType:'TEST',sourceUrl:null,observedAt:iso('2026-08-26T14:00:00Z'),availableAt:iso('2026-08-26T14:00:01Z'),capturedAt:iso('2026-08-26T14:00:02Z'),predictionCutoff:iso('2026-08-26T18:00:00Z'),isVerified:true,preMatchEligible:true,sourcePayloadFingerprint};
   const sourceEvidenceFingerprint=sha256Json(sourceCore);
@@ -85,4 +85,21 @@ test('attestation accepts and returns a canonical UUIDv7 snapshot identity',asyn
   const result=await persistenceFor(row).attestPredictionLineage({snapshotId:row.snapshot_id.toUpperCase()});
   assert.equal(result.status,'ATTESTED');
   assert.equal(result.snapshotId,row.snapshot_id);
+});
+
+
+test('attestation rejects hashed payload governance that contradicts LOCKED and NO',async()=>{
+  const row=attestationRow();
+  for(const predictionPayload of [{...row.prediction_payload,capitalState:'UNLOCKED'},{...row.prediction_payload,realMoney:'YES'}]){
+    await assert.rejects(persistenceFor({...row,prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+  }
+});
+
+test('attestation canonicalizes accepted numeric prediction event IDs',async()=>{
+  const row=attestationRow({eventId:'42'});
+  const inputPayload={...row.input_payload,eventId:42};
+  const predictionPayload={...row.prediction_payload,eventId:42};
+  const result=await persistenceFor({...row,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id});
+  assert.equal(result.status,'ATTESTED');
+  assert.equal(result.eventId,'42');
 });
