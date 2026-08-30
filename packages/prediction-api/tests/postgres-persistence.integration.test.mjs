@@ -23,7 +23,7 @@ function lineageFixture(eventId,prefix,kickoffAt){
   const feature=prepareFeatureProvenanceLineage(featureInput);
   const modelInput={modelSnapshotId:'API-MODEL-'+prefix,eventId,modelVersion:'POISSON_V1',payload:{lambda:2.4},kickoffAt,frozenAt:'2026-08-26T15:00:00.000Z',features:[{featureLineageId:feature.lineageId,featureFingerprint:feature.featureFingerprint}]};
   const model=prepareModelSnapshot(modelInput);
-  const signalInput={signalSnapshotId:'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:model.modelSnapshotId,modelFingerprint:model.modelFingerprint,payload:{eventId,market:'LINEAGE_SOURCE'},kickoffAt,frozenAt:'2026-08-26T15:05:00.000Z'};
+  const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:model.modelSnapshotId,modelFingerprint:model.modelFingerprint,payload:{eventId,market:'LINEAGE_SOURCE'},kickoffAt,frozenAt:'2026-08-26T15:05:00.000Z'};
   const signal=prepareFrozenSignal(signalInput);
   return{observation,featureInput,modelInput,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
 }
@@ -105,6 +105,12 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(conflict.status,409);
   assert.equal(conflictBody.error,'PERSISTENCE_IDEMPOTENCY_CONFLICT');
 
+  const mismatchedLive=livePayload();
+  mismatchedLive.persistenceLineage=PREMATCH_LINEAGE.persistenceLineage;
+  const mismatchResponse=await fetch(`${base}/v1/predict/live`,{method:'POST',headers:{'content-type':'application/json','x-request-id':`pg-live-mismatch-${randomUUID()}`},body:JSON.stringify(mismatchedLive)});
+  assert.equal(mismatchResponse.status,409);
+  assert.equal((await mismatchResponse.json()).error,'PERSISTENCE_LIVE_PARENT_SIGNAL_LINEAGE_NOT_EXACT');
+
   const liveRequestId=`pg-live-${randomUUID()}`;
   const live=await fetch(`${base}/v1/predict/live`,{method:'POST',headers:{'content-type':'application/json','x-request-id':liveRequestId},body:JSON.stringify(livePayload())});
   assert.equal(live.status,200);
@@ -133,5 +139,13 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   );
   await assert.rejects(verifyPool.query('UPDATE prediction_snapshot_frozen_signal_lineage_v01 SET capital_state=capital_state WHERE prediction_snapshot_id=$1',[stored.snapshot_id]),/prediction frozen signal lineage is immutable/i);
   await assert.rejects(verifyPool.query('DELETE FROM prediction_snapshot_frozen_signal_lineage_v01 WHERE prediction_snapshot_id=$1',[stored.snapshot_id]),/prediction frozen signal lineage is immutable/i);
+  const legacySnapshotId=randomUUID();
+  const legacyRequestId='legacy-'+randomUUID();
+  await verifyPool.query("INSERT INTO prediction_snapshots_v01(snapshot_id,request_id,endpoint,snapshot_type,event_id,market,input_sha256,output_sha256,input_payload,prediction_payload,capital_state,real_money) VALUES($1,$2,'/v1/predict','PREMATCH','PG-E1','TOTAL_3_5',$3,$3,'{}'::jsonb,'{}'::jsonb,'LOCKED','NO')",[legacySnapshotId,legacyRequestId,'e'.repeat(64)]);
+  const legacy=await persistence.getByRequest({requestId:legacyRequestId,endpoint:'/v1/predict'});
+  assert.equal(legacy.snapshot_id,legacySnapshotId);
+  assert.equal(legacy.frozen_signal_snapshot_id,null);
+  assert.equal(legacy.frozen_signal_fingerprint,null);
+  assert.equal(legacy.link_fingerprint,null);
   await verifyPool.end();
 });
