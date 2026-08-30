@@ -41,6 +41,7 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
       const inputSha256=sha256Json(input),outputSha256=sha256Json(output),persistedAt=clock().toISOString();
       const parentSignalId=output.audit?.parentSignalId??null,modelVersion=output.audit?.modelVersion??null;
       const featureVersion=output.audit?.featureVersion??null,sourceObservedAt=output.audit?.observedAt??null;
+      if(snapshotType==='LIVE'&&(typeof parentSignalId!=='string'||parentSignalId!==lineage.frozenSignalSnapshotId))throw persistenceError('PERSISTENCE_LIVE_PARENT_SIGNAL_LINEAGE_NOT_EXACT',409);
       let client=null;
       try{
         client=await pool.connect();
@@ -71,7 +72,7 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
     },
     async getByRequest({requestId,endpoint}){
       try{
-        const result=await pool.query("SELECT p.snapshot_id::text,p.request_id,p.endpoint,p.snapshot_type,p.event_id,p.market,p.selection,p.input_sha256,p.output_sha256,p.input_payload,p.prediction_payload,p.parent_signal_id,p.model_version,p.feature_version,p.source_observed_at,p.persisted_at,p.capital_state,p.real_money,l.frozen_signal_snapshot_id,l.frozen_signal_fingerprint,l.link_fingerprint FROM prediction_snapshots_v01 p JOIN prediction_snapshot_frozen_signal_lineage_v01 l ON l.prediction_snapshot_id=p.snapshot_id AND l.event_id=p.event_id WHERE p.request_id=$1 AND p.endpoint=$2",[requestId,endpoint]);
+        const result=await pool.query("SELECT p.snapshot_id::text,p.request_id,p.endpoint,p.snapshot_type,p.event_id,p.market,p.selection,p.input_sha256,p.output_sha256,p.input_payload,p.prediction_payload,p.parent_signal_id,p.model_version,p.feature_version,p.source_observed_at,p.persisted_at,p.capital_state,p.real_money,l.frozen_signal_snapshot_id,l.frozen_signal_fingerprint,l.link_fingerprint FROM prediction_snapshots_v01 p LEFT JOIN prediction_snapshot_frozen_signal_lineage_v01 l ON l.prediction_snapshot_id=p.snapshot_id AND l.event_id=p.event_id WHERE p.request_id=$1 AND p.endpoint=$2",[requestId,endpoint]);
         return result.rows?.[0]??null;
       }catch(error){throw persistenceError('POSTGRES_PERSISTENCE_READ_FAILED',503,error);}
     },
