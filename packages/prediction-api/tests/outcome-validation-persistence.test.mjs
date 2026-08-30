@@ -31,6 +31,7 @@ test('null or non-object source evidence and malformed prediction UUID reject as
   assert.throws(()=>preparePredictionOutcome({...outcomeInput,predictionSnapshotId:'not-a-uuid'}),error=>error.statusCode===400&&error.message==='OUTCOME_PREDICTION_ID_INVALID');
   assert.equal(preparePredictionOutcome({...outcomeInput,predictionSnapshotId:outcomeInput.predictionSnapshotId.toUpperCase()}).predictionSnapshotId,outcomeInput.predictionSnapshotId);
   assert.equal(preparePredictionOutcome({...outcomeInput,predictionSnapshotId:'01890F3E-7B1C-7CC2-98C4-DC0C0C0C0C0C'}).predictionSnapshotId,'01890f3e-7b1c-7cc2-98c4-dc0c0c0c0c0c');
+  for(const predictionSnapshotId of ['00000000-0000-0000-0000-000000000000','ffffffff-ffff-ffff-ffff-ffffffffffff'])assert.equal(preparePredictionOutcome({...outcomeInput,predictionSnapshotId}).predictionSnapshotId,predictionSnapshotId);
 });
 
 test('invalid chronology and changed payload identity reject',()=>{
