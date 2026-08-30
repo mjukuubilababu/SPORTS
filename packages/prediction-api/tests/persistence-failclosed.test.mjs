@@ -95,3 +95,13 @@ test('lineage attestation rejects invalid ids and sanitizes database read failur
     error=>error?.message==='POSTGRES_LINEAGE_ATTESTATION_READ_FAILED'&&error?.statusCode===503&&!error.message.includes('secret-host')
   );
 });
+
+
+test('PostgreSQL persistence rejects multi-model prematch writes it cannot attest exactly',async()=>{
+  const pool={async query(){throw new Error('not used');},async connect(){throw new Error('must reject before pool acquisition');}};
+  const persistence=createPredictionPersistenceFromPool(pool);
+  const input=payload();
+  input.models.push({...input.models[0],modelVersion:'POISSON_V2',snapshotId:'FAIL-S2',snapshotSha256:'b'.repeat(64)});
+  input.persistenceLineage={frozenSignalSnapshotId:'SIGNAL-X',frozenSignalFingerprint:'a'.repeat(64)};
+  await assert.rejects(persistence.persistPrediction({requestId:'multi-model',endpoint:'/v1/predict',input,output:{eventId:input.eventId,market:input.market,selection:input.selection,capitalState:'LOCKED',realMoney:'NO'}}),error=>error?.message==='PERSISTENCE_SINGLE_MODEL_LINEAGE_REQUIRED'&&error?.statusCode===409);
+});
