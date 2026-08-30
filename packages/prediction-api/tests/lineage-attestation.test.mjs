@@ -266,6 +266,16 @@ test('live attestation binds declared feature version to joined feature lineage'
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
+test('prematch attestation rejects contradictory direct-output projections',async()=>{
+  const row=attestationRow();
+  for(const changed of [
+    {...row,parent_signal_id:'SIGNAL-ATTEST'},
+    {...row,prediction_model_version:'MODEL_V1'},
+    {...row,prediction_feature_version:'V1'},
+    {...row,prediction_source_observed_at:'2026-08-26T14:00:00.000Z'}
+  ])await assert.rejects(persistenceFor(changed).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
 test('live attestation rejects a snapshot created after its freeze time',async()=>{
   const preMatchSnapshot={...liveSnapshot(),createdAt:'2026-08-26T15:06:00.000Z'};
   const row=attestationRow({signalPayload:preMatchSnapshot});
