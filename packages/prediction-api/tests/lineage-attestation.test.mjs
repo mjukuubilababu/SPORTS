@@ -266,6 +266,12 @@ test('live attestation binds declared feature version to joined feature lineage'
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
+test('prematch attestation binds consumed payload freeze time to model lineage',async()=>{
+  const base=attestationRow();
+  const row=attestationRow({modelPayload:{...base.model_payload,frozenAt:'2026-08-26T15:06:00.000Z'}});
+  await assert.rejects(persistenceFor(row).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
 test('prematch attestation preserves accepted additional model payload metadata',async()=>{
   const base=attestationRow();
   const row=attestationRow({modelPayload:{...base.model_payload,trainingDataset:'DATASET-2026'}});
