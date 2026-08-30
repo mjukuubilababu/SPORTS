@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createPredictionPersistenceFromPool, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
 
 const iso=value=>new Date(value).toISOString();
+const liveSnapshot=(eventId='ATTEST-E1')=>({snapshotType:'PRE_MATCH',immutable:true,signalId:'SIGNAL-ATTEST',eventId,modelVersion:'MODEL_V1',featureVersion:'V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T14:30:00.000Z',frozenAt:'2026-08-26T15:04:00.000Z',realMoney:'NO'});
 function attestationRow({payloadJson={value:1},featurePayload={rating:0.8},modelPayload={lambda:2.4},signalPayload={market:'1X2'},snapshotId='abcdefab-cdef-4abc-8def-abcdefabcdef',eventId='ATTEST-E1'}={}){
   const modelSnapshotId='MODEL-ATTEST',featureLineageId='FEATURE-LINEAGE-ATTEST';
   const sourcePayloadFingerprint=sha256ReferencePayload(payloadJson);
@@ -73,8 +74,9 @@ test('attestation canonicalizes an uppercase UUID before verifying and returning
 
 
 test('live attestation requires both live and prematch input event IDs to match the chain',async()=>{
-  const base=attestationRow();
-  const liveInput={live:{eventId:base.event_id},preMatchSnapshot:{eventId:base.event_id},persistenceLineage:base.input_payload.persistenceLineage};
+  const preMatchSnapshot=liveSnapshot();
+  const base=attestationRow({signalPayload:preMatchSnapshot});
+  const liveInput={live:{eventId:base.event_id},preMatchSnapshot,persistenceLineage:base.input_payload.persistenceLineage};
   const liveOutput={...base.prediction_payload,audit:{parentSignalId:base.frozen_signal_snapshot_id}};
   const live={...base,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:base.frozen_signal_snapshot_id,input_payload:liveInput,input_sha256:sha256Json(liveInput),prediction_payload:liveOutput,output_sha256:sha256Json(liveOutput)};
   assert.equal((await persistenceFor(live).attestPredictionLineage({snapshotId:live.snapshot_id})).status,'ATTESTED');
@@ -108,9 +110,10 @@ test('attestation canonicalizes accepted numeric prediction event IDs',async()=>
 
 
 test('attestation binds endpoint to snapshot type and live output parent signal',async()=>{
-  const row=attestationRow();
+  const preMatchSnapshot=liveSnapshot();
+  const row=attestationRow({signalPayload:preMatchSnapshot});
   await assert.rejects(persistenceFor({...row,endpoint:'/v1/predict/live'}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
-  const liveInput={live:{eventId:row.event_id},preMatchSnapshot:{eventId:row.event_id},persistenceLineage:row.input_payload.persistenceLineage};
+  const liveInput={live:{eventId:row.event_id},preMatchSnapshot,persistenceLineage:row.input_payload.persistenceLineage};
   const wrongOutput={...row.prediction_payload,audit:{parentSignalId:'OTHER-SIGNAL'}};
   const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:row.frozen_signal_snapshot_id,input_payload:liveInput,input_sha256:sha256Json(liveInput),prediction_payload:wrongOutput,output_sha256:sha256Json(wrongOutput)};
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
@@ -131,4 +134,15 @@ test('prematch attestation binds the consumed and reported model to joined linea
   await assert.rejects(persistenceFor({...row,input_payload:inputPayload,input_sha256:sha256Json(inputPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
   const predictionPayload={...row.prediction_payload,audit:{...row.prediction_payload.audit,modelSnapshots:[wrong]}};
   await assert.rejects(persistenceFor({...row,prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+
+test('live attestation rejects altered consumed prematch snapshot payload',async()=>{
+  const preMatchSnapshot=liveSnapshot();
+  const row=attestationRow({signalPayload:preMatchSnapshot});
+  const altered={...preMatchSnapshot,homeLambda:9.9};
+  const inputPayload={live:{eventId:row.event_id},preMatchSnapshot:altered,persistenceLineage:row.input_payload.persistenceLineage};
+  const predictionPayload={...row.prediction_payload,audit:{parentSignalId:row.frozen_signal_snapshot_id}};
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:row.frozen_signal_snapshot_id,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
