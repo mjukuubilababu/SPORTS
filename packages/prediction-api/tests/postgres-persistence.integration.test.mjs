@@ -115,4 +115,23 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(liveStored.model_version,'POISSON_V1');
   assert.equal(liveStored.feature_version,'FEATURE_V1');
   assert.equal(liveStored.frozen_signal_snapshot_id,LIVE_LINEAGE.persistenceLineage.frozenSignalSnapshotId);
+
+  const badRequestId='pg-cross-event-'+randomUUID();
+  const badInput=prematchPayload();
+  badInput.persistenceLineage=LIVE_LINEAGE.persistenceLineage;
+  const rejected=await fetch(base+'/v1/predict',{method:'POST',headers:{'content-type':'application/json','x-request-id':badRequestId},body:JSON.stringify(badInput)});
+  assert.equal(rejected.status,409);
+  const verifyPool=new Pool({connectionString:databaseUrl});
+  const rolledBack=await verifyPool.query('SELECT count(*)::int count FROM prediction_snapshots_v01 WHERE request_id=$1',[badRequestId]);
+  assert.equal(rolledBack.rows[0].count,0);
+
+  const unlinkedSnapshotId=randomUUID();
+  await verifyPool.query("INSERT INTO prediction_snapshots_v01(snapshot_id,request_id,endpoint,snapshot_type,event_id,market,input_sha256,output_sha256,input_payload,prediction_payload,capital_state,real_money) VALUES($1,$2,'/v1/predict','PREMATCH','PG-E1','TOTAL_3_5',$3,$3,'{}'::jsonb,'{}'::jsonb,'LOCKED','NO')",[unlinkedSnapshotId,'direct-cross-event-'+randomUUID(),'c'.repeat(64)]);
+  await assert.rejects(
+    verifyPool.query("INSERT INTO prediction_snapshot_frozen_signal_lineage_v01(prediction_snapshot_id,event_id,frozen_signal_snapshot_id,frozen_signal_fingerprint,link_fingerprint,capital_state,real_money) VALUES($1,'PG-LIVE-E1',$2,$3,$4,'LOCKED','NO')",[unlinkedSnapshotId,LIVE_LINEAGE.persistenceLineage.frozenSignalSnapshotId,LIVE_LINEAGE.persistenceLineage.frozenSignalFingerprint,'d'.repeat(64)]),
+    error=>error?.code==='23503'
+  );
+  await assert.rejects(verifyPool.query('UPDATE prediction_snapshot_frozen_signal_lineage_v01 SET capital_state=capital_state WHERE prediction_snapshot_id=$1',[stored.snapshot_id]),/prediction frozen signal lineage is immutable/i);
+  await assert.rejects(verifyPool.query('DELETE FROM prediction_snapshot_frozen_signal_lineage_v01 WHERE prediction_snapshot_id=$1',[stored.snapshot_id]),/prediction frozen signal lineage is immutable/i);
+  await verifyPool.end();
 });
