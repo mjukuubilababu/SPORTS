@@ -201,3 +201,12 @@ test('deterministic single-model WAIT snapshots remain attestable',async()=>{
   assert.deepEqual(row.prediction_payload.audit.modelSnapshots,[]);
   assert.equal((await persistenceFor(row).attestPredictionLineage({snapshotId:row.snapshot_id})).status,'ATTESTED');
 });
+
+
+test('attestation rejects a feature snapshot created after model freeze',async()=>{
+  const row=attestationRow();
+  const createdAt='2026-08-26T15:00:01.000Z';
+  const featureCore={lineageId:row.feature_lineage_id,featureId:row.feature_id,eventId:row.event_id,featureName:row.feature_name,featureVersion:row.feature_version,featureFingerprint:row.feature_fingerprint,sourceProvenanceId:row.source_provenance_id,sourceEvidenceFingerprint:row.source_evidence_fingerprint,createdAt};
+  const changed={...row,feature_created_at:createdAt,lineage_fingerprint:sha256Json(featureCore)};
+  await assert.rejects(persistenceFor(changed).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
