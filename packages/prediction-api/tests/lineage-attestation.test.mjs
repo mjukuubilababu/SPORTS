@@ -266,6 +266,15 @@ test('live attestation binds declared feature version to joined feature lineage'
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
+test('persistence rejects incomplete live snapshot timestamps before database acquisition',async()=>{
+  const preMatchSnapshot={...liveSnapshot()};
+  delete preMatchSnapshot.createdAt;
+  const row=attestationRow({signalPayload:preMatchSnapshot});
+  const input=liveInputFor(row,preMatchSnapshot);
+  const output=deterministicPredictionOutput('/v1/predict/live',input);
+  await assert.rejects(persistenceFor(row).persistPrediction({requestId:'REQ-MISSING-CREATED',endpoint:'/v1/predict/live',input,output}),error=>error?.message==='PERSISTENCE_LIVE_SNAPSHOT_TIMESTAMPS_INVALID');
+});
+
 test('prematch attestation rejects contradictory direct-output projections',async()=>{
   const row=attestationRow();
   for(const changed of [
