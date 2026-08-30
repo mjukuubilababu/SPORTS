@@ -2,9 +2,10 @@ import { sha256Json, sha256ReferencePayload, canonicalInputTimestamp } from './p
 
 function fail(message,statusCode=409,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function req(value,code){if(typeof value!=='string'||value.trim()==='')throw fail(code,400);return value.trim();}
-function uuid(value,code){const normalized=req(value,code).toLowerCase();if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(normalized))throw fail(code,400);return normalized;}
+function uuid(value,code){const normalized=req(value,code).toLowerCase();if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(normalized))throw fail(code,400);return normalized;}
 function timestamp(value,code){const normalized=canonicalInputTimestamp(value);if(normalized===null)throw fail(code,400);return normalized;}
 function integer(value,code){if(!Number.isInteger(value)||value<0)throw fail(code,400);return value;}
+function epoch(value){return value instanceof Date?value.getTime():Date.parse(value);}
 function snapshotPayload(value,code){try{return JSON.parse(JSON.stringify(value));}catch(cause){throw fail(code,400,cause);}}
 
 export function preparePredictionOutcome(input){
@@ -63,7 +64,7 @@ export function createPredictionOutcomeValidationPersistence(pool){
           JOIN reference_frozen_signal_snapshots_v01 s ON s.signal_snapshot_id=l.frozen_signal_snapshot_id AND s.signal_fingerprint=l.frozen_signal_fingerprint AND s.event_id=l.event_id
           WHERE p.snapshot_id=$1 AND p.event_id=$2`,[outcome.predictionSnapshotId,outcome.eventId]);
         if(lineage.rowCount!==1)throw fail('OUTCOME_EXACT_PREDICTION_LINEAGE_REQUIRED');
-        if(Date.parse(outcome.occurredAt)<=Date.parse(lineage.rows[0].kickoff_at))throw fail('OUTCOME_MUST_FOLLOW_KICKOFF');
+        if(epoch(outcome.occurredAt)<=epoch(lineage.rows[0].kickoff_at))throw fail('OUTCOME_MUST_FOLLOW_KICKOFF');
 
         const insertedOutcome=await client.query({text:`INSERT INTO prediction_outcomes_v01(outcome_id,prediction_snapshot_id,event_id,outcome_kind,home_goals,away_goals,official_source,source_payload,source_payload_fingerprint,outcome_fingerprint,occurred_at,observed_at,capital_state,real_money)
           VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,'LOCKED','NO') ON CONFLICT DO NOTHING RETURNING outcome_id`,values:[outcome.outcomeId,outcome.predictionSnapshotId,outcome.eventId,outcome.outcomeKind,outcome.homeGoals,outcome.awayGoals,outcome.officialSource,JSON.stringify(outcome.sourcePayload),outcome.sourcePayloadFingerprint,outcome.outcomeFingerprint,outcome.occurredAt,outcome.observedAt]});
