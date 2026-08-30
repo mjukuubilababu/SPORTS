@@ -36,8 +36,47 @@ CREATE TABLE IF NOT EXISTS prediction_validations_v01(
   FOREIGN KEY(prediction_snapshot_id,event_id)
     REFERENCES prediction_snapshots_v01(snapshot_id,event_id),
   FOREIGN KEY(outcome_id,event_id)
-    REFERENCES prediction_outcomes_v01(outcome_id,event_id)
+    REFERENCES prediction_outcomes_v01(outcome_id,event_id),
+  UNIQUE(prediction_snapshot_id,outcome_id)
 );
+
+CREATE OR REPLACE FUNCTION enforce_prediction_outcome_temporal_lineage() RETURNS trigger AS $
+DECLARE lineage_kickoff timestamptz;
+BEGIN
+  SELECT s.kickoff_at INTO lineage_kickoff
+    FROM prediction_snapshot_frozen_signal_lineage_v01 l
+    JOIN reference_frozen_signal_snapshots_v01 s
+      ON s.signal_snapshot_id=l.frozen_signal_snapshot_id
+     AND s.signal_fingerprint=l.frozen_signal_fingerprint
+     AND s.event_id=l.event_id
+   WHERE l.prediction_snapshot_id=NEW.prediction_snapshot_id
+     AND l.event_id=NEW.event_id;
+  IF lineage_kickoff IS NULL OR NEW.occurred_at <= lineage_kickoff THEN
+    RAISE EXCEPTION 'prediction outcome must follow exact lineage kickoff';
+  END IF;
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION enforce_prediction_validation_temporal_lineage() RETURNS trigger AS $
+DECLARE outcome_observed timestamptz;
+BEGIN
+  SELECT observed_at INTO outcome_observed FROM prediction_outcomes_v01
+   WHERE outcome_id=NEW.outcome_id AND event_id=NEW.event_id
+     AND prediction_snapshot_id=NEW.prediction_snapshot_id;
+  IF outcome_observed IS NULL OR NEW.validated_at < outcome_observed THEN
+    RAISE EXCEPTION 'prediction validation cannot predate exact outcome observation';
+  END IF;
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS prediction_outcomes_temporal_guard ON prediction_outcomes_v01;
+CREATE TRIGGER prediction_outcomes_temporal_guard BEFORE INSERT ON prediction_outcomes_v01
+FOR EACH ROW EXECUTE FUNCTION enforce_prediction_outcome_temporal_lineage();
+DROP TRIGGER IF EXISTS prediction_validations_temporal_guard ON prediction_validations_v01;
+CREATE TRIGGER prediction_validations_temporal_guard BEFORE INSERT ON prediction_validations_v01
+FOR EACH ROW EXECUTE FUNCTION enforce_prediction_validation_temporal_lineage();
 
 CREATE OR REPLACE FUNCTION reject_prediction_validation_mutation() RETURNS trigger AS $$
 BEGIN
