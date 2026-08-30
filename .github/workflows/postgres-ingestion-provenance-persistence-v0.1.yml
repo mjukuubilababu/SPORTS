@@ -68,6 +68,7 @@ jobs:
             'packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql',
             'packages/reference-e2e/src/postgres-ingestion-provenance.mjs',
             'packages/reference-e2e/tests/postgres-ingestion-provenance.integration.mjs',
+            '.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0.1.yml',
             '.github/workflows/postgres-core-runtime-persistence-v0.1.yml',
             '.github/workflows/postgres-run-lease-ownership-fencing-v0.1.yml',
             '.github/workflows/postgres-runtime-evidence-persistence-v0.1.yml',
