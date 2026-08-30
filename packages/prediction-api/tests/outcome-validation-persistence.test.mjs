@@ -30,6 +30,7 @@ test('null or non-object source evidence and malformed prediction UUID reject as
   for(const sourcePayload of [null,'official',7,[]])assert.throws(()=>preparePredictionOutcome({...outcomeInput,sourcePayload}),error=>error.statusCode===400&&error.message==='OUTCOME_SOURCE_PAYLOAD_REQUIRED');
   assert.throws(()=>preparePredictionOutcome({...outcomeInput,predictionSnapshotId:'not-a-uuid'}),error=>error.statusCode===400&&error.message==='OUTCOME_PREDICTION_ID_INVALID');
   assert.equal(preparePredictionOutcome({...outcomeInput,predictionSnapshotId:outcomeInput.predictionSnapshotId.toUpperCase()}).predictionSnapshotId,outcomeInput.predictionSnapshotId);
+  assert.equal(preparePredictionOutcome({...outcomeInput,predictionSnapshotId:'01890F3E-7B1C-7CC2-98C4-DC0C0C0C0C0C'}).predictionSnapshotId,'01890f3e-7b1c-7cc2-98c4-dc0c0c0c0c0c');
 });
 
 test('invalid chronology and changed payload identity reject',()=>{
@@ -39,12 +40,12 @@ test('invalid chronology and changed payload identity reject',()=>{
   assert.notEqual(preparePredictionOutcome({...outcomeInput,sourcePayload:{home:9,away:1}}).outcomeFingerprint,outcome.outcomeFingerprint);
 });
 
-function fakePool({failValidation=false,duplicate=false,conflict=false}={}){
+function fakePool({failValidation=false,duplicate=false,conflict=false,kickoffAt='2026-08-30T18:00:00Z'}={}){
   const calls=[];let released=false;
   const client={async query(query,values){
     const text=typeof query==='string'?query:query.text;calls.push(text);
     if(text==='BEGIN'||text==='COMMIT'||text==='ROLLBACK')return {rowCount:0,rows:[]};
-    if(text.includes('SELECT p.event_id'))return {rowCount:1,rows:[{event_id:'E1',kickoff_at:'2026-08-30T18:00:00Z'}]};
+    if(text.includes('SELECT p.event_id'))return {rowCount:1,rows:[{event_id:'E1',kickoff_at:kickoffAt}]};
     if(text.includes('INSERT INTO prediction_outcomes'))return {rowCount:duplicate?0:1,rows:duplicate?[]:[{outcome_id:'OUT-1'}]};
     if(text.includes('FROM prediction_outcomes'))return {rowCount:1,rows:[{outcome_id:'OUT-1',prediction_snapshot_id:outcomeInput.predictionSnapshotId,event_id:'E1',outcome_fingerprint:conflict?'f'.repeat(64):preparePredictionOutcome(outcomeInput).outcomeFingerprint}]};
     if(text.includes('INSERT INTO prediction_validations')){if(failValidation)throw new Error('partial failure');return {rowCount:duplicate?0:1,rows:duplicate?[]:[{validation_id:'VAL-1'}]};}
@@ -62,6 +63,13 @@ test('Pool transaction uses one dedicated client and exact replay is idempotent'
   assert.equal(pool.released,true);
   const replay=await createPredictionOutcomeValidationPersistence(fakePool({duplicate:true})).persist({outcome:outcomeInput,validation:validationInput});
   assert.equal(replay.status,'ALREADY_PERSISTED');
+});
+
+test('kickoff comparison preserves PostgreSQL Date milliseconds and returns stable chronology conflict',async()=>{
+  const pool=fakePool({kickoffAt:new Date('2026-08-30T20:00:00.900Z')});
+  await assert.rejects(createPredictionOutcomeValidationPersistence(pool).persist({outcome:{...outcomeInput,occurredAt:'2026-08-30T20:00:00.500Z',observedAt:'2026-08-30T20:00:01.000Z'},validation:{...validationInput,validatedAt:'2026-08-30T20:00:02.000Z'}}),error=>error.statusCode===409&&error.message==='OUTCOME_MUST_FOLLOW_KICKOFF');
+  assert.equal(pool.calls.some(query=>query.includes('INSERT INTO prediction_outcomes')),false);
+  assert.equal(pool.calls.at(-1),'ROLLBACK');
 });
 
 test('partial validation failure fully rolls back and changed same identity rejects',async()=>{
