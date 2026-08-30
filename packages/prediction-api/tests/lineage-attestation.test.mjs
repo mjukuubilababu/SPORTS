@@ -266,6 +266,15 @@ test('live attestation binds declared feature version to joined feature lineage'
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
+test('live attestation rejects a snapshot created after its freeze time',async()=>{
+  const preMatchSnapshot={...liveSnapshot(),createdAt:'2026-08-26T15:06:00.000Z'};
+  const row=attestationRow({signalPayload:preMatchSnapshot});
+  const inputPayload=liveInputFor(row,preMatchSnapshot);
+  const predictionPayload=deterministicPredictionOutput('/v1/predict/live',inputPayload);
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V1',prediction_source_observed_at:inputPayload.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
 test('live attestation binds consumed payload freeze time to frozen signal row',async()=>{
   const preMatchSnapshot={...liveSnapshot(),frozenAt:'2026-08-26T15:06:00.000Z'};
   const row=attestationRow({signalPayload:preMatchSnapshot});
