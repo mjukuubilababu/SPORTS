@@ -10,7 +10,7 @@ export function sha256Json(value){return createHash('sha256').update(JSON.string
 export function sha256ReferencePayload(value){return createHash('sha256').update(typeof value==='string'?value:JSON.stringify(stable(value))).digest('hex');}
 function persistenceError(message,statusCode=503,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function exactHash(value){return typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);}
-export function canonicalScalarIdentity(value){return typeof value==='string'?value:(typeof value==='number'&&Number.isFinite(value)?String(value):null);}
+export function canonicalScalarIdentity(value){return typeof value==='string'?value.trim():(typeof value==='number'&&Number.isFinite(value)?String(value):null);}
 export function canonicalInputTimestamp(value){const epoch=Date.parse(value);return Number.isFinite(epoch)?new Date(epoch).toISOString():null;}
 
 function freezeDeterministic(value){if(!value||typeof value!=='object'||Object.isFrozen(value))return value;for(const child of Object.values(value))freezeDeterministic(child);return Object.freeze(value);}
