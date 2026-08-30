@@ -130,6 +130,12 @@ export function createPredictionApiServer({persistence=null}={}){
         const health=await persistence.healthCheck();
         return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:health,capitalState:'LOCKED',realMoney:'NO'});
       }
+      const lineageMatch=req.method==='GET'&&req.url?.match(/^\/v1\/predictions\/([0-9a-f-]+)\/lineage$/i);
+      if(lineageMatch){
+        if(!persistence?.attestPredictionLineage)throw Object.assign(new Error('POSTGRES_LINEAGE_ATTESTATION_REQUIRED'),{statusCode:503});
+        const attestation=await persistence.attestPredictionLineage({snapshotId:lineageMatch[1]});
+        return json(res,200,{apiVersion:API_VERSION,lineageAttestation:attestation,truthOwner:'GATE1',capitalOwner:'GATE6',predictionIsValidation:false,predictionIsExecution:false,capitalState:'LOCKED',realMoney:'NO'});
+      }
       if(req.method==='POST' && req.url==='/v1/predict'){
         const body=await readJson(req);
         const result=orchestrateModelProbabilities(body);
