@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS prediction_outcomes_v01(
   capital_state text NOT NULL CHECK(capital_state='LOCKED'),
   real_money text NOT NULL CHECK(real_money='NO'),
   UNIQUE(outcome_id,event_id),
+  UNIQUE(prediction_snapshot_id),
   UNIQUE(outcome_id,outcome_fingerprint,event_id),
   FOREIGN KEY(prediction_snapshot_id,event_id) REFERENCES prediction_snapshots_v01(snapshot_id,event_id),
   CHECK(observed_at >= occurred_at),
