@@ -1,8 +1,7 @@
-import { sha256Json, sha256ReferencePayload, canonicalInputTimestamp, canonicalScalarIdentity } from './postgres-persistence.mjs';
+import { sha256Json, sha256ReferencePayload, canonicalInputTimestamp } from './postgres-persistence.mjs';
 
 function fail(message,statusCode=409,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function req(value,code){if(typeof value!=='string'||value.trim()==='')throw fail(code,400);return value.trim();}
-function hash(value,code){if(typeof value!=='string'||!/^[0-9a-f]{64}$/.test(value))throw fail(code,400);return value;}
 function timestamp(value,code){const normalized=canonicalInputTimestamp(value);if(normalized===null)throw fail(code,400);return normalized;}
 function integer(value,code){if(!Number.isInteger(value)||value<0)throw fail(code,400);return value;}
 function snapshotPayload(value,code){try{return JSON.parse(JSON.stringify(value));}catch(cause){throw fail(code,400,cause);}}
