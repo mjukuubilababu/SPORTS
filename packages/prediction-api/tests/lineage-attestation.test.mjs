@@ -18,7 +18,8 @@ function attestationRow({payloadJson={value:1},featurePayload={rating:0.8},model
   const signalPayloadFingerprint=sha256ReferencePayload(signalPayload);
   const signalCore={signalSnapshotId:'SIGNAL-ATTEST',eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId,modelFingerprint,signalPayloadFingerprint,kickoffAt:iso('2026-08-26T19:00:00Z'),frozenAt:iso('2026-08-26T15:05:00Z')};
   const signalFingerprint=sha256Json(signalCore);
-  const inputPayload={eventId,persistenceLineage:{frozenSignalSnapshotId:'SIGNAL-ATTEST',frozenSignalFingerprint:signalFingerprint}},predictionPayload={eventId,capitalState:'LOCKED',realMoney:'NO'};
+  const consumedModel={modelVersion:'MODEL_V1',snapshotId:modelSnapshotId,snapshotSha256:modelFingerprint};
+  const inputPayload={eventId,models:[consumedModel],persistenceLineage:{frozenSignalSnapshotId:'SIGNAL-ATTEST',frozenSignalFingerprint:signalFingerprint}},predictionPayload={eventId,audit:{modelSnapshots:[consumedModel]},capitalState:'LOCKED',realMoney:'NO'};
   return {snapshot_id:snapshotId,endpoint:'/v1/predict',snapshot_type:'PREMATCH',event_id:eventId,input_sha256:sha256Json(inputPayload),output_sha256:sha256Json(predictionPayload),input_payload:inputPayload,prediction_payload:predictionPayload,parent_signal_id:null,prediction_capital:'LOCKED',prediction_money:'NO',frozen_signal_snapshot_id:'SIGNAL-ATTEST',frozen_signal_fingerprint:signalFingerprint,link_fingerprint:sha256Json({predictionSnapshotId:snapshotId,eventId,frozenSignalSnapshotId:'SIGNAL-ATTEST',frozenSignalFingerprint:signalFingerprint}),link_capital:'LOCKED',link_money:'NO',signal_kind:'FROZEN_PREDICTION',model_snapshot_id:modelSnapshotId,model_fingerprint:modelFingerprint,signal_fingerprint:signalFingerprint,signal_payload_fingerprint:signalPayloadFingerprint,signal_payload:signalPayload,signal_frozen_at:signalCore.frozenAt,signal_kickoff_at:signalCore.kickoffAt,signal_capital:'LOCKED',signal_money:'NO',model_version:'MODEL_V1',stored_model_fingerprint:modelFingerprint,model_payload_fingerprint:modelPayloadFingerprint,model_payload:modelPayload,model_frozen_at:modelCore.frozenAt,model_kickoff_at:modelCore.kickoffAt,model_capital:'LOCKED',model_money:'NO',feature_sequence:0,feature_lineage_id:featureLineageId,feature_fingerprint:featureFingerprint,model_feature_link_fingerprint:sha256Json(modelFeatureCore),model_feature_capital:'LOCKED',model_feature_money:'NO',feature_id:'FEATURE-ATTEST',feature_name:'rating',feature_version:'V1',feature_payload:featurePayload,feature_created_at:featureCore.createdAt,source_provenance_id:'PROV-ATTEST',source_evidence_fingerprint:sourceEvidenceFingerprint,lineage_fingerprint:sha256Json(featureCore),feature_capital:'LOCKED',feature_money:'NO',observation_id:'OBS-ATTEST',entity_type:'MATCH',entity_id:eventId,evidence_kind:'MODEL_INPUT',provider:null,source:'TEST',source_type:'TEST',source_url:null,observed_at:sourceCore.observedAt,available_at:sourceCore.availableAt,source_captured_at:sourceCore.capturedAt,prediction_cutoff:sourceCore.predictionCutoff,source_payload_fingerprint:sourcePayloadFingerprint,evidence_fingerprint:sourceEvidenceFingerprint,payload_json:payloadJson,pre_match_eligible:true,is_verified:true,source_capital:'LOCKED',source_money:'NO'};
 }
 function persistenceFor(row){return createPredictionPersistenceFromPool({async query(){return {rowCount:1,rows:[row]};},async connect(){throw new Error('not used');}});}
@@ -120,4 +121,14 @@ test('attestation rejects non-scalar event identities instead of coercing them',
   const inputPayload={...row.input_payload,eventId:{id:'A'}};
   const predictionPayload={...row.prediction_payload,eventId:{id:'B'}};
   await assert.rejects(persistenceFor({...row,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+
+test('prematch attestation binds the consumed and reported model to joined lineage',async()=>{
+  const row=attestationRow();
+  const wrong={modelVersion:'MODEL_V1',snapshotId:'OTHER-MODEL',snapshotSha256:'a'.repeat(64)};
+  const inputPayload={...row.input_payload,models:[wrong]};
+  await assert.rejects(persistenceFor({...row,input_payload:inputPayload,input_sha256:sha256Json(inputPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+  const predictionPayload={...row.prediction_payload,audit:{...row.prediction_payload.audit,modelSnapshots:[wrong]}};
+  await assert.rejects(persistenceFor({...row,prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
