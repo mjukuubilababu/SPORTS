@@ -11,7 +11,7 @@ export function sha256ReferencePayload(value){return createHash('sha256').update
 function persistenceError(message,statusCode=503,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function exactHash(value){return typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);}
 
-function deterministicPredictionOutput(endpoint,input){
+export function deterministicPredictionOutput(endpoint,input){
   if(endpoint==='/v1/predict'){
     const result=orchestrateModelProbabilities(input);
     return {apiVersion:'PREDICTION_HTTP_API_V0_1',state:result.status,eventId:result.eventId,market:result.market,selection:result.selection,probability:result.probability??null,breakEvenProbability:result.breakEvenProbability??null,ev:result.ev??null,evidenceMaturity:result.evidenceMaturity??null,criticalBlocks:result.criticalBlocks??[],modelFamilyCount:result.familyCount??0,inputModelCount:result.inputModelCount??0,audit:{orchestratorVersion:result.version,kickoffAt:result.kickoffAt??null,families:result.families??[],modelSnapshots:result.modelSnapshots??[],governance:result.governance??null},capitalState:'LOCKED',realMoney:'NO'};
