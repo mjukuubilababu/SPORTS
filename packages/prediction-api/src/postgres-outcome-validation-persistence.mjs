@@ -3,8 +3,8 @@ import { sha256Json, sha256ReferencePayload, canonicalInputTimestamp } from './p
 function fail(message,statusCode=409,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function req(value,code){if(typeof value!=='string'||value.trim()==='')throw fail(code,400);return value.trim();}
 function uuid(value,code){const normalized=req(value,code).toLowerCase();if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(normalized))throw fail(code,400);return normalized;}
-function timestamp(value,code){const normalized=canonicalInputTimestamp(value);if(normalized===null)throw fail(code,400);return normalized;}
-function integer(value,code){if(!Number.isInteger(value)||value<0)throw fail(code,400);return value;}
+function timestamp(value,code){const normalized=value instanceof Date?(Number.isFinite(value.getTime())?value.toISOString():null):canonicalInputTimestamp(value);if(normalized===null)throw fail(code,400);return normalized;}
+function integer(value,code){if(!Number.isInteger(value)||value<0||value>2147483647)throw fail(code,400);return value;}
 function epoch(value){return value instanceof Date?value.getTime():Date.parse(value);}
 function snapshotPayload(value,code){try{return JSON.parse(JSON.stringify(value));}catch(cause){throw fail(code,400,cause);}}
 
