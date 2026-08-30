@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalInputTimestamp, canonicalModelIdentity, canonicalScalarIdentity, createPredictionPersistenceFromPool, deterministicPredictionOutput, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
+import { canonicalInputTimestamp, canonicalModelIdentity, canonicalScalarIdentity, canonicalTimestampEpoch, createPredictionPersistenceFromPool, deterministicPredictionOutput, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
 
 const iso=value=>new Date(value).toISOString();
 const liveSnapshot=(eventId='ATTEST-E1')=>({snapshotType:'PRE_MATCH',immutable:true,signalId:'SIGNAL-ATTEST',eventId,modelVersion:'MODEL_V1',featureVersion:'V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T14:30:00.000Z',frozenAt:'2026-08-26T15:05:00.000Z',realMoney:'NO'});
@@ -264,6 +264,12 @@ test('live attestation binds declared feature version to joined feature lineage'
   const predictionPayload=deterministicPredictionOutput('/v1/predict/live',inputPayload);
   const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V2',prediction_source_observed_at:inputPayload.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+test('live snapshot chronology compares accepted extended years by epoch',()=>{
+  const createdAt='+010000-01-01T00:00:00.000Z',frozenAt='2026-08-26T15:05:00.000Z';
+  assert.ok(canonicalTimestampEpoch(createdAt)>canonicalTimestampEpoch(frozenAt));
+  assert.ok(canonicalInputTimestamp(createdAt)<canonicalInputTimestamp(frozenAt));
 });
 
 test('persistence rejects incomplete live snapshot timestamps before database acquisition',async()=>{
