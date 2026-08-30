@@ -241,13 +241,13 @@ test('live attestation binds stored feature and observed-at projections to outpu
 });
 
 
-test('live attestation canonicalizes an accepted numeric feature version projection',async()=>{
+test('live attestation rejects a numeric feature version absent from joined lineage',async()=>{
   const preMatchSnapshot={...liveSnapshot(),featureVersion:1};
   const row=attestationRow({signalPayload:preMatchSnapshot});
   const inputPayload=liveInputFor(row,preMatchSnapshot);
   const predictionPayload=deterministicPredictionOutput('/v1/predict/live',inputPayload);
   const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'1',prediction_source_observed_at:inputPayload.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
-  assert.equal((await persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id})).status,'ATTESTED');
+  await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
 
