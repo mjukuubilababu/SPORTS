@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createPredictionApiServer } from '../src/server.mjs';
+import { createPredictionPersistenceFromPool } from '../src/postgres-persistence.mjs';
 
 function payload(){
   return {
@@ -48,4 +49,24 @@ test('health endpoint fails closed when configured PostgreSQL is unavailable',as
     assert.equal(response.status,503);
     assert.equal(body.error,'POSTGRES_PERSISTENCE_UNAVAILABLE');
   });
+});
+
+
+test('pool acquisition failure is sanitized as stable 503 persistence failure',async()=>{
+  const pool={
+    query(){throw new Error('not used');},
+    async connect(){throw new Error('connect ECONNREFUSED postgresql://secret-host');}
+  };
+  const persistence=createPredictionPersistenceFromPool(pool);
+  const input=payload();
+  input.persistenceLineage={frozenSignalSnapshotId:'SIGNAL-X',frozenSignalFingerprint:'a'.repeat(64)};
+  await assert.rejects(
+    persistence.persistPrediction({
+      requestId:'connect-failure',
+      endpoint:'/v1/predict',
+      input,
+      output:{eventId:input.eventId,market:input.market,selection:input.selection,capitalState:'LOCKED',realMoney:'NO'}
+    }),
+    error=>error?.message==='POSTGRES_PERSISTENCE_WRITE_FAILED'&&error?.statusCode===503&&!error.message.includes('secret-host')
+  );
 });

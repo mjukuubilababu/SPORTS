@@ -1,16 +1,44 @@
 {
-  "capability":"prediction-http-api",
-  "version":"v0.1",
-  "transport":"HTTP_JSON",
-  "endpoints":[
-    {"method":"GET","path":"/health","purpose":"service health and governance state"},
-    {"method":"POST","path":"/v1/predict","purpose":"invoke canonical multi-model probability orchestrator"}
+  "capability": "prediction-http-api",
+  "version": "v0.1",
+  "transport": "HTTP_JSON",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "purpose": "service health and governance state"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/predict",
+      "purpose": "invoke canonical multi-model probability orchestrator"
+    }
   ],
-  "predict_required_fields":["eventId","market","selection","kickoffAt","models","offeredOdds","confidence"],
-  "model_logic_duplicated_in_api":false,
-  "market_to_model_circularity_forbidden":true,
-  "max_body_bytes":1048576,
-  "cache_control":"no-store",
-  "capital_state":"LOCKED",
-  "real_money":"NO"
+  "predict_required_fields": [
+    "eventId",
+    "market",
+    "selection",
+    "kickoffAt",
+    "models",
+    "offeredOdds",
+    "confidence"
+  ],
+  "model_logic_duplicated_in_api": false,
+  "market_to_model_circularity_forbidden": true,
+  "max_body_bytes": 1048576,
+  "cache_control": "no-store",
+  "capital_state": "LOCKED",
+  "real_money": "NO",
+  "postgres_persistence": {
+    "version": "v0.2",
+    "required_lineage_input_when_enabled": [
+      "persistenceLineage.frozenSignalSnapshotId",
+      "persistenceLineage.frozenSignalFingerprint"
+    ],
+    "exact_event_bound_frozen_signal_fk": true,
+    "atomic_prediction_and_lineage_transaction": true,
+    "dedicated_pool_client": true,
+    "fail_closed": true,
+    "parallel_prediction_store": false
+  }
 }
