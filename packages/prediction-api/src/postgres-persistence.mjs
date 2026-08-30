@@ -33,6 +33,10 @@ function assertPersistenceInput({requestId,endpoint,input,output}){
   if(!output||typeof output!=='object'||Array.isArray(output))throw persistenceError('PERSISTENCE_OUTPUT_OBJECT_REQUIRED',400);
   if(!output.eventId)throw persistenceError('PERSISTENCE_EVENT_ID_REQUIRED',400);
   if(endpoint==='/v1/predict'&&(!Array.isArray(input.models)||input.models.length!==1))throw persistenceError('PERSISTENCE_SINGLE_MODEL_LINEAGE_REQUIRED',409);
+  if(endpoint==='/v1/predict/live'){
+    const createdAt=canonicalInputTimestamp(input.preMatchSnapshot?.createdAt),frozenAt=canonicalInputTimestamp(input.preMatchSnapshot?.frozenAt);
+    if(createdAt===null||frozenAt===null||createdAt>frozenAt)throw persistenceError('PERSISTENCE_LIVE_SNAPSHOT_TIMESTAMPS_INVALID',409);
+  }
   if(output.capitalState!=='LOCKED'||output.realMoney!=='NO')throw persistenceError('PERSISTENCE_CAPITAL_GOVERNANCE_VIOLATION',500);
   const lineage=input.persistenceLineage;
   if(!lineage||typeof lineage!=='object'||Array.isArray(lineage))throw persistenceError('PERSISTENCE_FROZEN_SIGNAL_LINEAGE_REQUIRED',409);
