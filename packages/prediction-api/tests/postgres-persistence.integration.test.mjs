@@ -96,6 +96,26 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(stored.frozen_signal_snapshot_id,PREMATCH_LINEAGE.persistenceLineage.frozenSignalSnapshotId);
   assert.equal(stored.frozen_signal_fingerprint,PREMATCH_LINEAGE.persistenceLineage.frozenSignalFingerprint);
 
+  const prematchAttestation=await persistence.attestPredictionLineage({snapshotId:stored.snapshot_id});
+  assert.equal(prematchAttestation.status,'ATTESTED');
+  assert.equal(prematchAttestation.eventId,'PG-E1');
+  assert.equal(prematchAttestation.exactEventBound,true);
+  assert.equal(prematchAttestation.prematchEvidenceOnly,true);
+  assert.equal(prematchAttestation.settlementSeparate,true);
+  assert.equal(prematchAttestation.features.length,1);
+  assert.equal(prematchAttestation.authorizesValidation,false);
+  assert.equal(prematchAttestation.authorizesExecution,false);
+  assert.equal(prematchAttestation.capitalState,'LOCKED');
+  assert.equal(prematchAttestation.realMoney,'NO');
+  const attestationResponse=await fetch(`${base}/v1/predictions/${stored.snapshot_id}/lineage`);
+  assert.equal(attestationResponse.status,200);
+  const attestationBody=await attestationResponse.json();
+  assert.equal(attestationBody.lineageAttestation.snapshotId,stored.snapshot_id);
+  assert.equal(attestationBody.truthOwner,'GATE1');
+  assert.equal(attestationBody.capitalOwner,'GATE6');
+  assert.equal(attestationBody.predictionIsValidation,false);
+  assert.equal(attestationBody.predictionIsExecution,false);
+
   const duplicate=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json','x-request-id':requestId},body:JSON.stringify(input)});
   assert.equal(duplicate.status,200);
   const sameRow=await persistence.getByRequest({requestId,endpoint:'/v1/predict'});
@@ -123,6 +143,9 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(liveStored.model_version,'POISSON_V1');
   assert.equal(liveStored.feature_version,'FEATURE_V1');
   assert.equal(liveStored.frozen_signal_snapshot_id,LIVE_LINEAGE.persistenceLineage.frozenSignalSnapshotId);
+  const liveAttestation=await persistence.attestPredictionLineage({snapshotId:liveStored.snapshot_id});
+  assert.equal(liveAttestation.status,'ATTESTED');
+  assert.equal(liveAttestation.frozenSignalSnapshotId,'PG-LIVE-SIGNAL-1');
 
   const badRequestId='pg-cross-event-'+randomUUID();
   const badInput=prematchPayload();
@@ -149,5 +172,11 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(legacy.frozen_signal_snapshot_id,null);
   assert.equal(legacy.frozen_signal_fingerprint,null);
   assert.equal(legacy.link_fingerprint,null);
+  await assert.rejects(persistence.attestPredictionLineage({snapshotId:legacySnapshotId}),error=>error?.message==='PREDICTION_LINEAGE_NOT_ATTESTABLE'&&error?.statusCode===409);
+  const legacyResponse=await fetch(`${base}/v1/predictions/${legacySnapshotId}/lineage`);
+  assert.equal(legacyResponse.status,409);
+  assert.equal((await legacyResponse.json()).error,'PREDICTION_LINEAGE_NOT_ATTESTABLE');
+  const missingId=randomUUID();
+  await assert.rejects(persistence.attestPredictionLineage({snapshotId:missingId}),error=>error?.message==='PREDICTION_SNAPSHOT_NOT_FOUND'&&error?.statusCode===404);
   await verifyPool.end();
 });
