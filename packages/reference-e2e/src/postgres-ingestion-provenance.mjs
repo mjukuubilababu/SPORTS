@@ -216,12 +216,12 @@ export function prepareFeatureProvenanceLineage(input) {
     sourceEvidenceFingerprint: input.sourceEvidenceFingerprint,
     createdAt
   });
-  return Object.freeze({ ...core, lineageFingerprint: sha256(core), capitalState: 'LOCKED', realMoney: 'NO' });
+  return Object.freeze({ ...core, featurePayload: structuredClone(input.featurePayload), lineageFingerprint: sha256(core), capitalState: 'LOCKED', realMoney: 'NO' });
 }
 
 async function verifyLineage(client, expected) {
   const result = await client.query(
-    `SELECT lineage_id,feature_id,event_id,feature_name,feature_version,feature_fingerprint,
+    `SELECT lineage_id,feature_id,event_id,feature_name,feature_version,feature_fingerprint,feature_payload,
             source_provenance_id,source_evidence_fingerprint,lineage_fingerprint,created_at,
             capital_state,real_money
        FROM reference_feature_provenance_lineage_v01 WHERE lineage_id=$1`,
@@ -241,6 +241,7 @@ async function verifyLineage(client, expected) {
     createdAt: dbIso(row.created_at)
   });
   if (sha256(core) !== expected.lineageFingerprint || row.lineage_fingerprint !== expected.lineageFingerprint ||
+      sha256(row.feature_payload) !== expected.featureFingerprint ||
       row.capital_state !== 'LOCKED' || row.real_money !== 'NO') {
     throw fail(`POSTGRES_FEATURE_LINEAGE_IMMUTABILITY_CONFLICT:${expected.lineageId}`);
   }
@@ -249,11 +250,11 @@ async function verifyLineage(client, expected) {
 async function insertLineage(client, row) {
   await client.query(
     `INSERT INTO reference_feature_provenance_lineage_v01(
-       lineage_id,feature_id,event_id,feature_name,feature_version,feature_fingerprint,
+       lineage_id,feature_id,event_id,feature_name,feature_version,feature_fingerprint,feature_payload,
        source_provenance_id,source_evidence_fingerprint,lineage_fingerprint,created_at,capital_state,real_money
-     ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'LOCKED','NO')
+     ) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,'LOCKED','NO')
      ON CONFLICT (lineage_id) DO NOTHING`,
-    [row.lineageId,row.featureId,row.eventId,row.featureName,row.featureVersion,row.featureFingerprint,
+    [row.lineageId,row.featureId,row.eventId,row.featureName,row.featureVersion,row.featureFingerprint,JSON.stringify(row.featurePayload),
       row.sourceProvenanceId,row.sourceEvidenceFingerprint,row.lineageFingerprint,row.createdAt]
   );
   await verifyLineage(client, row);
