@@ -21,11 +21,14 @@ function lineageFixture(eventId,prefix,kickoffAt){
   const source=prepareIngestionObservation(observation);
   const featureInput={lineageId:'API-FEATURE-LINEAGE-'+prefix,featureId:'API-FEATURE-'+prefix,eventId,featureName:'api_model_input',featureVersion:'FEATURE_V1',featurePayload:{value:1},sourceProvenanceId:source.provenanceId,sourceEvidenceFingerprint:source.evidenceFingerprint,createdAt:'2026-08-26T14:05:00.000Z'};
   const feature=prepareFeatureProvenanceLineage(featureInput);
-  const modelInput={modelSnapshotId:'API-MODEL-'+prefix,eventId,modelVersion:'POISSON_V1',payload:{lambda:2.4},kickoffAt,frozenAt:'2026-08-26T15:00:00.000Z',features:[{featureLineageId:feature.lineageId,featureFingerprint:feature.featureFingerprint}]};
-  const model=prepareModelSnapshot(modelInput);
-  const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:model.modelSnapshotId,modelFingerprint:model.modelFingerprint,payload:{eventId,market:'LINEAGE_SOURCE'},kickoffAt,frozenAt:'2026-08-26T15:05:00.000Z'};
+  const modelSnapshotId='API-MODEL-'+prefix;
+  const modelPayload=prefix==='PREMATCH'?((({snapshotSha256,...payload})=>payload)(model({snapshotId:modelSnapshotId}))):{lambda:2.4};
+  const modelInput={modelSnapshotId,eventId,modelVersion:'POISSON_V1',payload:modelPayload,kickoffAt,frozenAt:'2026-08-26T15:00:00.000Z',features:[{featureLineageId:feature.lineageId,featureFingerprint:feature.featureFingerprint}]};
+  const preparedModel=prepareModelSnapshot(modelInput);
+  const signalPayload=prefix==='LIVE'?createPreMatchOutcomeSnapshot({signalId:'PG-LIVE-SIGNAL-1',eventId,modelVersion:preparedModel.modelVersion,featureVersion:'FEATURE_V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T17:55:00Z',frozenAt:'2026-08-26T18:00:00Z'}):{eventId,market:'LINEAGE_SOURCE'};
+  const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:preparedModel.modelSnapshotId,modelFingerprint:preparedModel.modelFingerprint,payload:signalPayload,kickoffAt,frozenAt:prefix==='LIVE'?'2026-08-26T18:00:00.000Z':'2026-08-26T15:05:00.000Z'};
   const signal=prepareFrozenSignal(signalInput);
-  return{observation,featureInput,modelInput,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
+  return{observation,featureInput,modelInput,modelSnapshot:preparedModel,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
 }
 const PREMATCH_LINEAGE=lineageFixture('PG-E1','PREMATCH','2026-08-26T19:00:00.000Z');
 const LIVE_LINEAGE=lineageFixture('PG-LIVE-E1','LIVE','2026-08-26T19:00:00.000Z');
@@ -44,14 +47,11 @@ function model(overrides={}){
 }
 
 function prematchPayload(){
-  return {persistenceLineage:PREMATCH_LINEAGE.persistenceLineage,eventId:'PG-E1',market:'TOTAL_3_5',selection:'UNDER',kickoffAt:'2026-08-26T19:00:00Z',models:[model()],offeredOdds:1.9,confidence:{score:0.9,criticalBlocks:[]}};
+  return {persistenceLineage:PREMATCH_LINEAGE.persistenceLineage,eventId:'PG-E1',market:'TOTAL_3_5',selection:'UNDER',kickoffAt:'2026-08-26T19:00:00Z',models:[model({snapshotId:PREMATCH_LINEAGE.modelSnapshot.modelSnapshotId,snapshotSha256:PREMATCH_LINEAGE.modelSnapshot.modelFingerprint})],offeredOdds:1.9,confidence:{score:0.9,criticalBlocks:[]}};
 }
 
 function livePayload(){
-  const preMatchSnapshot=createPreMatchOutcomeSnapshot({
-    signalId:'PG-LIVE-SIGNAL-1',eventId:'PG-LIVE-E1',modelVersion:'POISSON_V1',featureVersion:'FEATURE_V1',
-    homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T17:55:00Z',frozenAt:'2026-08-26T18:00:00Z'
-  });
+  const preMatchSnapshot=LIVE_LINEAGE.signalInput.payload;
   return {
     persistenceLineage:LIVE_LINEAGE.persistenceLineage,
     preMatchSnapshot,
@@ -96,6 +96,26 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(stored.frozen_signal_snapshot_id,PREMATCH_LINEAGE.persistenceLineage.frozenSignalSnapshotId);
   assert.equal(stored.frozen_signal_fingerprint,PREMATCH_LINEAGE.persistenceLineage.frozenSignalFingerprint);
 
+  const prematchAttestation=await persistence.attestPredictionLineage({snapshotId:stored.snapshot_id});
+  assert.equal(prematchAttestation.status,'ATTESTED');
+  assert.equal(prematchAttestation.eventId,'PG-E1');
+  assert.equal(prematchAttestation.exactEventBound,true);
+  assert.equal(prematchAttestation.prematchEvidenceOnly,true);
+  assert.equal(prematchAttestation.settlementSeparate,true);
+  assert.equal(prematchAttestation.features.length,1);
+  assert.equal(prematchAttestation.authorizesValidation,false);
+  assert.equal(prematchAttestation.authorizesExecution,false);
+  assert.equal(prematchAttestation.capitalState,'LOCKED');
+  assert.equal(prematchAttestation.realMoney,'NO');
+  const attestationResponse=await fetch(`${base}/v1/predictions/${stored.snapshot_id}/lineage`);
+  assert.equal(attestationResponse.status,200);
+  const attestationBody=await attestationResponse.json();
+  assert.equal(attestationBody.lineageAttestation.snapshotId,stored.snapshot_id);
+  assert.equal(attestationBody.truthOwner,'GATE1');
+  assert.equal(attestationBody.capitalOwner,'GATE6');
+  assert.equal(attestationBody.predictionIsValidation,false);
+  assert.equal(attestationBody.predictionIsExecution,false);
+
   const duplicate=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json','x-request-id':requestId},body:JSON.stringify(input)});
   assert.equal(duplicate.status,200);
   const sameRow=await persistence.getByRequest({requestId,endpoint:'/v1/predict'});
@@ -123,6 +143,9 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(liveStored.model_version,'POISSON_V1');
   assert.equal(liveStored.feature_version,'FEATURE_V1');
   assert.equal(liveStored.frozen_signal_snapshot_id,LIVE_LINEAGE.persistenceLineage.frozenSignalSnapshotId);
+  const liveAttestation=await persistence.attestPredictionLineage({snapshotId:liveStored.snapshot_id});
+  assert.equal(liveAttestation.status,'ATTESTED');
+  assert.equal(liveAttestation.frozenSignalSnapshotId,'PG-LIVE-SIGNAL-1');
 
   const badRequestId='pg-cross-event-'+randomUUID();
   const badInput=prematchPayload();
@@ -149,5 +172,11 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   assert.equal(legacy.frozen_signal_snapshot_id,null);
   assert.equal(legacy.frozen_signal_fingerprint,null);
   assert.equal(legacy.link_fingerprint,null);
+  await assert.rejects(persistence.attestPredictionLineage({snapshotId:legacySnapshotId}),error=>error?.message==='PREDICTION_LINEAGE_NOT_ATTESTABLE'&&error?.statusCode===409);
+  const legacyResponse=await fetch(`${base}/v1/predictions/${legacySnapshotId}/lineage`);
+  assert.equal(legacyResponse.status,409);
+  assert.equal((await legacyResponse.json()).error,'PREDICTION_LINEAGE_NOT_ATTESTABLE');
+  const missingId=randomUUID();
+  await assert.rejects(persistence.attestPredictionLineage({snapshotId:missingId}),error=>error?.message==='PREDICTION_SNAPSHOT_NOT_FOUND'&&error?.statusCode===404);
   await verifyPool.end();
 });

@@ -12,6 +12,11 @@
       "method": "POST",
       "path": "/v1/predict",
       "purpose": "invoke canonical multi-model probability orchestrator"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/predictions/{snapshotId}/lineage",
+      "purpose": "read-only exact source-to-prediction lineage attestation for downstream consumers"
     }
   ],
   "predict_required_fields": [
@@ -39,6 +44,36 @@
     "atomic_prediction_and_lineage_transaction": true,
     "dedicated_pool_client": true,
     "fail_closed": true,
-    "parallel_prediction_store": false
+    "parallel_prediction_store": false,
+    "downstream_lineage_attestation": {
+      "version": "v0.1",
+      "chain": [
+        "PREDICTION_SNAPSHOT",
+        "FROZEN_SIGNAL",
+        "MODEL_SNAPSHOT",
+        "FEATURE_SNAPSHOT",
+        "SOURCE_PROVENANCE"
+      ],
+      "exact_event_bound": true,
+      "input_and_output_hashes_recomputed": true,
+      "prematch_eligibility_rechecked": true,
+      "settlement_separate": true,
+      "legacy_unlinked_rows_fail_closed": true,
+      "authorizes_validation": false,
+      "authorizes_execution": false,
+      "truth_owner": "GATE1",
+      "capital_owner": "GATE6",
+      "capital_state": "LOCKED",
+      "real_money": "NO",
+      "all_persisted_fingerprints_recomputed": true,
+      "complete_contiguous_feature_set_required": true,
+      "model_and_signal_kickoff_must_match": true,
+      "model_freeze_must_not_follow_signal_freeze": true,
+      "feature_payload_upgrade_policy": "LEGACY_NULL_FAIL_CLOSED",
+      "reference_payload_hash_semantics": "RAW_STRING_OTHERWISE_STABLE_JSON",
+      "prediction_payload_event_must_match_chain": true,
+      "input_event_must_match_chain": true,
+      "declared_input_lineage_must_match_joined_signal": true
+    }
   }
 }

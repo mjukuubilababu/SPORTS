@@ -70,3 +70,44 @@ test('pool acquisition failure is sanitized as stable 503 persistence failure',a
     error=>error?.message==='POSTGRES_PERSISTENCE_WRITE_FAILED'&&error?.statusCode===503&&!error.message.includes('secret-host')
   );
 });
+
+
+test('lineage attestation endpoint fails closed without PostgreSQL persistence',async()=>{
+  await withServer(null,async base=>{
+    const response=await fetch(`${base}/v1/predictions/00000000-0000-4000-8000-000000000001/lineage`);
+    assert.equal(response.status,503);
+    const body=await response.json();
+    assert.equal(body.error,'POSTGRES_LINEAGE_ATTESTATION_REQUIRED');
+    assert.equal(body.capitalState,'LOCKED');
+    assert.equal(body.realMoney,'NO');
+  });
+});
+
+test('lineage attestation rejects invalid ids and sanitizes database read failure',async()=>{
+  const pool={
+    async query(){throw new Error('read ECONNRESET postgresql://secret-host');},
+    async connect(){throw new Error('not used');}
+  };
+  const persistence=createPredictionPersistenceFromPool(pool);
+  await assert.rejects(persistence.attestPredictionLineage({snapshotId:'not-a-uuid'}),error=>error?.message==='PREDICTION_SNAPSHOT_ID_INVALID'&&error?.statusCode===400);
+  await assert.rejects(
+    persistence.attestPredictionLineage({snapshotId:'00000000-0000-4000-8000-000000000001'}),
+    error=>error?.message==='POSTGRES_LINEAGE_ATTESTATION_READ_FAILED'&&error?.statusCode===503&&!error.message.includes('secret-host')
+  );
+});
+
+
+test('PostgreSQL persistence rejects multi-model prematch writes it cannot attest exactly',async()=>{
+  const pool={async query(){throw new Error('not used');},async connect(){throw new Error('must reject before pool acquisition');}};
+  const persistence=createPredictionPersistenceFromPool(pool);
+  const input=payload();
+  input.models.push({...input.models[0],modelVersion:'POISSON_V2',snapshotId:'FAIL-S2',snapshotSha256:'b'.repeat(64)});
+  input.persistenceLineage={frozenSignalSnapshotId:'SIGNAL-X',frozenSignalFingerprint:'a'.repeat(64)};
+  await assert.rejects(persistence.persistPrediction({requestId:'multi-model',endpoint:'/v1/predict',input,output:{eventId:input.eventId,market:input.market,selection:input.selection,capitalState:'LOCKED',realMoney:'NO'}}),error=>error?.message==='PERSISTENCE_SINGLE_MODEL_LINEAGE_REQUIRED'&&error?.statusCode===409);
+});
+
+
+test('health readiness fails closed when upstream attestation schema is incomplete',async()=>{
+  const pool={async query(){return {rows:[{table_name:'prediction_snapshots_v01',lineage_table:'prediction_snapshot_frozen_signal_lineage_v01',observations_table:'reference_ingestion_observations_v01',features_table:'reference_feature_provenance_lineage_v01',models_table:'reference_model_snapshots_v01',model_features_table:'reference_model_feature_lineage_v01',signals_table:'reference_frozen_signal_snapshots_v01',feature_payload_ready:false}]};},async connect(){throw new Error('not used');}};
+  await assert.rejects(createPredictionPersistenceFromPool(pool).healthCheck(),error=>error?.message==='POSTGRES_PERSISTENCE_UNAVAILABLE'&&error?.statusCode===503);
+});

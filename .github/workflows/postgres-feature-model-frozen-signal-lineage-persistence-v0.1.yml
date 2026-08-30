@@ -6,6 +6,7 @@ on:
     paths:
       - 'packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql'
       - 'packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql'
+      - 'packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql'
       - 'packages/reference-e2e/src/postgres-feature-model-signal-lineage.mjs'
       - 'packages/reference-e2e/tests/postgres-feature-model-signal-lineage.integration.mjs'
       - 'contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0.1.json'
@@ -55,18 +56,45 @@ jobs:
           print('FEATURE_MODEL_SIGNAL_GOVERNANCE=PASS')
           PY
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            allowed='^(\.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.yml|contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.json|packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1\.sql|packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1\.sql|packages/reference-e2e/src/postgres-feature-model-signal-lineage\.mjs|packages/reference-e2e/tests/postgres-feature-model-signal-lineage\.integration\.mjs)$'
-            unexpected="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -Ev "$allowed" || true)"
-            test -z "$unexpected"
+            python - <<'PY'
+          import subprocess
+          allowed = {
+            '.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0.1.yml',
+            '.github/workflows/postgres-ingestion-provenance-persistence-v0.1.yml',
+            '.github/workflows/postgres-core-runtime-persistence-v0.1.yml',
+            '.github/workflows/postgres-run-lease-ownership-fencing-v0.1.yml',
+            '.github/workflows/postgres-runtime-evidence-persistence-v0.1.yml',
+            '.github/workflows/postgres-stage-checkpoint-crash-recovery-v0.1.yml',
+            '.github/workflows/prediction-http-api.yml',
+            'contracts/prediction-http-api-v0.1.json',
+            'contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0.1.json',
+            'packages/prediction-api/src/postgres-persistence.mjs',
+            'packages/prediction-api/src/server.mjs',
+            'packages/prediction-api/tests/lineage-attestation.test.mjs',
+            'packages/prediction-api/tests/persistence-failclosed.test.mjs',
+            'packages/prediction-api/tests/postgres-persistence.integration.test.mjs',
+            'packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql',
+            'packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql',
+            'packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql',
+            'packages/reference-e2e/src/postgres-feature-model-signal-lineage.mjs',
+            'packages/reference-e2e/src/postgres-ingestion-provenance.mjs',
+            'packages/reference-e2e/tests/postgres-feature-model-signal-lineage.integration.mjs',
+          }
+          changed = subprocess.check_output(['git','diff','--name-only','${{ github.event.pull_request.base.sha }}...HEAD'], text=True).splitlines()
+          unexpected = sorted(set(changed) - allowed)
+          assert not unexpected, f'Unexpected files: {unexpected}'
+          PY
           fi
       - name: Apply PostgreSQL migration chain twice
         run: |
           set -euo pipefail
-          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql; do
+          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql; do
             psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
           done
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT column_name FROM information_schema.columns WHERE table_name='reference_feature_provenance_lineage_v01' AND column_name='feature_payload'")" = "feature_payload"
       - name: Verify existing-schema upgrade path
         run: |
           set -euo pipefail
