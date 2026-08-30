@@ -257,6 +257,15 @@ test('kickoff canonicalization matches orchestrator Date.parse semantics for num
 });
 
 
+test('live attestation binds declared feature version to joined feature lineage',async()=>{
+  const preMatchSnapshot={...liveSnapshot(),featureVersion:'V2'};
+  const row=attestationRow({signalPayload:preMatchSnapshot});
+  const inputPayload=liveInputFor(row,preMatchSnapshot);
+  const predictionPayload=deterministicPredictionOutput('/v1/predict/live',inputPayload);
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V2',prediction_source_observed_at:inputPayload.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
 test('model identity canonicalization matches PostgreSQL text projections',()=>{
   assert.equal(canonicalScalarIdentity(7),'7');
   assert.equal(canonicalScalarIdentity('MODEL-7'),'MODEL-7');
