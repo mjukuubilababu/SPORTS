@@ -41,8 +41,9 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
       const inputSha256=sha256Json(input),outputSha256=sha256Json(output),persistedAt=clock().toISOString();
       const parentSignalId=output.audit?.parentSignalId??null,modelVersion=output.audit?.modelVersion??null;
       const featureVersion=output.audit?.featureVersion??null,sourceObservedAt=output.audit?.observedAt??null;
-      const client=await pool.connect();
+      let client=null;
       try{
+        client=await pool.connect();
         await client.query('BEGIN');
         const source=await client.query("SELECT signal_kind FROM reference_frozen_signal_snapshots_v01 WHERE signal_snapshot_id=$1 AND signal_fingerprint=$2 AND event_id=$3",[lineage.frozenSignalSnapshotId,lineage.frozenSignalFingerprint,String(output.eventId)]);
         if(source.rowCount!==1||!['FROZEN_SIGNAL','FROZEN_PREDICTION'].includes(source.rows[0].signal_kind))throw persistenceError('PERSISTENCE_FROZEN_SIGNAL_LINEAGE_NOT_EXACT',409);
@@ -63,10 +64,10 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
         await client.query('COMMIT');
         return Object.freeze({status:duplicate?'ALREADY_PERSISTED':'PERSISTED',duplicate,snapshotId:activeSnapshotId,inputSha256,outputSha256,frozenSignalSnapshotId:lineage.frozenSignalSnapshotId,frozenSignalFingerprint:lineage.frozenSignalFingerprint});
       }catch(error){
-        await client.query('ROLLBACK').catch(()=>{});
+        if(client)await client.query('ROLLBACK').catch(()=>{});
         if(error?.statusCode)throw error;
         throw persistenceError('POSTGRES_PERSISTENCE_WRITE_FAILED',503,error);
-      }finally{client.release();}
+      }finally{client?.release();}
     },
     async getByRequest({requestId,endpoint}){
       try{
