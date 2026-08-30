@@ -21,7 +21,7 @@ function attestationRow({payloadJson={value:1},featurePayload={rating:0.8},model
   const signalFingerprint=sha256Json(signalCore);
   const consumedModel={modelVersion:'MODEL_V1',snapshotId:modelSnapshotId,snapshotSha256:modelFingerprint};
   const inputPayload={eventId,models:[consumedModel],persistenceLineage:{frozenSignalSnapshotId:'SIGNAL-ATTEST',frozenSignalFingerprint:signalFingerprint}},predictionPayload={eventId,audit:{modelSnapshots:[consumedModel]},capitalState:'LOCKED',realMoney:'NO'};
-  return {snapshot_id:snapshotId,endpoint:'/v1/predict',snapshot_type:'PREMATCH',event_id:eventId,input_sha256:sha256Json(inputPayload),output_sha256:sha256Json(predictionPayload),input_payload:inputPayload,prediction_payload:predictionPayload,parent_signal_id:null,prediction_capital:'LOCKED',prediction_money:'NO',frozen_signal_snapshot_id:'SIGNAL-ATTEST',frozen_signal_fingerprint:signalFingerprint,link_fingerprint:sha256Json({predictionSnapshotId:snapshotId,eventId,frozenSignalSnapshotId:'SIGNAL-ATTEST',frozenSignalFingerprint:signalFingerprint}),link_capital:'LOCKED',link_money:'NO',signal_kind:'FROZEN_PREDICTION',model_snapshot_id:modelSnapshotId,model_fingerprint:modelFingerprint,signal_fingerprint:signalFingerprint,signal_payload_fingerprint:signalPayloadFingerprint,signal_payload:signalPayload,signal_frozen_at:signalCore.frozenAt,signal_kickoff_at:signalCore.kickoffAt,signal_capital:'LOCKED',signal_money:'NO',model_version:'MODEL_V1',stored_model_fingerprint:modelFingerprint,model_payload_fingerprint:modelPayloadFingerprint,model_payload:modelPayload,model_frozen_at:modelCore.frozenAt,model_kickoff_at:modelCore.kickoffAt,model_capital:'LOCKED',model_money:'NO',feature_sequence:0,feature_lineage_id:featureLineageId,feature_fingerprint:featureFingerprint,model_feature_link_fingerprint:sha256Json(modelFeatureCore),model_feature_capital:'LOCKED',model_feature_money:'NO',feature_id:'FEATURE-ATTEST',feature_name:'rating',feature_version:'V1',feature_payload:featurePayload,feature_created_at:featureCore.createdAt,source_provenance_id:'PROV-ATTEST',source_evidence_fingerprint:sourceEvidenceFingerprint,lineage_fingerprint:sha256Json(featureCore),feature_capital:'LOCKED',feature_money:'NO',observation_id:'OBS-ATTEST',entity_type:'MATCH',entity_id:eventId,evidence_kind:'MODEL_INPUT',provider:null,source:'TEST',source_type:'TEST',source_url:null,observed_at:sourceCore.observedAt,available_at:sourceCore.availableAt,source_captured_at:sourceCore.capturedAt,prediction_cutoff:sourceCore.predictionCutoff,source_payload_fingerprint:sourcePayloadFingerprint,evidence_fingerprint:sourceEvidenceFingerprint,payload_json:payloadJson,pre_match_eligible:true,is_verified:true,source_capital:'LOCKED',source_money:'NO'};
+  return {snapshot_id:snapshotId,endpoint:'/v1/predict',snapshot_type:'PREMATCH',event_id:eventId,input_sha256:sha256Json(inputPayload),output_sha256:sha256Json(predictionPayload),input_payload:inputPayload,prediction_payload:predictionPayload,parent_signal_id:null,prediction_model_version:null,prediction_capital:'LOCKED',prediction_money:'NO',frozen_signal_snapshot_id:'SIGNAL-ATTEST',frozen_signal_fingerprint:signalFingerprint,link_fingerprint:sha256Json({predictionSnapshotId:snapshotId,eventId,frozenSignalSnapshotId:'SIGNAL-ATTEST',frozenSignalFingerprint:signalFingerprint}),link_capital:'LOCKED',link_money:'NO',signal_kind:'FROZEN_PREDICTION',model_snapshot_id:modelSnapshotId,model_fingerprint:modelFingerprint,signal_fingerprint:signalFingerprint,signal_payload_fingerprint:signalPayloadFingerprint,signal_payload:signalPayload,signal_frozen_at:signalCore.frozenAt,signal_kickoff_at:signalCore.kickoffAt,signal_capital:'LOCKED',signal_money:'NO',model_version:'MODEL_V1',stored_model_fingerprint:modelFingerprint,model_payload_fingerprint:modelPayloadFingerprint,model_payload:modelPayload,model_frozen_at:modelCore.frozenAt,model_kickoff_at:modelCore.kickoffAt,model_capital:'LOCKED',model_money:'NO',feature_sequence:0,feature_lineage_id:featureLineageId,feature_fingerprint:featureFingerprint,model_feature_link_fingerprint:sha256Json(modelFeatureCore),model_feature_capital:'LOCKED',model_feature_money:'NO',feature_id:'FEATURE-ATTEST',feature_name:'rating',feature_version:'V1',feature_payload:featurePayload,feature_created_at:featureCore.createdAt,source_provenance_id:'PROV-ATTEST',source_evidence_fingerprint:sourceEvidenceFingerprint,lineage_fingerprint:sha256Json(featureCore),feature_capital:'LOCKED',feature_money:'NO',observation_id:'OBS-ATTEST',entity_type:'MATCH',entity_id:eventId,evidence_kind:'MODEL_INPUT',provider:null,source:'TEST',source_type:'TEST',source_url:null,observed_at:sourceCore.observedAt,available_at:sourceCore.availableAt,source_captured_at:sourceCore.capturedAt,prediction_cutoff:sourceCore.predictionCutoff,source_payload_fingerprint:sourcePayloadFingerprint,evidence_fingerprint:sourceEvidenceFingerprint,payload_json:payloadJson,pre_match_eligible:true,is_verified:true,source_capital:'LOCKED',source_money:'NO'};
 }
 function persistenceFor(row){return createPredictionPersistenceFromPool({async query(){return {rowCount:1,rows:[row]};},async connect(){throw new Error('not used');}});}
 
@@ -77,8 +77,8 @@ test('live attestation requires both live and prematch input event IDs to match 
   const preMatchSnapshot=liveSnapshot();
   const base=attestationRow({signalPayload:preMatchSnapshot});
   const liveInput={live:{eventId:base.event_id},preMatchSnapshot,persistenceLineage:base.input_payload.persistenceLineage};
-  const liveOutput={...base.prediction_payload,audit:{parentSignalId:base.frozen_signal_snapshot_id}};
-  const live={...base,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:base.frozen_signal_snapshot_id,input_payload:liveInput,input_sha256:sha256Json(liveInput),prediction_payload:liveOutput,output_sha256:sha256Json(liveOutput)};
+  const liveOutput={...base.prediction_payload,audit:{parentSignalId:base.frozen_signal_snapshot_id,modelVersion:'MODEL_V1'}};
+  const live={...base,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:base.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',input_payload:liveInput,input_sha256:sha256Json(liveInput),prediction_payload:liveOutput,output_sha256:sha256Json(liveOutput)};
   assert.equal((await persistenceFor(live).attestPredictionLineage({snapshotId:live.snapshot_id})).status,'ATTESTED');
   const crossEventInput={...liveInput,preMatchSnapshot:{eventId:'EVENT-B'}};
   await assert.rejects(persistenceFor({...live,input_payload:crossEventInput,input_sha256:sha256Json(crossEventInput)}).attestPredictionLineage({snapshotId:live.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
@@ -114,8 +114,8 @@ test('attestation binds endpoint to snapshot type and live output parent signal'
   const row=attestationRow({signalPayload:preMatchSnapshot});
   await assert.rejects(persistenceFor({...row,endpoint:'/v1/predict/live'}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
   const liveInput={live:{eventId:row.event_id},preMatchSnapshot,persistenceLineage:row.input_payload.persistenceLineage};
-  const wrongOutput={...row.prediction_payload,audit:{parentSignalId:'OTHER-SIGNAL'}};
-  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:row.frozen_signal_snapshot_id,input_payload:liveInput,input_sha256:sha256Json(liveInput),prediction_payload:wrongOutput,output_sha256:sha256Json(wrongOutput)};
+  const wrongOutput={...row.prediction_payload,audit:{parentSignalId:'OTHER-SIGNAL',modelVersion:'MODEL_V1'}};
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',input_payload:liveInput,input_sha256:sha256Json(liveInput),prediction_payload:wrongOutput,output_sha256:sha256Json(wrongOutput)};
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
@@ -142,7 +142,24 @@ test('live attestation rejects altered consumed prematch snapshot payload',async
   const row=attestationRow({signalPayload:preMatchSnapshot});
   const altered={...preMatchSnapshot,homeLambda:9.9};
   const inputPayload={live:{eventId:row.event_id},preMatchSnapshot:altered,persistenceLineage:row.input_payload.persistenceLineage};
-  const predictionPayload={...row.prediction_payload,audit:{parentSignalId:row.frozen_signal_snapshot_id}};
-  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:row.frozen_signal_snapshot_id,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  const predictionPayload={...row.prediction_payload,audit:{parentSignalId:row.frozen_signal_snapshot_id,modelVersion:'MODEL_V1'}};
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+
+test('attestation re-derives prematch eligibility from source timestamps',async()=>{
+  const row=attestationRow();
+  const capturedAfterCutoff={...row,source_captured_at:'2026-08-26T18:00:01.000Z'};
+  const sourceCore={provenanceId:row.source_provenance_id,observationId:row.observation_id,eventId:row.event_id,entityType:row.entity_type,entityId:row.entity_id,evidenceKind:row.evidence_kind,provider:row.provider,source:row.source,sourceType:row.source_type,sourceUrl:row.source_url,observedAt:iso(row.observed_at),availableAt:iso(row.available_at),capturedAt:iso(capturedAfterCutoff.source_captured_at),predictionCutoff:iso(row.prediction_cutoff),isVerified:true,preMatchEligible:true,sourcePayloadFingerprint:row.source_payload_fingerprint};
+  await assert.rejects(persistenceFor({...capturedAfterCutoff,evidence_fingerprint:sha256Json(sourceCore)}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+test('live attestation binds stored and reported model version to lineage',async()=>{
+  const preMatchSnapshot=liveSnapshot();
+  const row=attestationRow({signalPayload:preMatchSnapshot});
+  const inputPayload={live:{eventId:row.event_id},preMatchSnapshot,persistenceLineage:row.input_payload.persistenceLineage};
+  const predictionPayload={...row.prediction_payload,audit:{parentSignalId:row.frozen_signal_snapshot_id,modelVersion:'OTHER_MODEL'}};
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'OTHER_MODEL',input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
