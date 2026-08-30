@@ -5,6 +5,7 @@ export const PREDICTION_PERSISTENCE_MODE='POSTGRES';
 
 function stable(value){if(value===null||typeof value!=='object')return value;if(Array.isArray(value))return value.map(stable);return Object.fromEntries(Object.keys(value).sort().map(key=>[key,stable(value[key])]));}
 export function sha256Json(value){return createHash('sha256').update(JSON.stringify(stable(value))).digest('hex');}
+export function sha256ReferencePayload(value){return createHash('sha256').update(typeof value==='string'?value:JSON.stringify(stable(value))).digest('hex');}
 function persistenceError(message,statusCode=503,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function exactHash(value){return typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);}
 
@@ -91,15 +92,15 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
         const features=result.rows.map((row,index)=>({featureSequence:row.feature_sequence,featureLineageId:row.feature_lineage_id,featureFingerprint:row.feature_fingerprint}));
         const completeFeatures=features.every((row,index)=>row.featureSequence===index)&&new Set(features.map(row=>row.featureLineageId+':'+row.featureFingerprint)).size===features.length;
         const exactRows=result.rows.every(row=>{
-          const sourcePayloadFingerprint=sha256Json(row.payload_json);
+          const sourcePayloadFingerprint=sha256ReferencePayload(row.payload_json);
           const sourceCore={provenanceId:row.source_provenance_id,observationId:row.observation_id,eventId:row.event_id,entityType:row.entity_type,entityId:row.entity_id,evidenceKind:row.evidence_kind,provider:row.provider,source:row.source,sourceType:row.source_type,sourceUrl:row.source_url,observedAt:dbIso(row.observed_at),availableAt:dbIso(row.available_at),capturedAt:dbIso(row.source_captured_at),predictionCutoff:row.prediction_cutoff==null?null:dbIso(row.prediction_cutoff),isVerified:row.is_verified,preMatchEligible:row.pre_match_eligible,sourcePayloadFingerprint:row.source_payload_fingerprint};
           const featureCore={lineageId:row.feature_lineage_id,featureId:row.feature_id,eventId:row.event_id,featureName:row.feature_name,featureVersion:row.feature_version,featureFingerprint:row.feature_fingerprint,sourceProvenanceId:row.source_provenance_id,sourceEvidenceFingerprint:row.source_evidence_fingerprint,createdAt:dbIso(row.feature_created_at)};
           const modelFeatureCore={modelSnapshotId:row.model_snapshot_id,featureSequence:row.feature_sequence,eventId:row.event_id,featureLineageId:row.feature_lineage_id,featureFingerprint:row.feature_fingerprint};
-          return row.feature_payload!==null&&sourcePayloadFingerprint===row.source_payload_fingerprint&&sha256Json(sourceCore)===row.evidence_fingerprint&&sha256Json(row.feature_payload)===row.feature_fingerprint&&sha256Json(featureCore)===row.lineage_fingerprint&&sha256Json(modelFeatureCore)===row.model_feature_link_fingerprint;
+          return row.feature_payload!==null&&sourcePayloadFingerprint===row.source_payload_fingerprint&&sha256Json(sourceCore)===row.evidence_fingerprint&&sha256ReferencePayload(row.feature_payload)===row.feature_fingerprint&&sha256Json(featureCore)===row.lineage_fingerprint&&sha256Json(modelFeatureCore)===row.model_feature_link_fingerprint;
         });
-        const modelPayloadFingerprint=sha256Json(first.model_payload);
+        const modelPayloadFingerprint=sha256ReferencePayload(first.model_payload);
         const modelCore={modelSnapshotId:first.model_snapshot_id,eventId:first.event_id,modelVersion:first.model_version,modelPayloadFingerprint,kickoffAt:dbIso(first.model_kickoff_at),frozenAt:dbIso(first.model_frozen_at),features};
-        const signalPayloadFingerprint=sha256Json(first.signal_payload);
+        const signalPayloadFingerprint=sha256ReferencePayload(first.signal_payload);
         const signalCore={signalSnapshotId:first.frozen_signal_snapshot_id,eventId:first.event_id,signalKind:first.signal_kind,modelSnapshotId:first.model_snapshot_id,modelFingerprint:first.model_fingerprint,signalPayloadFingerprint,kickoffAt:dbIso(first.signal_kickoff_at),frozenAt:dbIso(first.signal_frozen_at)};
         const expectedLink=sha256Json({predictionSnapshotId:snapshotId,eventId:first.event_id,frozenSignalSnapshotId:first.frozen_signal_snapshot_id,frozenSignalFingerprint:first.frozen_signal_fingerprint});
         const governed=result.rows.every(row=>[row.prediction_capital,row.link_capital,row.signal_capital,row.model_capital,row.model_feature_capital,row.feature_capital,row.source_capital].every(value=>value==='LOCKED')&&[row.prediction_money,row.link_money,row.signal_money,row.model_money,row.model_feature_money,row.feature_money,row.source_money].every(value=>value==='NO'));
