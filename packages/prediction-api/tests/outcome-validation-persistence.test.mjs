@@ -34,6 +34,15 @@ test('null or non-object source evidence and malformed prediction UUID reject as
   for(const predictionSnapshotId of ['00000000-0000-0000-0000-000000000000','ffffffff-ffff-ffff-ffff-ffffffffffff'])assert.equal(preparePredictionOutcome({...outcomeInput,predictionSnapshotId}).predictionSnapshotId,predictionSnapshotId);
 });
 
+test('Date timestamps preserve milliseconds and goals stay within PostgreSQL integer range',()=>{
+  assert.throws(()=>preparePredictionOutcome({...outcomeInput,occurredAt:new Date('2026-08-30T20:00:00.900Z'),observedAt:new Date('2026-08-30T20:00:00.500Z')}),/OUTCOME_OBSERVATION_PREDATES_OCCURRENCE/);
+  const outcome=preparePredictionOutcome({...outcomeInput,occurredAt:new Date('2026-08-30T20:00:00.500Z'),observedAt:new Date('2026-08-30T20:00:00.900Z')});
+  assert.equal(outcome.occurredAt,'2026-08-30T20:00:00.500Z');
+  assert.equal(outcome.observedAt,'2026-08-30T20:00:00.900Z');
+  assert.equal(preparePredictionValidation({...validationInput,validatedAt:new Date('2026-08-30T20:00:01.123Z')},outcome).validatedAt,'2026-08-30T20:00:01.123Z');
+  for(const goals of [{homeGoals:2147483648},{awayGoals:2147483648}])assert.throws(()=>preparePredictionOutcome({...outcomeInput,...goals}),/OUTCOME_(HOME|AWAY)_GOALS_INVALID/);
+});
+
 test('invalid chronology and changed payload identity reject',()=>{
   assert.throws(()=>preparePredictionOutcome({...outcomeInput,observedAt:'2026-08-30T19:59:59Z'}),/OUTCOME_OBSERVATION_PREDATES_OCCURRENCE/);
   const outcome=preparePredictionOutcome(outcomeInput);
