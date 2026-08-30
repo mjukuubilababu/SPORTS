@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { canonicalInputTimestamp, canonicalModelIdentity, canonicalScalarIdentity, createPredictionPersistenceFromPool, deterministicPredictionOutput, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
 
 const iso=value=>new Date(value).toISOString();
-const liveSnapshot=(eventId='ATTEST-E1')=>({snapshotType:'PRE_MATCH',immutable:true,signalId:'SIGNAL-ATTEST',eventId,modelVersion:'MODEL_V1',featureVersion:'V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T14:30:00.000Z',frozenAt:'2026-08-26T15:04:00.000Z',realMoney:'NO'});
+const liveSnapshot=(eventId='ATTEST-E1')=>({snapshotType:'PRE_MATCH',immutable:true,signalId:'SIGNAL-ATTEST',eventId,modelVersion:'MODEL_V1',featureVersion:'V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T14:30:00.000Z',frozenAt:'2026-08-26T15:05:00.000Z',realMoney:'NO'});
 const liveInputFor=(row,preMatchSnapshot)=>({persistenceLineage:row.input_payload.persistenceLineage,preMatchSnapshot,live:{eventId:row.event_id,minute:61,homeScore:1,awayScore:0,observedAt:'2026-08-26T19:21:00.000Z',evidence:[{type:'LIVE_SCORE_TIME_PROVIDER_SNAPSHOT',verified:true}]}});
 function attestationRow({payloadJson={value:1},featurePayload={rating:0.8},modelPayload=null,signalPayload={market:'1X2'},snapshotId='abcdefab-cdef-4abc-8def-abcdefabcdef',eventId='ATTEST-E1'}={}){
   const modelSnapshotId='MODEL-ATTEST',featureLineageId='FEATURE-LINEAGE-ATTEST';
@@ -263,6 +263,15 @@ test('live attestation binds declared feature version to joined feature lineage'
   const inputPayload=liveInputFor(row,preMatchSnapshot);
   const predictionPayload=deterministicPredictionOutput('/v1/predict/live',inputPayload);
   const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V2',prediction_source_observed_at:inputPayload.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+test('live attestation binds consumed payload freeze time to frozen signal row',async()=>{
+  const preMatchSnapshot={...liveSnapshot(),frozenAt:'2026-08-26T15:06:00.000Z'};
+  const row=attestationRow({signalPayload:preMatchSnapshot});
+  const inputPayload=liveInputFor(row,preMatchSnapshot);
+  const predictionPayload=deterministicPredictionOutput('/v1/predict/live',inputPayload);
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V1',prediction_source_observed_at:inputPayload.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
