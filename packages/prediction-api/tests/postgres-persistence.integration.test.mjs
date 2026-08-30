@@ -23,7 +23,8 @@ function lineageFixture(eventId,prefix,kickoffAt){
   const feature=prepareFeatureProvenanceLineage(featureInput);
   const modelInput={modelSnapshotId:'API-MODEL-'+prefix,eventId,modelVersion:'POISSON_V1',payload:{lambda:2.4},kickoffAt,frozenAt:'2026-08-26T15:00:00.000Z',features:[{featureLineageId:feature.lineageId,featureFingerprint:feature.featureFingerprint}]};
   const model=prepareModelSnapshot(modelInput);
-  const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:model.modelSnapshotId,modelFingerprint:model.modelFingerprint,payload:{eventId,market:'LINEAGE_SOURCE'},kickoffAt,frozenAt:'2026-08-26T15:05:00.000Z'};
+  const signalPayload=prefix==='LIVE'?createPreMatchOutcomeSnapshot({signalId:'PG-LIVE-SIGNAL-1',eventId,modelVersion:model.modelVersion,featureVersion:'FEATURE_V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T17:55:00Z',frozenAt:'2026-08-26T18:00:00Z'}):{eventId,market:'LINEAGE_SOURCE'};
+  const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:model.modelSnapshotId,modelFingerprint:model.modelFingerprint,payload:signalPayload,kickoffAt,frozenAt:prefix==='LIVE'?'2026-08-26T18:00:00.000Z':'2026-08-26T15:05:00.000Z'};
   const signal=prepareFrozenSignal(signalInput);
   return{observation,featureInput,modelInput,modelSnapshot:model,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
 }
@@ -48,10 +49,7 @@ function prematchPayload(){
 }
 
 function livePayload(){
-  const preMatchSnapshot=createPreMatchOutcomeSnapshot({
-    signalId:'PG-LIVE-SIGNAL-1',eventId:'PG-LIVE-E1',modelVersion:'POISSON_V1',featureVersion:'FEATURE_V1',
-    homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T17:55:00Z',frozenAt:'2026-08-26T18:00:00Z'
-  });
+  const preMatchSnapshot=LIVE_LINEAGE.signalInput.payload;
   return {
     persistenceLineage:LIVE_LINEAGE.persistenceLineage,
     preMatchSnapshot,
