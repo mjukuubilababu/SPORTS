@@ -70,3 +70,28 @@ test('pool acquisition failure is sanitized as stable 503 persistence failure',a
     error=>error?.message==='POSTGRES_PERSISTENCE_WRITE_FAILED'&&error?.statusCode===503&&!error.message.includes('secret-host')
   );
 });
+
+
+test('lineage attestation endpoint fails closed without PostgreSQL persistence',async()=>{
+  await withServer(null,async base=>{
+    const response=await fetch(`${base}/v1/predictions/00000000-0000-4000-8000-000000000001/lineage`);
+    assert.equal(response.status,503);
+    const body=await response.json();
+    assert.equal(body.error,'POSTGRES_LINEAGE_ATTESTATION_REQUIRED');
+    assert.equal(body.capitalState,'LOCKED');
+    assert.equal(body.realMoney,'NO');
+  });
+});
+
+test('lineage attestation rejects invalid ids and sanitizes database read failure',async()=>{
+  const pool={
+    async query(){throw new Error('read ECONNRESET postgresql://secret-host');},
+    async connect(){throw new Error('not used');}
+  };
+  const persistence=createPredictionPersistenceFromPool(pool);
+  await assert.rejects(persistence.attestPredictionLineage({snapshotId:'not-a-uuid'}),error=>error?.message==='PREDICTION_SNAPSHOT_ID_INVALID'&&error?.statusCode===400);
+  await assert.rejects(
+    persistence.attestPredictionLineage({snapshotId:'00000000-0000-4000-8000-000000000001'}),
+    error=>error?.message==='POSTGRES_LINEAGE_ATTESTATION_READ_FAILED'&&error?.statusCode===503&&!error.message.includes('secret-host')
+  );
+});
