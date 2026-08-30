@@ -56,7 +56,68 @@ jobs:
           print('FEATURE_MODEL_SIGNAL_GOVERNANCE=PASS')
           PY
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            allowed='^(\.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.yml|\.github/workflows/postgres-ingestion-provenance-persistence-v0\.1\.yml|\.github/workflows/postgres-core-runtime-persistence-v0\.1\.yml|\.github/workflows/postgres-run-lease-ownership-fencing-v0\.1\.yml|\.github/workflows/postgres-runtime-evidence-persistence-v0\.1\.yml|\.github/workflows/postgres-stage-checkpoint-crash-recovery-v0\.1\.yml|\.github/workflows/prediction-http-api\.yml|contracts/prediction-http-api-v0\.1\.json|packages/prediction-api/src/postgres-persistence\.mjs|packages/prediction-api/src/server\.mjs|packages/prediction-api/tests/lineage-attestation\.test\.mjs|packages/prediction-api/tests/persistence-failclosed\.test\.mjs|packages/prediction-api/tests/postgres-persistence\.integration\.test\.mjs|packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1\.sql|packages/reference-e2e/src/postgres-ingestion-provenance\.mjs)$'
+            allowed='^(\.github/workflows/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.yml|\.github/workflows/postgres-ingestion-provenance-persistence-v0\.1\.yml|\.github/workflows/postgres-core-runtime-persistence-v0\.1\.yml|\.github/workflows/postgres-run-lease-ownership-fencing-v0\.1\.yml|\.github/workflows/postgres-runtime-evidence-persistence-v0\.1\.yml|\.github/workflows/postgres-stage-checkpoint-crash-recovery-v0\.1\.yml|\.github/workflows/prediction-http-api\.yml|contracts/prediction-http-api-v0\.1\.json|packages/prediction-api/src/postgres-persistence\.mjs|packages/prediction-api/src/server\.mjs|packages/prediction-api/tests/lineage-attestation\.test\.mjs|packages/prediction-api/tests/persistence-failclosed\.test\.mjs|packages/prediction-api/tests/postgres-persistence\.integration\.test\.mjs|packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1\.sql|packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1\.sql|packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1\.sql|packages/reference-e2e/src/postgres-feature-model-signal-lineage\.mjs|packages/reference-e2e/src/postgres-ingestion-provenance\.mjs|packages/reference-e2e/tests/postgres-feature-model-signal-lineage\.integration\.mjs|contracts/postgres-feature-model-frozen-signal-lineage-persistence-v0\.1\.json)
+            unexpected="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -Ev "$allowed" || true)"
+            test -z "$unexpected"
+          fi
+      - name: Apply PostgreSQL migration chain twice
+        run: |
+          set -euo pipefail
+          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql; do
+            psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT column_name FROM information_schema.columns WHERE table_name='reference_feature_provenance_lineage_v01' AND column_name='feature_payload'")" = "feature_payload"
+      - name: Verify existing-schema upgrade path
+        run: |
+          set -euo pipefail
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          ALTER TABLE reference_model_feature_lineage_v01 DROP CONSTRAINT reference_model_feature_model_event_fk;
+          ALTER TABLE reference_model_snapshots_v01 DROP CONSTRAINT reference_model_snapshots_id_event_uq;
+          ALTER TABLE reference_model_feature_lineage_v01
+            ADD CONSTRAINT reference_model_feature_lineage_v01_model_snapshot_id_fkey
+            FOREIGN KEY(model_snapshot_id) REFERENCES reference_model_snapshots_v01(model_snapshot_id);
+          SQL
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM pg_constraint WHERE conname='reference_model_feature_model_event_fk'")" = "1"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM pg_constraint WHERE conname='reference_model_snapshots_id_event_uq'")" = "1"
+      - name: Install reference E2E dependencies
+        working-directory: packages/reference-e2e
+        run: npm install --no-audit --no-fund --no-package-lock
+      - name: Run existing reference regressions
+        working-directory: packages/reference-e2e
+        env: {REFERENCE_EVIDENCE_PERSISTENCE_MODE: disabled}
+        run: |
+          npm test
+          npm run e2e
+      - name: Run PostgreSQL 16 persistence regressions
+        working-directory: packages/reference-e2e
+        run: |
+          node --test tests/postgres-evidence.integration.mjs tests/postgres-checkpoint-recovery.integration.mjs tests/postgres-run-lease-fencing.integration.mjs tests/postgres-ingestion-provenance.integration.mjs tests/postgres-feature-model-signal-lineage.integration.mjs
+      - name: Verify lineage DB boundaries
+        run: |
+          set -euo pipefail
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_model_snapshots_v01")" -ge 1
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_model_feature_lineage_v01")" -ge 1
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_frozen_signal_snapshots_v01")" -ge 1
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_frozen_signal_snapshots_v01 WHERE signal_kind NOT IN ('FROZEN_SIGNAL','FROZEN_PREDICTION')")" = "0"
+      - name: Write verification artifact
+        run: |
+          mkdir -p artifacts/postgres-feature-model-signal-lineage
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report={'version':'v0.1','decision':'PASS','database':'PostgreSQL 16 ephemeral CI','exact_chain':True,'cross_event_rejected':True,'post_kickoff_rejected':True,'settlement_separate':True,'exact_replay_idempotent':True,'changed_identity_rejected':True,'partial_failure_rollback':True,'immutable':True,'dedicated_pool_client':True,'p002_changed':False,'gate1':'GATE1','gate6':'GATE6','capital_state':'LOCKED','real_money':'NO','automatic_promotion':False,'automatic_retuning':False}
+          Path('artifacts/postgres-feature-model-signal-lineage/verification.json').write_text(json.dumps(report,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: postgres-feature-model-frozen-signal-lineage-persistence-v0.1
+          path: artifacts/postgres-feature-model-signal-lineage/verification.json
+          if-no-files-found: error
+
             unexpected="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -Ev "$allowed" || true)"
             test -z "$unexpected"
           fi
