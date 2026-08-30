@@ -266,6 +266,12 @@ test('live attestation binds declared feature version to joined feature lineage'
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
+test('prematch attestation preserves accepted additional model payload metadata',async()=>{
+  const base=attestationRow();
+  const row=attestationRow({modelPayload:{...base.model_payload,trainingDataset:'DATASET-2026'}});
+  assert.equal((await persistenceFor(row).attestPredictionLineage({snapshotId:row.snapshot_id})).status,'ATTESTED');
+});
+
 test('model identity canonicalization matches PostgreSQL text projections',()=>{
   assert.equal(canonicalScalarIdentity(7),'7');
   assert.equal(canonicalScalarIdentity('MODEL-7'),'MODEL-7');
