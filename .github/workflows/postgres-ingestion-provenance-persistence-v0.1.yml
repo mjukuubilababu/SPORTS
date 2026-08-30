@@ -6,6 +6,7 @@ on:
       - import/decision-intelligence-v0.5-qualified-set
     paths:
       - 'packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql'
+      - 'packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql'
       - 'packages/reference-e2e/src/postgres-ingestion-provenance.mjs'
       - 'packages/reference-e2e/tests/postgres-ingestion-provenance.integration.mjs'
       - 'contracts/postgres-ingestion-provenance-persistence-v0.1.json'
@@ -67,6 +68,18 @@ jobs:
             'packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql',
             'packages/reference-e2e/src/postgres-ingestion-provenance.mjs',
             'packages/reference-e2e/tests/postgres-ingestion-provenance.integration.mjs',
+            '.github/workflows/postgres-core-runtime-persistence-v0.1.yml',
+            '.github/workflows/postgres-run-lease-ownership-fencing-v0.1.yml',
+            '.github/workflows/postgres-runtime-evidence-persistence-v0.1.yml',
+            '.github/workflows/postgres-stage-checkpoint-crash-recovery-v0.1.yml',
+            '.github/workflows/prediction-http-api.yml',
+            'contracts/prediction-http-api-v0.1.json',
+            'packages/prediction-api/src/postgres-persistence.mjs',
+            'packages/prediction-api/src/server.mjs',
+            'packages/prediction-api/tests/lineage-attestation.test.mjs',
+            'packages/prediction-api/tests/persistence-failclosed.test.mjs',
+            'packages/prediction-api/tests/postgres-persistence.integration.test.mjs',
+            'packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql',
           }
           changed=[]
           for line in subprocess.check_output(['git','diff','--name-status',f'{base}...HEAD'],text=True).splitlines():
@@ -130,6 +143,9 @@ jobs:
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT column_name FROM information_schema.columns WHERE table_name='reference_feature_provenance_lineage_v01' AND column_name='feature_payload'")" = "feature_payload"
           for table in \
             reference_ingestion_observations_v01 \
             reference_feature_provenance_lineage_v01 \
