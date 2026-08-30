@@ -1,23 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPredictionPersistenceFromPool, sha256Json } from '../src/postgres-persistence.mjs';
+import { createPredictionPersistenceFromPool, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
 
 const iso=value=>new Date(value).toISOString();
-function attestationRow(){
+function attestationRow({payloadJson={value:1},featurePayload={rating:0.8},modelPayload={lambda:2.4},signalPayload={market:'1X2'}}={}){
   const eventId='ATTEST-E1',modelSnapshotId='MODEL-ATTEST',featureLineageId='FEATURE-LINEAGE-ATTEST';
-  const payloadJson={value:1};
-  const sourcePayloadFingerprint=sha256Json(payloadJson);
+  const sourcePayloadFingerprint=sha256ReferencePayload(payloadJson);
   const sourceCore={provenanceId:'PROV-ATTEST',observationId:'OBS-ATTEST',eventId,entityType:'MATCH',entityId:eventId,evidenceKind:'MODEL_INPUT',provider:null,source:'TEST',sourceType:'TEST',sourceUrl:null,observedAt:iso('2026-08-26T14:00:00Z'),availableAt:iso('2026-08-26T14:00:01Z'),capturedAt:iso('2026-08-26T14:00:02Z'),predictionCutoff:iso('2026-08-26T18:00:00Z'),isVerified:true,preMatchEligible:true,sourcePayloadFingerprint};
   const sourceEvidenceFingerprint=sha256Json(sourceCore);
-  const featurePayload={rating:0.8};
-  const featureFingerprint=sha256Json(featurePayload);
+  const featureFingerprint=sha256ReferencePayload(featurePayload);
   const featureCore={lineageId:featureLineageId,featureId:'FEATURE-ATTEST',eventId,featureName:'rating',featureVersion:'V1',featureFingerprint,sourceProvenanceId:'PROV-ATTEST',sourceEvidenceFingerprint,createdAt:iso('2026-08-26T14:05:00Z')};
   const modelFeatureCore={modelSnapshotId,featureSequence:0,eventId,featureLineageId,featureFingerprint};
   const features=[{featureSequence:0,featureLineageId,featureFingerprint}];
-  const modelPayload={lambda:2.4},modelPayloadFingerprint=sha256Json(modelPayload);
+  const modelPayloadFingerprint=sha256ReferencePayload(modelPayload);
   const modelCore={modelSnapshotId,eventId,modelVersion:'MODEL_V1',modelPayloadFingerprint,kickoffAt:iso('2026-08-26T19:00:00Z'),frozenAt:iso('2026-08-26T15:00:00Z'),features};
   const modelFingerprint=sha256Json(modelCore);
-  const signalPayload={market:'1X2'},signalPayloadFingerprint=sha256Json(signalPayload);
+  const signalPayloadFingerprint=sha256ReferencePayload(signalPayload);
   const signalCore={signalSnapshotId:'SIGNAL-ATTEST',eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId,modelFingerprint,signalPayloadFingerprint,kickoffAt:iso('2026-08-26T19:00:00Z'),frozenAt:iso('2026-08-26T15:05:00Z')};
   const signalFingerprint=sha256Json(signalCore);
   const snapshotId='00000000-0000-4000-8000-000000000001';
@@ -43,4 +41,13 @@ test('attestation rejects incomplete features and impossible model-to-signal tim
   await assert.rejects(persistenceFor({...row,feature_sequence:1}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
   await assert.rejects(persistenceFor({...row,signal_frozen_at:'2026-08-26T14:59:00.000Z'}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
   await assert.rejects(persistenceFor({...row,signal_kickoff_at:'2026-08-26T20:00:00.000Z'}).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
+});
+
+
+test('attestation uses canonical raw-string payload hash semantics',async()=>{
+  const row=attestationRow({payloadJson:'source',featurePayload:'rating',modelPayload:'model',signalPayload:'signal'});
+  assert.notEqual(sha256ReferencePayload('rating'),sha256Json('rating'));
+  const result=await persistenceFor(row).attestPredictionLineage({snapshotId:row.snapshot_id});
+  assert.equal(result.status,'ATTESTED');
+  assert.equal(result.allFingerprintsRecomputed,true);
 });
