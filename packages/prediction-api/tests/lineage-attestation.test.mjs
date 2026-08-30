@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalInputTimestamp, createPredictionPersistenceFromPool, deterministicPredictionOutput, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
+import { canonicalInputTimestamp, canonicalScalarIdentity, createPredictionPersistenceFromPool, deterministicPredictionOutput, sha256Json, sha256ReferencePayload } from '../src/postgres-persistence.mjs';
 
 const iso=value=>new Date(value).toISOString();
 const liveSnapshot=(eventId='ATTEST-E1')=>({snapshotType:'PRE_MATCH',immutable:true,signalId:'SIGNAL-ATTEST',eventId,modelVersion:'MODEL_V1',featureVersion:'V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T14:30:00.000Z',frozenAt:'2026-08-26T15:04:00.000Z',realMoney:'NO'});
@@ -254,4 +254,11 @@ test('live attestation canonicalizes an accepted numeric feature version project
 test('kickoff canonicalization matches orchestrator Date.parse semantics for numbers',()=>{
   assert.equal(canonicalInputTimestamp(1),new Date(Date.parse(1)).toISOString());
   assert.notEqual(canonicalInputTimestamp(1),new Date(1).toISOString());
+});
+
+
+test('model identity canonicalization matches PostgreSQL text projections',()=>{
+  assert.equal(canonicalScalarIdentity(7),'7');
+  assert.equal(canonicalScalarIdentity('MODEL-7'),'MODEL-7');
+  assert.equal(canonicalScalarIdentity({id:7}),null);
 });
