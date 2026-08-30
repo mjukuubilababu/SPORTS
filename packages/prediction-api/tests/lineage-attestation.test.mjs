@@ -162,7 +162,7 @@ test('attestation re-derives prematch eligibility from source timestamps',async(
 test('live attestation binds stored and reported model version to lineage',async()=>{
   const preMatchSnapshot=liveSnapshot();
   const row=attestationRow({signalPayload:preMatchSnapshot});
-  const inputPayload={live:{eventId:row.event_id},preMatchSnapshot,persistenceLineage:row.input_payload.persistenceLineage};
+  const inputPayload=liveInputFor(row,preMatchSnapshot);
   const canonicalOutput=deterministicPredictionOutput('/v1/predict/live',inputPayload);
   const predictionPayload={...canonicalOutput,audit:{...canonicalOutput.audit,modelVersion:'OTHER_MODEL'}};
   const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'OTHER_MODEL',input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
