@@ -260,5 +260,7 @@ test('kickoff canonicalization matches orchestrator Date.parse semantics for num
 test('model identity canonicalization matches PostgreSQL text projections',()=>{
   assert.equal(canonicalScalarIdentity(7),'7');
   assert.equal(canonicalScalarIdentity('MODEL-7'),'MODEL-7');
+  assert.equal(canonicalScalarIdentity(' MODEL-7 '),'MODEL-7');
+  assert.equal(canonicalScalarIdentity('   '),'');
   assert.equal(canonicalScalarIdentity({id:7}),null);
 });
