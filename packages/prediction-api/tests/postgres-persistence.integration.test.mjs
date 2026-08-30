@@ -24,11 +24,11 @@ function lineageFixture(eventId,prefix,kickoffAt){
   const modelSnapshotId='API-MODEL-'+prefix;
   const modelPayload=prefix==='PREMATCH'?((({snapshotSha256,...payload})=>payload)(model({snapshotId:modelSnapshotId}))):{lambda:2.4};
   const modelInput={modelSnapshotId,eventId,modelVersion:'POISSON_V1',payload:modelPayload,kickoffAt,frozenAt:'2026-08-26T15:00:00.000Z',features:[{featureLineageId:feature.lineageId,featureFingerprint:feature.featureFingerprint}]};
-  const model=prepareModelSnapshot(modelInput);
-  const signalPayload=prefix==='LIVE'?createPreMatchOutcomeSnapshot({signalId:'PG-LIVE-SIGNAL-1',eventId,modelVersion:model.modelVersion,featureVersion:'FEATURE_V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T17:55:00Z',frozenAt:'2026-08-26T18:00:00Z'}):{eventId,market:'LINEAGE_SOURCE'};
-  const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:model.modelSnapshotId,modelFingerprint:model.modelFingerprint,payload:signalPayload,kickoffAt,frozenAt:prefix==='LIVE'?'2026-08-26T18:00:00.000Z':'2026-08-26T15:05:00.000Z'};
+  const preparedModel=prepareModelSnapshot(modelInput);
+  const signalPayload=prefix==='LIVE'?createPreMatchOutcomeSnapshot({signalId:'PG-LIVE-SIGNAL-1',eventId,modelVersion:preparedModel.modelVersion,featureVersion:'FEATURE_V1',homeLambda:1.6,awayLambda:1.0,createdAt:'2026-08-26T17:55:00Z',frozenAt:'2026-08-26T18:00:00Z'}):{eventId,market:'LINEAGE_SOURCE'};
+  const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:preparedModel.modelSnapshotId,modelFingerprint:preparedModel.modelFingerprint,payload:signalPayload,kickoffAt,frozenAt:prefix==='LIVE'?'2026-08-26T18:00:00.000Z':'2026-08-26T15:05:00.000Z'};
   const signal=prepareFrozenSignal(signalInput);
-  return{observation,featureInput,modelInput,modelSnapshot:model,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
+  return{observation,featureInput,modelInput,modelSnapshot:preparedModel,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
 }
 const PREMATCH_LINEAGE=lineageFixture('PG-E1','PREMATCH','2026-08-26T19:00:00.000Z');
 const LIVE_LINEAGE=lineageFixture('PG-LIVE-E1','LIVE','2026-08-26T19:00:00.000Z');
