@@ -50,7 +50,9 @@ CREATE TABLE IF NOT EXISTS reference_feature_provenance_lineage_v01(
   event_id text NOT NULL,
   feature_name text NOT NULL,
   feature_version text NOT NULL,
-  feature_fingerprint text NOT NULL CHECK(feature_fingerprint ~ '^[0-9a-f]{64}
+  feature_fingerprint text NOT NULL CHECK(feature_fingerprint ~ '^[0-9a-f]{64}$'),
+  feature_payload jsonb,
+  source_provenance_id text NOT NULL,
   source_evidence_fingerprint text NOT NULL CHECK(source_evidence_fingerprint ~ '^[0-9a-f]{64}$'),
   lineage_fingerprint text NOT NULL UNIQUE CHECK(lineage_fingerprint ~ '^[0-9a-f]{64}$'),
   created_at timestamptz NOT NULL,
