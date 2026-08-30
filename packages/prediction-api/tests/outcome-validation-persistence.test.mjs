@@ -26,6 +26,12 @@ test('preparation snapshots mutable payload references exactly once',()=>{
   assert.equal(validation.validationPayload.correct,true);
 });
 
+test('null or non-object source evidence and malformed prediction UUID reject as stable input errors',()=>{
+  for(const sourcePayload of [null,'official',7,[]])assert.throws(()=>preparePredictionOutcome({...outcomeInput,sourcePayload}),error=>error.statusCode===400&&error.message==='OUTCOME_SOURCE_PAYLOAD_REQUIRED');
+  assert.throws(()=>preparePredictionOutcome({...outcomeInput,predictionSnapshotId:'not-a-uuid'}),error=>error.statusCode===400&&error.message==='OUTCOME_PREDICTION_ID_INVALID');
+  assert.equal(preparePredictionOutcome({...outcomeInput,predictionSnapshotId:outcomeInput.predictionSnapshotId.toUpperCase()}).predictionSnapshotId,outcomeInput.predictionSnapshotId);
+});
+
 test('invalid chronology and changed payload identity reject',()=>{
   assert.throws(()=>preparePredictionOutcome({...outcomeInput,observedAt:'2026-08-30T19:59:59Z'}),/OUTCOME_OBSERVATION_PREDATES_OCCURRENCE/);
   const outcome=preparePredictionOutcome(outcomeInput);
