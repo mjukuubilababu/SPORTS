@@ -5,6 +5,7 @@ on:
     branches:
       - import/decision-intelligence-v0.5-qualified-set
     paths:
+      - 'packages/prediction-api/**'
       - 'packages/reference-e2e/**'
       - 'contracts/postgres-runtime-evidence-persistence-v0.1.json'
       - 'docs/postgres-runtime-evidence-persistence-v0.1.md'
@@ -119,10 +120,17 @@ jobs:
         working-directory: packages/prediction-api
         run: npm install --no-audit --no-fund
 
-      - name: Apply Prediction API persistence migration for unified verifier
+      - name: Apply canonical lineage and Prediction API migrations for unified verifier
         run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0006_match_memory_observations_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0008_frozen_signal_prediction_api_reference_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/prediction-api/migrations/0015_prediction_snapshots_v0_1.sql
-          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('prediction_snapshots_v01')::text")" = "prediction_snapshots_v01"
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/prediction-api/migrations/0016_prediction_frozen_signal_lineage_v0_1.sql
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT to_regclass('prediction_snapshot_frozen_signal_lineage_v01')::text")" = "prediction_snapshot_frozen_signal_lineage_v01"
 
       - name: Run unified repository verifier
         id: unified
