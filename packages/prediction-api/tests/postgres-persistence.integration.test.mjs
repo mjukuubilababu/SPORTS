@@ -25,7 +25,7 @@ function lineageFixture(eventId,prefix,kickoffAt){
   const model=prepareModelSnapshot(modelInput);
   const signalInput={signalSnapshotId:prefix==='LIVE'?'PG-LIVE-SIGNAL-1':'API-SIGNAL-'+prefix,eventId,signalKind:'FROZEN_PREDICTION',modelSnapshotId:model.modelSnapshotId,modelFingerprint:model.modelFingerprint,payload:{eventId,market:'LINEAGE_SOURCE'},kickoffAt,frozenAt:'2026-08-26T15:05:00.000Z'};
   const signal=prepareFrozenSignal(signalInput);
-  return{observation,featureInput,modelInput,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
+  return{observation,featureInput,modelInput,modelSnapshot:model,signalInput,persistenceLineage:{frozenSignalSnapshotId:signal.signalSnapshotId,frozenSignalFingerprint:signal.signalFingerprint}};
 }
 const PREMATCH_LINEAGE=lineageFixture('PG-E1','PREMATCH','2026-08-26T19:00:00.000Z');
 const LIVE_LINEAGE=lineageFixture('PG-LIVE-E1','LIVE','2026-08-26T19:00:00.000Z');
@@ -44,7 +44,7 @@ function model(overrides={}){
 }
 
 function prematchPayload(){
-  return {persistenceLineage:PREMATCH_LINEAGE.persistenceLineage,eventId:'PG-E1',market:'TOTAL_3_5',selection:'UNDER',kickoffAt:'2026-08-26T19:00:00Z',models:[model()],offeredOdds:1.9,confidence:{score:0.9,criticalBlocks:[]}};
+  return {persistenceLineage:PREMATCH_LINEAGE.persistenceLineage,eventId:'PG-E1',market:'TOTAL_3_5',selection:'UNDER',kickoffAt:'2026-08-26T19:00:00Z',models:[model({snapshotId:PREMATCH_LINEAGE.modelSnapshot.modelSnapshotId,snapshotSha256:PREMATCH_LINEAGE.modelSnapshot.modelFingerprint})],offeredOdds:1.9,confidence:{score:0.9,criticalBlocks:[]}};
 }
 
 function livePayload(){
