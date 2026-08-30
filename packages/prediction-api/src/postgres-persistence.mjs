@@ -70,6 +70,37 @@ export function createPredictionPersistenceFromPool(pool,{clock=()=>new Date()}=
         throw persistenceError('POSTGRES_PERSISTENCE_WRITE_FAILED',503,error);
       }finally{client?.release();}
     },
+    async attestPredictionLineage({snapshotId}){
+      if(typeof snapshotId!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(snapshotId))throw persistenceError('PREDICTION_SNAPSHOT_ID_INVALID',400);
+      try{
+        const result=await pool.query(`SELECT p.snapshot_id::text,p.snapshot_type,p.event_id,p.input_sha256,p.output_sha256,p.input_payload,p.prediction_payload,p.parent_signal_id,p.capital_state AS prediction_capital,p.real_money AS prediction_money,l.frozen_signal_snapshot_id,l.frozen_signal_fingerprint,l.link_fingerprint,l.capital_state AS link_capital,l.real_money AS link_money,s.signal_kind,s.model_snapshot_id,s.model_fingerprint,s.frozen_at AS signal_frozen_at,s.kickoff_at AS signal_kickoff_at,s.capital_state AS signal_capital,s.real_money AS signal_money,m.frozen_at AS model_frozen_at,m.kickoff_at AS model_kickoff_at,m.capital_state AS model_capital,m.real_money AS model_money,mf.feature_sequence,mf.feature_lineage_id,mf.feature_fingerprint,mf.link_fingerprint AS model_feature_link_fingerprint,mf.capital_state AS model_feature_capital,mf.real_money AS model_feature_money,f.source_provenance_id,f.source_evidence_fingerprint,f.lineage_fingerprint,f.capital_state AS feature_capital,f.real_money AS feature_money,o.evidence_kind,o.captured_at AS source_captured_at,o.pre_match_eligible,o.is_verified,o.capital_state AS source_capital,o.real_money AS source_money
+          FROM prediction_snapshots_v01 p
+          JOIN prediction_snapshot_frozen_signal_lineage_v01 l ON l.prediction_snapshot_id=p.snapshot_id AND l.event_id=p.event_id
+          JOIN reference_frozen_signal_snapshots_v01 s ON s.signal_snapshot_id=l.frozen_signal_snapshot_id AND s.signal_fingerprint=l.frozen_signal_fingerprint AND s.event_id=l.event_id
+          JOIN reference_model_snapshots_v01 m ON m.model_snapshot_id=s.model_snapshot_id AND m.model_fingerprint=s.model_fingerprint AND m.event_id=s.event_id
+          JOIN reference_model_feature_lineage_v01 mf ON mf.model_snapshot_id=m.model_snapshot_id AND mf.event_id=m.event_id
+          JOIN reference_feature_provenance_lineage_v01 f ON f.lineage_id=mf.feature_lineage_id AND f.feature_fingerprint=mf.feature_fingerprint AND f.event_id=mf.event_id
+          JOIN reference_ingestion_observations_v01 o ON o.provenance_id=f.source_provenance_id AND o.evidence_fingerprint=f.source_evidence_fingerprint AND o.event_id=f.event_id
+         WHERE p.snapshot_id=$1 ORDER BY mf.feature_sequence`,[snapshotId]);
+        if(result.rowCount===0){
+          const exists=await pool.query('SELECT 1 FROM prediction_snapshots_v01 WHERE snapshot_id=$1',[snapshotId]);
+          throw persistenceError(exists.rowCount===1?'PREDICTION_LINEAGE_NOT_ATTESTABLE':'PREDICTION_SNAPSHOT_NOT_FOUND',exists.rowCount===1?409:404);
+        }
+        const first=result.rows[0];
+        const expectedLink=sha256Json({predictionSnapshotId:snapshotId,eventId:first.event_id,frozenSignalSnapshotId:first.frozen_signal_snapshot_id,frozenSignalFingerprint:first.frozen_signal_fingerprint});
+        const governed=result.rows.every(row=>[
+          row.prediction_capital,row.link_capital,row.signal_capital,row.model_capital,row.model_feature_capital,row.feature_capital,row.source_capital
+        ].every(value=>value==='LOCKED')&&[
+          row.prediction_money,row.link_money,row.signal_money,row.model_money,row.model_feature_money,row.feature_money,row.source_money
+        ].every(value=>value==='NO'));
+        const prematch=result.rows.every(row=>row.pre_match_eligible===true&&row.is_verified===true&&new Date(row.source_captured_at)<=new Date(row.model_frozen_at)&&!['SETTLEMENT','PREDICTION_SETTLEMENT'].includes(row.evidence_kind));
+        const hashes=first.input_sha256===sha256Json(first.input_payload)&&first.output_sha256===sha256Json(first.prediction_payload)&&first.link_fingerprint===expectedLink;
+        const temporal=new Date(first.signal_frozen_at)<new Date(first.signal_kickoff_at)&&new Date(first.model_frozen_at)<new Date(first.model_kickoff_at);
+        const liveParent=first.snapshot_type!=='LIVE'||first.parent_signal_id===first.frozen_signal_snapshot_id;
+        if(!governed||!prematch||!hashes||!temporal||!liveParent||!['FROZEN_SIGNAL','FROZEN_PREDICTION'].includes(first.signal_kind))throw persistenceError('PREDICTION_LINEAGE_ATTESTATION_FAILED',409);
+        return Object.freeze({status:'ATTESTED',snapshotId,eventId:first.event_id,snapshotType:first.snapshot_type,frozenSignalSnapshotId:first.frozen_signal_snapshot_id,frozenSignalFingerprint:first.frozen_signal_fingerprint,modelSnapshotId:first.model_snapshot_id,modelFingerprint:first.model_fingerprint,features:Object.freeze(result.rows.map(row=>Object.freeze({sequence:row.feature_sequence,featureLineageId:row.feature_lineage_id,featureFingerprint:row.feature_fingerprint,sourceProvenanceId:row.source_provenance_id,sourceEvidenceFingerprint:row.source_evidence_fingerprint}))),exactEventBound:true,prematchEvidenceOnly:true,settlementSeparate:true,authorizesValidation:false,authorizesExecution:false,capitalState:'LOCKED',realMoney:'NO'});
+      }catch(error){if(error?.statusCode)throw error;throw persistenceError('POSTGRES_LINEAGE_ATTESTATION_READ_FAILED',503,error);}
+    },
     async getByRequest({requestId,endpoint}){
       try{
         const result=await pool.query("SELECT p.snapshot_id::text,p.request_id,p.endpoint,p.snapshot_type,p.event_id,p.market,p.selection,p.input_sha256,p.output_sha256,p.input_payload,p.prediction_payload,p.parent_signal_id,p.model_version,p.feature_version,p.source_observed_at,p.persisted_at,p.capital_state,p.real_money,l.frozen_signal_snapshot_id,l.frozen_signal_fingerprint,l.link_fingerprint FROM prediction_snapshots_v01 p LEFT JOIN prediction_snapshot_frozen_signal_lineage_v01 l ON l.prediction_snapshot_id=p.snapshot_id AND l.event_id=p.event_id WHERE p.request_id=$1 AND p.endpoint=$2",[requestId,endpoint]);
