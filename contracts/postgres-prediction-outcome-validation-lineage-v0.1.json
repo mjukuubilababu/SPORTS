@@ -1,0 +1,39 @@
+{
+  "version": "POSTGRES_PREDICTION_OUTCOME_VALIDATION_LINEAGE_V0_1",
+  "purpose": "Durably bind official post-kickoff outcome evidence and validation evidence to the exact immutable PostgreSQL prediction snapshot without authorizing execution.",
+  "truth_ownership": {
+    "prediction": "EXISTING_PREDICTION_SNAPSHOT",
+    "validation": "SEPARATE_POST_OUTCOME_EVIDENCE",
+    "gate1": "AUTHORITATIVE_TRUTH_OWNER",
+    "gate6": "CAPITAL_AUTHORITY"
+  },
+  "lineage": [
+    "PREDICTION_SNAPSHOT",
+    "EXACT_FROZEN_SIGNAL",
+    "OFFICIAL_POST_KICKOFF_OUTCOME",
+    "VALIDATION"
+  ],
+  "invariants": {
+    "exact_prediction_snapshot_fk": true,
+    "exact_event_fk": true,
+    "exact_outcome_fingerprint_fk": true,
+    "outcome_after_lineage_kickoff": true,
+    "validation_after_outcome_observation": true,
+    "exact_replay_idempotent": true,
+    "changed_payload_same_identity_rejected": true,
+    "update_delete_rejected": true,
+    "partial_failure_full_rollback": true,
+    "dedicated_pool_client_transaction": true,
+    "prediction_not_validation": true,
+    "validation_not_execution": true,
+    "settlement_separate_from_prematch_evidence": true
+  },
+  "governance": {
+    "P002": "UNCHANGED",
+    "capital_state": "LOCKED",
+    "real_money": "NO",
+    "automatic_promotion": false,
+    "automatic_retuning": false,
+    "authorizes_execution": false
+  }
+}
