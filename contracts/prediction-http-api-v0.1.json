@@ -69,7 +69,8 @@
       "complete_contiguous_feature_set_required": true,
       "model_and_signal_kickoff_must_match": true,
       "model_freeze_must_not_follow_signal_freeze": true,
-      "feature_payload_upgrade_policy": "LEGACY_NULL_FAIL_CLOSED"
+      "feature_payload_upgrade_policy": "LEGACY_NULL_FAIL_CLOSED",
+      "reference_payload_hash_semantics": "RAW_STRING_OTHERWISE_STABLE_JSON"
     }
   }
 }
