@@ -147,7 +147,7 @@ test('live attestation rejects altered consumed prematch snapshot payload',async
   const altered={...preMatchSnapshot,homeLambda:9.9};
   const inputPayload=liveInputFor(row,altered);
   const predictionPayload=deterministicPredictionOutput('/v1/predict/live',inputPayload);
-  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V1',prediction_source_observed_at:liveInput.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V1',prediction_source_observed_at:inputPayload.live.observedAt,input_payload:inputPayload,input_sha256:sha256Json(inputPayload),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
@@ -190,7 +190,7 @@ test('live attestation rejects persisted inputs forbidden by canonical live vali
   const validInput=liveInputFor(row,preMatchSnapshot);
   const predictionPayload=deterministicPredictionOutput('/v1/predict/live',validInput);
   const invalidInput={...validInput,live:{...validInput.live,homeRateMultiplier:2}};
-  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V1',prediction_source_observed_at:liveInput.live.observedAt,input_payload:invalidInput,input_sha256:sha256Json(invalidInput),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
+  const live={...row,endpoint:'/v1/predict/live',snapshot_type:'LIVE',market:'1X2',selection:null,parent_signal_id:row.frozen_signal_snapshot_id,prediction_model_version:'MODEL_V1',prediction_feature_version:'V1',prediction_source_observed_at:invalidInput.live.observedAt,input_payload:invalidInput,input_sha256:sha256Json(invalidInput),prediction_payload:predictionPayload,output_sha256:sha256Json(predictionPayload)};
   await assert.rejects(persistenceFor(live).attestPredictionLineage({snapshotId:row.snapshot_id}),error=>error?.message==='PREDICTION_LINEAGE_ATTESTATION_FAILED');
 });
 
