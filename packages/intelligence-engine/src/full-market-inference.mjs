@@ -196,8 +196,8 @@ export function settleSystemSignalAndUserExecution({systemSignal,userExecution,h
  const settleComponent=c=>({component:c,status:selectionOutcome(c,row)});
  const systemComponents=systemSignal.components??[systemSignal];
  const userComponents=userExecution?.components??[];
- const systemSettlement=systemComponents.map(settleComponent),userSettlement=userComponents.map(settleComponent);
- return deepFreeze({signal_id:systemSignal.signal_id,system_signal:{components:systemSettlement,result:systemSettlement.every(x=>x.status==='WIN')?'WIN':'LOSS'},
-  user_execution:userExecution?{execution_id:userExecution.execution_id,components:userSettlement,result:userSettlement.every(x=>x.status==='WIN')?'WIN':'LOSS'}:null,
+ const systemSettlement=systemComponents.map(settleComponent),userSettlement=userComponents.map(settleComponent);const aggregate=rows=>rows.some(x=>x.status==='LOSS')?'LOSS':rows.some(x=>x.status==='PUSH')?'PUSH':rows.every(x=>x.status==='WIN')?'WIN':'UNSUPPORTED';
+ return deepFreeze({signal_id:systemSignal.signal_id,system_signal:{components:systemSettlement,result:aggregate(systemSettlement)},
+  user_execution:userExecution?{execution_id:userExecution.execution_id,components:userSettlement,result:aggregate(userSettlement)}:null,
   attribution:userExecution?'COMPONENT_LEVEL_SYSTEM_SIGNAL_SEPARATE_FROM_USER_EXECUTION':'SYSTEM_ONLY',final_score:{home:homeScore,away:awayScore},settled_at:settledAt,no_hindsight:true});
 }
