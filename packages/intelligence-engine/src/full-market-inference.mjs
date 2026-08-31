@@ -11,7 +11,7 @@ function stable(x){if(Array.isArray(x))return x.map(stable);if(x&&typeof x==='ob
 function hash(x){return crypto.createHash('sha256').update(JSON.stringify(stable(x))).digest('hex');}
 function timestamp(x,name){const ms=Date.parse(x);if(!Number.isFinite(ms))throw new Error(name+'_INVALID');return ms;}
 function finite01(x){return Number.isFinite(x)&&x>=0&&x<=1;}
-function weighted(prior,current,pw,cw){if(!Number.isFinite(prior)&&!Number.isFinite(current))return null;if(!Number.isFinite(prior))return current;if(!Number.isFinite(current))return prior;return prior*pw+current*cw;}
+function weighted(prior,current,pw,cw){if(!Number.isFinite(prior)&&!Number.isFinite(current))return null;if(!Number.isFinite(prior))return cw>0?current*cw:null;if(!Number.isFinite(current))return pw>0?prior*pw:null;return prior*pw+current*cw;}
 
 export function buildIndependentTeamState({
  teamId,asOf,currentSeasonSample=0,previousSeason={},currentSeason={},transfers=0,managerSystemChange=0,
@@ -131,7 +131,7 @@ export function devigMarketObservations(observations,frozenAt,kickoffAt){
  const copied=observations.map((o,index)=>{
   const provenanceReady=Boolean(o.provider&&o.source&&o.observedAt&&o.marketSnapshotId);
   if(o.observedAt&&timestamp(o.observedAt,'MARKET_OBSERVED_AT')>freeze)throw new Error('MARKET_OBSERVATION_AFTER_FREEZE');
-  return {...o,observationIndex:index,market_raw_probability:o.odds>1?1/o.odds:null,provenance_ready:provenanceReady};
+  return {...o,observationIndex:index,market_raw_probability:o.odds>1?1/o.odds:null,market_fair_probability:null,provenance_ready:provenanceReady};
  });
  const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId&&o.observedAt?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}|${o.observedAt}`:null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
  for(const rows of groups.values()){if(rows.every(x=>x.completeMarket===true&&x.market_raw_probability!==null)){const z=rows.reduce((s,x)=>s+x.market_raw_probability,0);for(const row of rows)row.market_fair_probability=row.market_raw_probability/z;}}
@@ -214,6 +214,7 @@ export function settleSystemSignalAndUserExecution({systemSignal,userExecution,h
  const settleComponent=c=>({component:c,status:selectionOutcome(c,row)});
  const systemComponents=systemSignal.components??[systemSignal];
  const userComponents=userExecution?.components??[];
+ if(!Array.isArray(systemComponents)||systemComponents.length===0)throw new Error('SYSTEM_SIGNAL_COMPONENTS_REQUIRED');if(userExecution&&(!Array.isArray(userComponents)||userComponents.length===0))throw new Error('USER_EXECUTION_COMPONENTS_REQUIRED');
  const systemSettlement=systemComponents.map(settleComponent),userSettlement=userComponents.map(settleComponent);const aggregate=rows=>rows.some(x=>x.status==='LOSS')?'LOSS':rows.some(x=>x.status==='PUSH')?'PUSH':rows.every(x=>x.status==='WIN')?'WIN':'UNSUPPORTED';
  return deepFreeze({signal_id:systemSignal.signal_id,system_signal:{components:systemSettlement,result:aggregate(systemSettlement)},
   user_execution:userExecution?{execution_id:userExecution.execution_id,components:userSettlement,result:aggregate(userSettlement)}:null,
