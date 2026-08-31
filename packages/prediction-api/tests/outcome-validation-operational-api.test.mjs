@@ -84,4 +84,7 @@ test('startup and health reject undersized outcome ingestion tokens and close ad
   await withServer({outcomeValidationPersistence:outcomeAdapter,outcomeIngestionToken:'short'},async base=>{
     const response=await fetch(base+'/health');assert.equal(response.status,503);assert.equal((await response.json()).error,'OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED');
   });
+  await withServer({outcomeIngestionToken:'short'},async base=>{
+    const response=await fetch(base+'/health');assert.equal(response.status,503);assert.equal((await response.json()).error,'OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED');
+  });
 });
