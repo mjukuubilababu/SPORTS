@@ -136,7 +136,7 @@ export function createPredictionApiServer({persistence=null,outcomeValidationPer
     try{
       if(req.method==='GET' && req.url==='/health'){
         const predictionHealth=persistence?await persistence.healthCheck():{mode:'DISABLED',status:'disabled'};
-        if(outcomeValidationPersistence)assertOutcomeIngestionToken(outcomeIngestionToken);
+        if(outcomeValidationPersistence||outcomeIngestionToken)assertOutcomeIngestionToken(outcomeIngestionToken);
         const outcomeValidationHealth=outcomeValidationPersistence?await outcomeValidationPersistence.healthCheck():{mode:'DISABLED',status:'disabled'};
         return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:predictionHealth,outcomeValidationPersistence:outcomeValidationHealth,capitalState:'LOCKED',realMoney:'NO'});
       }
