@@ -28,6 +28,26 @@ jobs:
       - name: Run full-market inference specification tests
         working-directory: packages/intelligence-engine
         run: node --test tests/full-market-inference.test.mjs
+      - name: Diagnose unified verifier failures
+        shell: bash
+        run: |
+          set +e
+          python scripts/verify_unified.py
+          RC=$?
+          set -e
+          if [ "$RC" -ne 0 ]; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('artifacts/unified-verification-report.json').read_text())
+          for result in report['results']:
+              if not result['passed']:
+                  print({'name':result['name'],'returncode':result['returncode']})
+                  print(result.get('stdout',''))
+                  print(result.get('stderr',''))
+          raise SystemExit(1)
+          PY
+          fi
       - name: Compare full intelligence-engine regression with canonical base
         if: github.event_name == 'pull_request'
         shell: bash
