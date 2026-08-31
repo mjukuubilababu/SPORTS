@@ -60,10 +60,10 @@ test('health fails closed when outcome validation storage is unavailable',async(
   await withServer({outcomeValidationPersistence:{mode:'POSTGRES',async healthCheck(){throw unavailable;}},outcomeIngestionToken:token},async base=>{
     const response=await fetch(base+'/health');assert.equal(response.status,503);assert.equal((await response.json()).error,'POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE');
   });
-  const pool={async connect(){throw new Error('unused');},async query(){return {rowCount:1,rows:[{outcomes_table:'prediction_outcomes_v01',validations_table:'prediction_validations_v01',outcomes_access:true,validations_access:true}]};}};
+  const pool={async connect(){throw new Error('unused');},async query(){return {rowCount:1,rows:[{outcomes_table:'prediction_outcomes_v01',validations_table:'prediction_validations_v01',outcomes_select:true,outcomes_insert:true,validations_select:true,validations_insert:true}]};}};
   const health=await createPredictionOutcomeValidationPersistence(pool,{attestPredictionLineage:async()=>null}).healthCheck();
   assert.equal(health.status,'ok');assert.equal(health.outcomesTable,'prediction_outcomes_v01');assert.equal(health.validationsTable,'prediction_validations_v01');
-  const deniedPool={async connect(){throw new Error('unused');},async query(){return {rowCount:1,rows:[{outcomes_table:'prediction_outcomes_v01',validations_table:'prediction_validations_v01',outcomes_access:true,validations_access:false}]};}};
+  const deniedPool={async connect(){throw new Error('unused');},async query(){return {rowCount:1,rows:[{outcomes_table:'prediction_outcomes_v01',validations_table:'prediction_validations_v01',outcomes_select:true,outcomes_insert:false,validations_select:true,validations_insert:true}]};}};
   await assert.rejects(createPredictionOutcomeValidationPersistence(deniedPool,{attestPredictionLineage:async()=>null}).healthCheck(),/POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE/);
 });
 
