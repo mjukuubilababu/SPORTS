@@ -85,7 +85,7 @@ function selectionOutcome(component,row){
  };
  if(allowedSelections[component.marketFamily]&&!allowedSelections[component.marketFamily].includes(component.selection))return'UNSUPPORTED';
  if(['TOTAL_GOALS_OVER_UNDER_FULL_TIME','HOME_TEAM_OVER_UNDER_FULL_TIME','AWAY_TEAM_OVER_UNDER_FULL_TIME'].includes(component.marketFamily)&&!Number.isFinite(line))return'UNSUPPORTED';
- if(component.marketFamily==='CORRECT_SCORE_FULL_TIME'&&!/^\\d+-\\d+$/.test(String(component.selection)))return'UNSUPPORTED';
+ if(component.marketFamily==='CORRECT_SCORE_FULL_TIME'&&!/^\d+-\d+$/.test(String(component.selection)))return'UNSUPPORTED';
  if(component.marketFamily==='TOTAL_GOALS_EXACT_FULL_TIME'&&(!Number.isInteger(Number(component.selection))||Number(component.selection)<0))return'UNSUPPORTED';
  switch(component.marketFamily){
   case'1X2_FULL_TIME':return ({HOME:row.homeGoals>row.awayGoals,DRAW:row.homeGoals===row.awayGoals,AWAY:row.homeGoals<row.awayGoals})[component.selection]?'WIN':'LOSS';
