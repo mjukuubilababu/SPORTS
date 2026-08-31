@@ -1,12 +1,21 @@
 import http from 'node:http';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { orchestrateModelProbabilities } from '../../intelligence-engine/src/model-probability-orchestrator.mjs';
 import { predictLive1X2 } from '../../intelligence-engine/src/live-outcome.mjs';
 import { createPostgresPredictionPersistence } from './postgres-persistence.mjs';
+import { createPostgresPredictionOutcomeValidationPersistence } from './postgres-outcome-validation-persistence.mjs';
 
 const API_VERSION='PREDICTION_HTTP_API_V0_1';
 const LIVE_API_VERSION='PREDICTION_LIVE_HTTP_API_V0_1';
 const MAX_BODY_BYTES=1024*1024;
+
+function authorizeOutcomeValidation(req,token){
+  if(typeof token!=='string'||token.length<32)throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED'),{statusCode:503});
+  const authorization=String(req.headers.authorization||''),prefix='Bearer ';
+  if(!authorization.startsWith(prefix))throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_REQUIRED'),{statusCode:401});
+  const supplied=authorization.slice(prefix.length),expected=Buffer.from(token),actual=Buffer.from(supplied);
+  if(actual.length!==expected.length||!timingSafeEqual(actual,expected))throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_FORBIDDEN'),{statusCode:403});
+}
 
 function json(res,status,payload){
   const body=JSON.stringify(payload);
@@ -117,11 +126,12 @@ async function persistIfConfigured(persistence,{requestId,endpoint,input,output}
   return persistence.persistPrediction({requestId,endpoint,input,output});
 }
 
-export function createPredictionApiServer({persistence=null}={}){
+export function createPredictionApiServer({persistence=null,outcomeValidationPersistence=null,outcomeIngestionToken=null}={}){
   return http.createServer(async(req,res)=>{
     const requestId=String(req.headers['x-request-id'] || randomUUID());
     res.setHeader('x-request-id',requestId);
     res.setHeader('x-persistence-mode',persistence?.mode || 'DISABLED');
+    res.setHeader('x-outcome-validation-persistence-mode',outcomeValidationPersistence?.mode || (outcomeValidationPersistence?'CONFIGURED':'DISABLED'));
     try{
       if(req.method==='GET' && req.url==='/health'){
         if(!persistence){
@@ -135,6 +145,21 @@ export function createPredictionApiServer({persistence=null}={}){
         if(!persistence?.attestPredictionLineage)throw Object.assign(new Error('POSTGRES_LINEAGE_ATTESTATION_REQUIRED'),{statusCode:503});
         const attestation=await persistence.attestPredictionLineage({snapshotId:lineageMatch[1]});
         return json(res,200,{apiVersion:API_VERSION,lineageAttestation:attestation,truthOwner:'GATE1',capitalOwner:'GATE6',predictionIsValidation:false,predictionIsExecution:false,capitalState:'LOCKED',realMoney:'NO'});
+      }
+      const outcomeValidationMatch=req.url?.match(/^\/v1\/predictions\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/outcome-validation$/i);
+      if(outcomeValidationMatch&&['GET','POST'].includes(req.method)){
+        if(!outcomeValidationPersistence)throw Object.assign(new Error('POSTGRES_OUTCOME_VALIDATION_PERSISTENCE_REQUIRED'),{statusCode:503});
+        authorizeOutcomeValidation(req,outcomeIngestionToken);
+        const predictionSnapshotId=outcomeValidationMatch[1].toLowerCase();
+        if(req.method==='GET'){
+          const attestation=await outcomeValidationPersistence.attest({predictionSnapshotId});
+          return json(res,200,{apiVersion:API_VERSION,outcomeValidationAttestation:attestation,truthOwner:'GATE1',capitalOwner:'GATE6',predictionIsValidation:false,validationIsExecution:false,authorizesExecution:false,capitalState:'LOCKED',realMoney:'NO'});
+        }
+        const body=await readJson(req);
+        if(!body?.outcome||!body?.validation)throw Object.assign(new Error('OUTCOME_AND_VALIDATION_REQUIRED'),{statusCode:400});
+        if(String(body.outcome.predictionSnapshotId||'').toLowerCase()!==predictionSnapshotId)throw Object.assign(new Error('OUTCOME_ROUTE_PREDICTION_ID_MISMATCH'),{statusCode:409});
+        const persisted=await outcomeValidationPersistence.persist({outcome:body.outcome,validation:body.validation});
+        return json(res,persisted.status==='PERSISTED'?201:200,{apiVersion:API_VERSION,outcomeValidation:persisted,truthOwner:'GATE1',capitalOwner:'GATE6',predictionIsValidation:false,validationIsExecution:false,authorizesExecution:false,capitalState:'LOCKED',realMoney:'NO'});
       }
       if(req.method==='POST' && req.url==='/v1/predict'){
         const body=await readJson(req);
@@ -179,14 +204,15 @@ function resolvePersistenceMode(){
   return process.env.DATABASE_URL?'postgres':'disabled';
 }
 
-export async function startPredictionApi({port=Number(process.env.PORT || 8080),host=process.env.HOST || '0.0.0.0',persistence=null}={}){
+export async function startPredictionApi({port=Number(process.env.PORT || 8080),host=process.env.HOST || '0.0.0.0',persistence=null,outcomeValidationPersistence=null,outcomeIngestionToken=process.env.PREDICTION_OUTCOME_INGEST_TOKEN||null}={}){
   const mode=persistence?.mode?'postgres':resolvePersistenceMode();
   const activePersistence=persistence || (mode==='postgres'?await createPostgresPredictionPersistence():null);
+  const activeOutcomeValidation=outcomeValidationPersistence || (mode==='postgres'&&outcomeIngestionToken?await createPostgresPredictionOutcomeValidationPersistence():null);
   if(activePersistence)await activePersistence.healthCheck();
-  const server=createPredictionApiServer({persistence:activePersistence});
+  const server=createPredictionApiServer({persistence:activePersistence,outcomeValidationPersistence:activeOutcomeValidation,outcomeIngestionToken});
   server.listen(port,host,()=>console.log(JSON.stringify({apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,host,port,persistenceMode:activePersistence?.mode || 'DISABLED',capitalState:'LOCKED',realMoney:'NO'})));
-  if(activePersistence?.close){
-    server.once('close',()=>{Promise.resolve(activePersistence.close()).catch(error=>console.error(JSON.stringify({error:'POSTGRES_PERSISTENCE_CLOSE_FAILED',message:error.message})));});
+  if(activePersistence?.close||activeOutcomeValidation?.close){
+    server.once('close',()=>{Promise.allSettled([activePersistence?.close?.(),activeOutcomeValidation?.close?.()]).then(results=>{for(const result of results)if(result.status==='rejected')console.error(JSON.stringify({error:'POSTGRES_PERSISTENCE_CLOSE_FAILED',message:result.reason?.message}));});});
   }
   return server;
 }
