@@ -84,7 +84,7 @@ function selectionOutcome(component,row){
   'TEAM_TO_SCORE_4WAY_FULL_TIME':['BOTH','HOME_ONLY','AWAY_ONLY','NEITHER']
  };
  if(allowedSelections[component.marketFamily]&&!allowedSelections[component.marketFamily].includes(component.selection))return'UNSUPPORTED';
- if(['TOTAL_GOALS_OVER_UNDER_FULL_TIME','HOME_TEAM_OVER_UNDER_FULL_TIME','AWAY_TEAM_OVER_UNDER_FULL_TIME'].includes(component.marketFamily)&&!Number.isFinite(line))return'UNSUPPORTED';
+ if(['TOTAL_GOALS_OVER_UNDER_FULL_TIME','HOME_TEAM_OVER_UNDER_FULL_TIME','AWAY_TEAM_OVER_UNDER_FULL_TIME'].includes(component.marketFamily)&&(!Number.isFinite(line)||line<0||!Number.isInteger(line*2)))return'UNSUPPORTED';
  if(component.marketFamily==='CORRECT_SCORE_FULL_TIME'&&!/^\d+-\d+$/.test(String(component.selection)))return'UNSUPPORTED';
  if(component.marketFamily==='TOTAL_GOALS_EXACT_FULL_TIME'&&(!Number.isInteger(Number(component.selection))||Number(component.selection)<0))return'UNSUPPORTED';
  switch(component.marketFamily){
@@ -101,13 +101,14 @@ function selectionOutcome(component,row){
   case'TOTAL_GOALS_EXACT_FULL_TIME':return row.totalGoals===Number(component.selection)?'WIN':'LOSS';
   case'ODD_EVEN_FULL_TIME':return ((row.totalGoals%2===1?'ODD':'EVEN')===component.selection)?'WIN':'LOSS';
   case'TEAM_TO_SCORE_4WAY_FULL_TIME':{const result=row.homeGoals>0&&row.awayGoals>0?'BOTH':row.homeGoals>0?'HOME_ONLY':row.awayGoals>0?'AWAY_ONLY':'NEITHER';return result===component.selection?'WIN':'LOSS';}
-  case'MULTIGOALS_FULL_TIME':{const bounds=String(component.selection).match(/(\d+)\D+(\d+)/);const min=component.minGoals??(bounds?Number(bounds[1]):null),max=component.maxGoals??(bounds?Number(bounds[2]):null);return Number.isFinite(min)&&Number.isFinite(max)?(row.totalGoals>=min&&row.totalGoals<=max?'WIN':'LOSS'):'UNSUPPORTED';}
+  case'MULTIGOALS_FULL_TIME':{const bounds=String(component.selection??'').match(/^(\d+)-(\d+)$/);const min=component.minGoals??(bounds?Number(bounds[1]):null),max=component.maxGoals??(bounds?Number(bounds[2]):null);return Number.isInteger(min)&&min>=0&&Number.isInteger(max)&&max>=min?(row.totalGoals>=min&&row.totalGoals<=max?'WIN':'LOSS'):'UNSUPPORTED';}
   default:return'UNSUPPORTED';
  }
 }
 function selectionPredicate(component){return selectionOutcome(component,{homeGoals:0,awayGoals:0,totalGoals:0})==='UNSUPPORTED'?null:(row=>selectionOutcome(component,row)==='WIN');}
 function distributionMass(distribution,component,outcome){return distribution.rows.reduce((s,row)=>s+(selectionOutcome(component,row)===outcome?row.probability:0),0);}
-function distributionProbability(distribution,component){const probe=selectionOutcome(component,distribution.rows[0]);if(probe==='UNSUPPORTED')return null;const win=distributionMass(distribution,component,'WIN'),loss=distributionMass(distribution,component,'LOSS'),push=distributionMass(distribution,component,'PUSH');return push>0&&win+loss>0?win/(win+loss):win;}
+function componentWithinDistributionSupport(distribution,component){const maxHome=Math.max(...distribution.rows.map(row=>row.homeGoals)),maxAway=Math.max(...distribution.rows.map(row=>row.awayGoals)),maxTotal=maxHome+maxAway;if(component.marketFamily==='CORRECT_SCORE_FULL_TIME'){const [home,away]=String(component.selection).split('-').map(Number);return home<=maxHome&&away<=maxAway;}if(component.marketFamily==='TOTAL_GOALS_EXACT_FULL_TIME')return Number(component.selection)<=maxTotal;if(component.marketFamily==='MULTIGOALS_FULL_TIME'){const bounds=String(component.selection??'').match(/^(\d+)-(\d+)$/);const max=component.maxGoals??(bounds?Number(bounds[2]):null);return Number.isInteger(max)&&max<=maxTotal;}return true;}
+function distributionProbability(distribution,component){if(!componentWithinDistributionSupport(distribution,component))return null;const probe=selectionOutcome(component,distribution.rows[0]);if(probe==='UNSUPPORTED')return null;const win=distributionMass(distribution,component,'WIN'),loss=distributionMass(distribution,component,'LOSS'),push=distributionMass(distribution,component,'PUSH');return push>0&&win+loss>0?win/(win+loss):win;}
 
 export function recomputeJointSelection(distribution,components,{jointOdds=null,jointMarketProbability=null}={}){
  if(!Array.isArray(components)||components.length<2)throw new Error('JOINT_COMPONENTS_REQUIRED');
