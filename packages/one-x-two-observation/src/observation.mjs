@@ -15,7 +15,8 @@ function canonical(value){
 }
 export function fingerprint(value){return crypto.createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');}
 export function evidencePayloadFingerprint(value){const {payload_fingerprint:ignoredPayload,identity_fingerprint:ignoredIdentity,...payload}=value;return fingerprint(payload);}
-function containsForbiddenReplayEvidence(value){if(!value||typeof value!=='object')return false;const forbidden=new Set(['settlement','finalscore','final_score','postkickoff','post_kickoff','futurearticles','future_articles']);return Object.entries(value).some(([key,nested])=>forbidden.has(key.toLowerCase())||containsForbiddenReplayEvidence(nested));}
+function deepFreeze(value){if(value&&typeof value==='object'){for(const nested of Object.values(value))deepFreeze(nested);Object.freeze(value);}return value;}
+function containsForbiddenReplayEvidence(value){if(!value||typeof value!=='object')return false;const concepts=['settlement','finalscore','postkickoff','futurearticle'];return Object.entries(value).some(([key,nested])=>{const normalized=key.toLowerCase().replace(/[^a-z0-9]/g,'');return concepts.some(concept=>normalized.includes(concept))||containsForbiddenReplayEvidence(nested);});}
 function iso(value,name){if(value===null)return null;if(typeof value!=='string'||!Number.isFinite(Date.parse(value)))throw new Error('INVALID_'+name.toUpperCase());return value;}
 function nullableString(value,name){if(value===null)return null;if(typeof value!=='string'||value.trim()==='')throw new Error('INVALID_'+name.toUpperCase());return value;}
 function outcomeFor(selection,h,a){const result=h===a?'DRAW':h>a?'HOME':'AWAY';return result===selection?'WIN':'LOSS';}
@@ -75,11 +76,12 @@ export function createCounterfactualReplay(observation,input){
   if(containsForbiddenReplayEvidence(input.inputs))throw new Error('COUNTERFACTUAL_LEAKAGE_REJECTED');
   if(!new Set(['HOME','DRAW','AWAY','ABSTAIN']).has(input.decision))throw new Error('INVALID_REPLAY_DECISION');
   const ps=input.probabilities;if(!ps||!['home','draw','away'].every(k=>typeof ps[k]==='number'&&ps[k]>=0&&ps[k]<=1)||Math.abs(ps.home+ps.draw+ps.away-1)>1e-9)throw new Error('INVALID_REPLAY_PROBABILITIES');
-  const replay={replay_id:input.replay_id,observation_id:observation.observation_id,event_id:observation.event_id,cutoff_at:input.cutoff_at,decision:input.decision,probabilities:ps,confidence:input.confidence??null,flags:input.flags??[],inputs:input.inputs??{},created_at:input.created_at};
-  return Object.freeze({...replay,input_fingerprint:fingerprint(replay)});
+  const replay=canonical({replay_id:input.replay_id,observation_id:observation.observation_id,event_id:observation.event_id,cutoff_at:input.cutoff_at,decision:input.decision,probabilities:ps,confidence:input.confidence??null,flags:input.flags??[],inputs:input.inputs??{},created_at:input.created_at});
+  return deepFreeze({...replay,input_fingerprint:fingerprint(replay)});
 }
 
 export function evaluateBatch(batch){
+  const ids=batch.observations.map(row=>row.observation_id);if(new Set(ids).size!==ids.length)throw new Error('DUPLICATE_OBSERVATION_ID');
   const observations=batch.observations.map(row=>normalizeObservation(batch,row));
   const wins=observations.filter(x=>x.outcome==='WIN').length,losses=observations.length-wins;
   const odds=observations.map(x=>x.entry_odds).sort((a,b)=>a-b);
