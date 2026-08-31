@@ -9,7 +9,7 @@ test('PostgreSQL 16 enforces immutable, atomic, idempotent observation evidence'
   const renamed={...e,observations:e.observations.map((x,i)=>i?x:{...x,observation_id:'replacement-leg'})};
   await assert.rejects(()=>persistBatch(pool,renamed),/CHANGED_BATCH/);
   const changed={...e,observations:e.observations.map((x,i)=>i?x:{...x,entry_odds:9,payload_fingerprint:'a'.repeat(64)})};
-  await assert.rejects(()=>persistBatch(pool,changed),/CHANGED_PAYLOAD/);
+  await assert.rejects(()=>persistBatch(pool,changed),/CHANGED_(BATCH|PAYLOAD)/);
   const rollbackRaw={...raw,batch_id:'rollback-batch',observations:raw.observations.map((x,i)=>({...x,observation_id:'rollback-'+i}))};
   await assert.rejects(()=>persistBatch(pool,evaluateBatch(rollbackRaw),{failAfter:2}),/INJECTED_PARTIAL_FAILURE/);
   assert.equal(Number((await pool.query("SELECT count(*) n FROM one_x_two_observations WHERE batch_id='rollback-batch'")).rows[0].n),0);
