@@ -32,7 +32,7 @@ export function buildIndependentTeamState({
  const metrics={};
  for(const key of keys){
   let value=weighted(previousSeason[key],currentSeason[key],priorWeight,currentSeasonWeight);
-  if(Number.isFinite(preseason[key])&&preseasonWeight>0)value=Number.isFinite(value)?value*(1-preseasonWeight)+preseason[key]*preseasonWeight:preseason[key];
+  if(Number.isFinite(preseason[key])&&preseasonWeight>0)value=Number.isFinite(value)?value*(1-preseasonWeight)+preseason[key]*preseasonWeight:preseason[key]*preseasonWeight;
   metrics[key]=Number.isFinite(value)?value:null;
  }
  for(const field of QUALITY_FIELDS)if(!(field in metrics))metrics[field]=null;
@@ -86,7 +86,7 @@ function selectionOutcome(component,row){
  if(allowedSelections[component.marketFamily]&&!allowedSelections[component.marketFamily].includes(component.selection))return'UNSUPPORTED';
  if(['TOTAL_GOALS_OVER_UNDER_FULL_TIME','HOME_TEAM_OVER_UNDER_FULL_TIME','AWAY_TEAM_OVER_UNDER_FULL_TIME'].includes(component.marketFamily)&&(!Number.isFinite(line)||line<0||!Number.isInteger(line*2)))return'UNSUPPORTED';
  if(component.marketFamily==='CORRECT_SCORE_FULL_TIME'&&!/^\d+-\d+$/.test(String(component.selection)))return'UNSUPPORTED';
- if(component.marketFamily==='TOTAL_GOALS_EXACT_FULL_TIME'&&(!Number.isInteger(Number(component.selection))||Number(component.selection)<0))return'UNSUPPORTED';
+ if(component.marketFamily==='TOTAL_GOALS_EXACT_FULL_TIME'){const exact=component.selection,validNumber=typeof exact==='number'&&Number.isInteger(exact)&&exact>=0,validString=typeof exact==='string'&&/^(0|[1-9]\d*)$/.test(exact);if(!validNumber&&!validString)return'UNSUPPORTED';}
  switch(component.marketFamily){
   case'1X2_FULL_TIME':return ({HOME:row.homeGoals>row.awayGoals,DRAW:row.homeGoals===row.awayGoals,AWAY:row.homeGoals<row.awayGoals})[component.selection]?'WIN':'LOSS';
   case'DOUBLE_CHANCE_FULL_TIME':return ({'1X':row.homeGoals>=row.awayGoals,'X2':row.awayGoals>=row.homeGoals,'12':row.homeGoals!==row.awayGoals})[component.selection]?'WIN':'LOSS';
@@ -195,7 +195,7 @@ export function buildFullMarketInference({
  const abstainReasons=[];if(!eligible.length)abstainReasons.push('NO_EVIDENCE_GATED_VALUE_CANDIDATE');
  if(teamAState.xi_confidence===null||teamBState.xi_confidence===null)abstainReasons.push('XI_UNCERTAIN');
  if(observations.some(x=>!x.provenance_ready))abstainReasons.push('MARKET_PROVENANCE_MISSING');
- const core={event_id:eventId,analysis_timestamp:analysisTimestamp,team_a_state:teamAState,team_b_state:teamBState,
+ const core={event_id:eventId,analysis_timestamp:analysisTimestamp,kickoff_at:kickoffAt,team_a_state:teamAState,team_b_state:teamBState,
   matchup_audit:buildMatchupAudit(teamAState,teamBState,matchupConceptEvidence,frozenAt),data_completeness:(teamAState.data_completeness+teamBState.data_completeness)/2,
   sample_size:{team_a:teamAState.sample_size,team_b:teamBState.sample_size},early_season_penalty:(teamAState.early_season_penalty+teamBState.early_season_penalty)/2,
   expected_home_goals:homeLambda,expected_away_goals:awayLambda,expected_total_goals:homeLambda+awayLambda,
@@ -209,6 +209,7 @@ export function buildFullMarketInference({
 
 export function settleSystemSignalAndUserExecution({systemSignal,userExecution,homeScore,awayScore,settledAt}){
  if(!systemSignal?.immutable)throw new Error('IMMUTABLE_SYSTEM_SIGNAL_REQUIRED');
+ const settledMs=timestamp(settledAt,'SETTLED_AT');if(systemSignal.kickoff_at&&settledMs<timestamp(systemSignal.kickoff_at,'SIGNAL_KICKOFF_AT'))throw new Error('SETTLEMENT_BEFORE_KICKOFF');if(systemSignal.frozen_at&&settledMs<=timestamp(systemSignal.frozen_at,'SIGNAL_FROZEN_AT'))throw new Error('SETTLEMENT_NOT_AFTER_FREEZE');
  if(!Number.isInteger(homeScore)||homeScore<0||!Number.isInteger(awayScore)||awayScore<0)throw new Error('FINAL_SCORE_INVALID');
  const row={homeGoals:homeScore,awayGoals:awayScore,totalGoals:homeScore+awayScore};
  const settleComponent=c=>({component:c,status:selectionOutcome(c,row)});
