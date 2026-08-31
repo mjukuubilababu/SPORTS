@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -48,23 +50,7 @@ jobs:
           import re
           from pathlib import Path
           glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
-          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)      - name: Revalidate frozen Pattern Intelligence and P002 contracts
-        run: python scripts/test_pattern_intelligence_contract_v0_1.py
-      - name: Verify governance markers
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          c=json.loads(Path('contracts/full-market-inference-match-distribution-v0.1.json').read_text())
-          assert c['governance']['gate1_to_gate6_unchanged'] is True
-          assert c['governance']['prediction_weight']==0
-          assert c['governance']['capital_effect']=='NONE'
-          assert c['governance']['real_money']=='NO'
-          assert c['market_policy']['odds_are_evidence_not_truth'] is True
-          assert c['combinations']['same_match_joint_recomputed_from_score_distribution'] is True
-          print('FULL_MARKET_GOVERNANCE=PASS')
-          PY
-)
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)$')
           def failures(path):
               out=set()
               for line in Path(path).read_text(errors='replace').splitlines():
