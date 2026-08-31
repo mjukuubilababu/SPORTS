@@ -14,6 +14,8 @@ function canonical(value){
   return value;
 }
 export function fingerprint(value){return crypto.createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');}
+export function evidencePayloadFingerprint(value){const {payload_fingerprint:ignoredPayload,identity_fingerprint:ignoredIdentity,...payload}=value;return fingerprint(payload);}
+function containsForbiddenReplayEvidence(value){if(!value||typeof value!=='object')return false;const forbidden=new Set(['settlement','finalscore','final_score','postkickoff','post_kickoff','futurearticles','future_articles']);return Object.entries(value).some(([key,nested])=>forbidden.has(key.toLowerCase())||containsForbiddenReplayEvidence(nested));}
 function iso(value,name){if(value===null)return null;if(typeof value!=='string'||!Number.isFinite(Date.parse(value)))throw new Error('INVALID_'+name.toUpperCase());return value;}
 function nullableString(value,name){if(value===null)return null;if(typeof value!=='string'||value.trim()==='')throw new Error('INVALID_'+name.toUpperCase());return value;}
 function outcomeFor(selection,h,a){const result=h===a?'DRAW':h>a?'HOME':'AWAY';return result===selection?'WIN':'LOSS';}
@@ -54,7 +56,7 @@ export function normalizeObservation(batch,row){
     failure_classification:row.failure_classification,state:hasClose?'EVALUATED':'SETTLED',
     favorite_rank:null,trap_flag:null,market_context:null,created_at:batch.created_at};
   if(!STATES.has(normalized.state))throw new Error('INVALID_STATE');
-  return Object.freeze({...normalized,identity_fingerprint:fingerprint(immutable),payload_fingerprint:fingerprint(normalized)});
+  return Object.freeze({...normalized,identity_fingerprint:fingerprint(immutable),payload_fingerprint:evidencePayloadFingerprint(normalized)});
 }
 
 export function verifyClose(observation,close){
@@ -62,17 +64,19 @@ export function verifyClose(observation,close){
   if(close.provider!==observation.entry_provider)throw new Error('CROSS_PROVIDER_CLV_REJECTED');
   if(!observation.kickoff_at||!close.observed_at||Date.parse(close.observed_at)>=Date.parse(observation.kickoff_at))throw new Error('POST_KICKOFF_CLOSE_REJECTED');
   if(typeof close.odds!=='number'||close.odds<=1)throw new Error('CLOSE_NOT_VERIFIED');
-  return Object.freeze({...observation,closing_odds:close.odds,closing_provider:close.provider,closing_observed_at:close.observed_at,closing_verified:true,clv:(observation.entry_odds/close.odds)-1,state:'EVALUATED'});
+  const updated={...observation,closing_odds:close.odds,closing_provider:close.provider,closing_observed_at:close.observed_at,closing_verified:true,clv:(observation.entry_odds/close.odds)-1,state:'EVALUATED'};
+  return Object.freeze({...updated,payload_fingerprint:evidencePayloadFingerprint(updated)});
 }
 
 export function createCounterfactualReplay(observation,input){
   if(!observation.event_id||!observation.kickoff_at)throw new Error('REPLAY_REQUIRES_VERIFIED_EVENT');
   if(input.event_id!==observation.event_id)throw new Error('CROSS_EVENT_REPLAY_REJECTED');
   if(!input.cutoff_at||Date.parse(input.cutoff_at)>Date.parse(observation.kickoff_at))throw new Error('REPLAY_CUTOFF_AFTER_KICKOFF');
-  if(['final_score','settlement','post_kickoff','future_articles'].some(k=>input.inputs?.[k]!=null))throw new Error('COUNTERFACTUAL_LEAKAGE_REJECTED');
+  if(containsForbiddenReplayEvidence(input.inputs))throw new Error('COUNTERFACTUAL_LEAKAGE_REJECTED');
   if(!new Set(['HOME','DRAW','AWAY','ABSTAIN']).has(input.decision))throw new Error('INVALID_REPLAY_DECISION');
   const ps=input.probabilities;if(!ps||!['home','draw','away'].every(k=>typeof ps[k]==='number'&&ps[k]>=0&&ps[k]<=1)||Math.abs(ps.home+ps.draw+ps.away-1)>1e-9)throw new Error('INVALID_REPLAY_PROBABILITIES');
-  return Object.freeze({replay_id:input.replay_id,observation_id:observation.observation_id,event_id:observation.event_id,cutoff_at:input.cutoff_at,decision:input.decision,probabilities:ps,confidence:input.confidence??null,flags:input.flags??[],input_fingerprint:fingerprint(input.inputs??{}),created_at:input.created_at});
+  const replay={replay_id:input.replay_id,observation_id:observation.observation_id,event_id:observation.event_id,cutoff_at:input.cutoff_at,decision:input.decision,probabilities:ps,confidence:input.confidence??null,flags:input.flags??[],inputs:input.inputs??{},created_at:input.created_at};
+  return Object.freeze({...replay,input_fingerprint:fingerprint(replay)});
 }
 
 export function evaluateBatch(batch){
