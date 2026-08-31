@@ -51,7 +51,7 @@ export function preparePredictionValidation(input,outcome){
 }
 
 export function createPredictionOutcomeValidationPersistence(pool,{attestPredictionLineage=null}={}){
-  if(!pool||typeof pool.connect!=='function'||typeof pool.query!=='function')throw new Error('POSTGRES_POOL_REQUIRED');
+  if(!pool||typeof pool.connect!=='function')throw new Error('POSTGRES_POOL_REQUIRED');
   const attestUpstream=attestPredictionLineage||((args)=>createPredictionPersistenceFromPool(pool).attestPredictionLineage(args));
   return Object.freeze({
     async healthCheck(){
