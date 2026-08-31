@@ -9,8 +9,9 @@ const API_VERSION='PREDICTION_HTTP_API_V0_1';
 const LIVE_API_VERSION='PREDICTION_LIVE_HTTP_API_V0_1';
 const MAX_BODY_BYTES=1024*1024;
 
+function assertOutcomeIngestionToken(token,statusCode=503){if(typeof token!=='string'||token.length<32)throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED'),{statusCode});}
 function authorizeOutcomeValidation(req,token){
-  if(typeof token!=='string'||token.length<32)throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED'),{statusCode:503});
+  assertOutcomeIngestionToken(token);
   const authorization=String(req.headers.authorization||''),prefix='Bearer ';
   if(!authorization.startsWith(prefix))throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_REQUIRED'),{statusCode:401});
   const supplied=authorization.slice(prefix.length),expected=createHash('sha256').update(token).digest(),actual=createHash('sha256').update(supplied).digest();
@@ -135,6 +136,7 @@ export function createPredictionApiServer({persistence=null,outcomeValidationPer
     try{
       if(req.method==='GET' && req.url==='/health'){
         const predictionHealth=persistence?await persistence.healthCheck():{mode:'DISABLED',status:'disabled'};
+        if(outcomeValidationPersistence)assertOutcomeIngestionToken(outcomeIngestionToken);
         const outcomeValidationHealth=outcomeValidationPersistence?await outcomeValidationPersistence.healthCheck():{mode:'DISABLED',status:'disabled'};
         return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:predictionHealth,outcomeValidationPersistence:outcomeValidationHealth,capitalState:'LOCKED',realMoney:'NO'});
       }
@@ -207,6 +209,7 @@ export async function startPredictionApi({port=Number(process.env.PORT || 8080),
   let activePersistence=persistence,activeOutcomeValidation=outcomeValidationPersistence;
   try{
     activePersistence=activePersistence || (mode==='postgres'?await createPostgresPredictionPersistence():null);
+    if(activeOutcomeValidation||outcomeIngestionToken)assertOutcomeIngestionToken(outcomeIngestionToken,500);
     activeOutcomeValidation=activeOutcomeValidation || (mode==='postgres'&&outcomeIngestionToken?await createPostgresPredictionOutcomeValidationPersistence():null);
     if(activePersistence)await activePersistence.healthCheck();
     if(activeOutcomeValidation)await activeOutcomeValidation.healthCheck();
