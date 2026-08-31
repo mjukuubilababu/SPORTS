@@ -204,10 +204,16 @@ function resolvePersistenceMode(){
 
 export async function startPredictionApi({port=Number(process.env.PORT || 8080),host=process.env.HOST || '0.0.0.0',persistence=null,outcomeValidationPersistence=null,outcomeIngestionToken=process.env.PREDICTION_OUTCOME_INGEST_TOKEN||null}={}){
   const mode=persistence?.mode?'postgres':resolvePersistenceMode();
-  const activePersistence=persistence || (mode==='postgres'?await createPostgresPredictionPersistence():null);
-  const activeOutcomeValidation=outcomeValidationPersistence || (mode==='postgres'&&outcomeIngestionToken?await createPostgresPredictionOutcomeValidationPersistence():null);
-  if(activePersistence)await activePersistence.healthCheck();
-  if(activeOutcomeValidation)await activeOutcomeValidation.healthCheck();
+  let activePersistence=persistence,activeOutcomeValidation=outcomeValidationPersistence;
+  try{
+    activePersistence=activePersistence || (mode==='postgres'?await createPostgresPredictionPersistence():null);
+    activeOutcomeValidation=activeOutcomeValidation || (mode==='postgres'&&outcomeIngestionToken?await createPostgresPredictionOutcomeValidationPersistence():null);
+    if(activePersistence)await activePersistence.healthCheck();
+    if(activeOutcomeValidation)await activeOutcomeValidation.healthCheck();
+  }catch(error){
+    await Promise.allSettled([activePersistence?.close?.(),activeOutcomeValidation?.close?.()]);
+    throw error;
+  }
   const server=createPredictionApiServer({persistence:activePersistence,outcomeValidationPersistence:activeOutcomeValidation,outcomeIngestionToken});
   server.listen(port,host,()=>console.log(JSON.stringify({apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,host,port,persistenceMode:activePersistence?.mode || 'DISABLED',capitalState:'LOCKED',realMoney:'NO'})));
   if(activePersistence?.close||activeOutcomeValidation?.close){
