@@ -52,11 +52,12 @@ jobs:
       - name: Apply PostgreSQL lineage and prediction migrations
         run: |
           set -euo pipefail
-          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql packages/reference-e2e/migrations/0008_frozen_signal_prediction_api_reference_v0_1.sql packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql packages/prediction-api/migrations/0015_prediction_snapshots_v0_1.sql packages/prediction-api/migrations/0016_prediction_frozen_signal_lineage_v0_1.sql; do
+          for migration in packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql packages/reference-e2e/migrations/0008_frozen_signal_prediction_api_reference_v0_1.sql packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql packages/prediction-api/migrations/0015_prediction_snapshots_v0_1.sql packages/prediction-api/migrations/0016_prediction_frozen_signal_lineage_v0_1.sql packages/prediction-api/migrations/0017_prediction_outcome_validation_lineage_v0_1.sql; do
             psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
           done
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0008_frozen_signal_prediction_api_reference_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/prediction-api/migrations/0016_prediction_frozen_signal_lineage_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/prediction-api/migrations/0017_prediction_outcome_validation_lineage_v0_1.sql
       - name: Install API dependencies
         working-directory: packages/prediction-api
         run: npm install --no-audit --no-fund --no-package-lock
