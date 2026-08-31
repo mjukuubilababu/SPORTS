@@ -70,6 +70,10 @@ jobs:
       - name: Run live outcome regression
         run: node --test packages/intelligence-engine/tests/outcome-1x2.test.mjs
 
+      - name: Install prediction API dependencies for unified verification
+        working-directory: packages/prediction-api
+        run: npm install --ignore-scripts --no-audit --no-fund
+
       - name: Run unified repository verifier
         run: python scripts/verify_unified.py
 
