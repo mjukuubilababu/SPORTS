@@ -1,4 +1,4 @@
-import { sha256Json, sha256ReferencePayload, canonicalInputTimestamp } from './postgres-persistence.mjs';
+import { sha256Json, sha256ReferencePayload, canonicalInputTimestamp, createPredictionPersistenceFromPool } from './postgres-persistence.mjs';
 
 function fail(message,statusCode=409,cause){const error=new Error(message,{cause});error.statusCode=statusCode;return error;}
 function req(value,code){if(typeof value!=='string'||value.trim()==='')throw fail(code,400);return value.trim();}
@@ -50,9 +50,18 @@ export function preparePredictionValidation(input,outcome){
   return Object.freeze({...core,validationPayload,validationFingerprint:sha256Json(core),capitalState:'LOCKED',realMoney:'NO',authorizesExecution:false});
 }
 
-export function createPredictionOutcomeValidationPersistence(pool){
-  if(!pool||typeof pool.connect!=='function')throw new Error('POSTGRES_POOL_REQUIRED');
+export function createPredictionOutcomeValidationPersistence(pool,{attestPredictionLineage=null}={}){
+  if(!pool||typeof pool.connect!=='function'||typeof pool.query!=='function')throw new Error('POSTGRES_POOL_REQUIRED');
+  const attestUpstream=attestPredictionLineage||((args)=>createPredictionPersistenceFromPool(pool).attestPredictionLineage(args));
   return Object.freeze({
+    async healthCheck(){
+      try{
+        const result=await pool.query("SELECT to_regclass('prediction_outcomes_v01')::text AS outcomes_table,to_regclass('prediction_validations_v01')::text AS validations_table");
+        const row=result.rows?.[0];
+        if(row?.outcomes_table!=='prediction_outcomes_v01'||row?.validations_table!=='prediction_validations_v01')throw new Error('OUTCOME_VALIDATION_SCHEMA_NOT_READY');
+        return Object.freeze({status:'ok',mode:'POSTGRES',outcomesTable:'prediction_outcomes_v01',validationsTable:'prediction_validations_v01'});
+      }catch(error){throw fail('POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE',503,error);}
+    },
     async persist({outcome:outcomeInput,validation:validationInput}){
       const outcome=preparePredictionOutcome(outcomeInput);
       const validation=preparePredictionValidation(validationInput,outcome);
@@ -94,10 +103,14 @@ export function createPredictionOutcomeValidationPersistence(pool){
     async attest({predictionSnapshotId}){
       const snapshotId=uuid(predictionSnapshotId,'OUTCOME_PREDICTION_ID_INVALID');
       try{
-        const result=await pool.query(`SELECT p.snapshot_id::text,p.event_id,p.capital_state AS prediction_capital,p.real_money AS prediction_money,
+        const upstream=await attestUpstream({snapshotId});
+        if(upstream?.status!=='ATTESTED'||upstream?.allFingerprintsRecomputed!==true||upstream?.exactEventBound!==true)throw fail('UPSTREAM_PREDICTION_LINEAGE_NOT_ATTESTED');
+        const result=await pool.query(`SELECT p.snapshot_id::text,p.event_id,p.capital_state AS prediction_capital,p.real_money AS prediction_money,s.kickoff_at AS lineage_kickoff_at,
           o.outcome_id,o.outcome_kind,o.home_goals,o.away_goals,o.official_source,o.source_payload,o.source_payload_fingerprint,o.outcome_fingerprint,o.occurred_at,o.observed_at,o.capital_state AS outcome_capital,o.real_money AS outcome_money,
           v.validation_id,v.validation_payload,v.validation_payload_fingerprint,v.validation_fingerprint,v.validated_at,v.capital_state AS validation_capital,v.real_money AS validation_money
           FROM prediction_snapshots_v01 p
+          JOIN prediction_snapshot_frozen_signal_lineage_v01 l ON l.prediction_snapshot_id=p.snapshot_id AND l.event_id=p.event_id
+          JOIN reference_frozen_signal_snapshots_v01 s ON s.signal_snapshot_id=l.frozen_signal_snapshot_id AND s.signal_fingerprint=l.frozen_signal_fingerprint AND s.event_id=l.event_id
           JOIN prediction_outcomes_v01 o ON o.prediction_snapshot_id=p.snapshot_id AND o.event_id=p.event_id
           JOIN prediction_validations_v01 v ON v.prediction_snapshot_id=p.snapshot_id AND v.event_id=p.event_id AND v.outcome_id=o.outcome_id AND v.outcome_fingerprint=o.outcome_fingerprint
           WHERE p.snapshot_id=$1`,[snapshotId]);
@@ -111,9 +124,9 @@ export function createPredictionOutcomeValidationPersistence(pool){
         const validationCore={validationId:row.validation_id,predictionSnapshotId:row.snapshot_id,outcomeId:row.outcome_id,outcomeFingerprint:row.outcome_fingerprint,eventId:row.event_id,validationPayloadFingerprint,validatedAt:dbIso(row.validated_at)};
         const governed=[row.prediction_capital,row.outcome_capital,row.validation_capital].every(value=>value==='LOCKED')&&[row.prediction_money,row.outcome_money,row.validation_money].every(value=>value==='NO');
         const exact=exactHash(row.source_payload_fingerprint)&&exactHash(row.outcome_fingerprint)&&exactHash(row.validation_payload_fingerprint)&&exactHash(row.validation_fingerprint)&&sourcePayloadFingerprint===row.source_payload_fingerprint&&sha256Json(outcomeCore)===row.outcome_fingerprint&&validationPayloadFingerprint===row.validation_payload_fingerprint&&sha256Json(validationCore)===row.validation_fingerprint;
-        const temporal=Date.parse(outcomeCore.observedAt)>=Date.parse(outcomeCore.occurredAt)&&Date.parse(validationCore.validatedAt)>=Date.parse(outcomeCore.observedAt);
+        const temporal=Date.parse(outcomeCore.occurredAt)>epoch(row.lineage_kickoff_at)&&Date.parse(outcomeCore.observedAt)>=Date.parse(outcomeCore.occurredAt)&&Date.parse(validationCore.validatedAt)>=Date.parse(outcomeCore.observedAt);
         if(!governed||!exact||!temporal)throw fail('OUTCOME_VALIDATION_ATTESTATION_FAILED');
-        return Object.freeze({status:'ATTESTED',predictionSnapshotId:row.snapshot_id,eventId:row.event_id,outcomeId:row.outcome_id,outcomeKind:row.outcome_kind,outcomeFingerprint:row.outcome_fingerprint,validationId:row.validation_id,validationFingerprint:row.validation_fingerprint,allFingerprintsRecomputed:true,exactEventBound:true,postKickoffOutcome:true,predictionIsValidation:false,validationIsExecution:false,authorizesExecution:false,capitalState:'LOCKED',realMoney:'NO'});
+        return Object.freeze({status:'ATTESTED',predictionSnapshotId:row.snapshot_id,eventId:row.event_id,upstreamPredictionLineageAttested:true,outcomeId:row.outcome_id,outcomeKind:row.outcome_kind,outcomeFingerprint:row.outcome_fingerprint,validationId:row.validation_id,validationFingerprint:row.validation_fingerprint,allFingerprintsRecomputed:true,exactEventBound:true,postKickoffOutcome:true,predictionIsValidation:false,validationIsExecution:false,authorizesExecution:false,capitalState:'LOCKED',realMoney:'NO'});
       }catch(error){if(error?.statusCode)throw error;throw fail('OUTCOME_VALIDATION_ATTESTATION_READ_FAILED',503,error);}
     }
   });
