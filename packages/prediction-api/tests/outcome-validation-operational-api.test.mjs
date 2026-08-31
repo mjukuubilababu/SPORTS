@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { createPredictionApiServer } from '../src/server.mjs';
+import { createPredictionApiServer, startPredictionApi } from '../src/server.mjs';
 import { createPredictionOutcomeValidationPersistence, preparePredictionOutcome, preparePredictionValidation } from '../src/postgres-outcome-validation-persistence.mjs';
 
 const token='0123456789abcdef0123456789abcdef';
@@ -63,4 +63,12 @@ test('health fails closed when outcome validation storage is unavailable',async(
   const pool={async connect(){throw new Error('unused');},async query(){return {rowCount:1,rows:[{outcomes_table:'prediction_outcomes_v01',validations_table:'prediction_validations_v01'}]};}};
   const health=await createPredictionOutcomeValidationPersistence(pool,{attestPredictionLineage:async()=>null}).healthCheck();
   assert.equal(health.status,'ok');assert.equal(health.outcomesTable,'prediction_outcomes_v01');assert.equal(health.validationsTable,'prediction_validations_v01');
+});
+
+test('startup health failure closes every initialized persistence adapter',async()=>{
+  const closed=[];
+  const prediction={mode:'POSTGRES',async healthCheck(){return {status:'ok'};},async close(){closed.push('prediction');}};
+  const outcomeAdapter={mode:'POSTGRES',async healthCheck(){throw Object.assign(new Error('POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE'),{statusCode:503});},async close(){closed.push('outcome');}};
+  await assert.rejects(startPredictionApi({port:0,host:'127.0.0.1',persistence:prediction,outcomeValidationPersistence:outcomeAdapter,outcomeIngestionToken:token}),/POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE/);
+  assert.deepEqual(closed.sort(),['outcome','prediction']);
 });
