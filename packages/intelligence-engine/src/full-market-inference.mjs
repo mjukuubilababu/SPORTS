@@ -77,6 +77,16 @@ export function buildMatchWorlds(distribution){
 
 function selectionOutcome(component,row){
  const line=component.line;
+ const allowedSelections={
+  '1X2_FULL_TIME':['HOME','DRAW','AWAY'],'DOUBLE_CHANCE_FULL_TIME':['1X','X2','12'],'DRAW_NO_BET_FULL_TIME':['HOME','AWAY'],
+  'TOTAL_GOALS_OVER_UNDER_FULL_TIME':['OVER','UNDER'],'HOME_TEAM_OVER_UNDER_FULL_TIME':['OVER','UNDER'],'AWAY_TEAM_OVER_UNDER_FULL_TIME':['OVER','UNDER'],
+  'BTTS_FULL_TIME':['YES','NO'],'CLEAN_SHEET_HOME':['YES','NO'],'CLEAN_SHEET_AWAY':['YES','NO'],'ODD_EVEN_FULL_TIME':['ODD','EVEN'],
+  'TEAM_TO_SCORE_4WAY_FULL_TIME':['BOTH','HOME_ONLY','AWAY_ONLY','NEITHER']
+ };
+ if(allowedSelections[component.marketFamily]&&!allowedSelections[component.marketFamily].includes(component.selection))return'UNSUPPORTED';
+ if(['TOTAL_GOALS_OVER_UNDER_FULL_TIME','HOME_TEAM_OVER_UNDER_FULL_TIME','AWAY_TEAM_OVER_UNDER_FULL_TIME'].includes(component.marketFamily)&&!Number.isFinite(line))return'UNSUPPORTED';
+ if(component.marketFamily==='CORRECT_SCORE_FULL_TIME'&&!/^\\d+-\\d+$/.test(String(component.selection)))return'UNSUPPORTED';
+ if(component.marketFamily==='TOTAL_GOALS_EXACT_FULL_TIME'&&(!Number.isInteger(Number(component.selection))||Number(component.selection)<0))return'UNSUPPORTED';
  switch(component.marketFamily){
   case'1X2_FULL_TIME':return ({HOME:row.homeGoals>row.awayGoals,DRAW:row.homeGoals===row.awayGoals,AWAY:row.homeGoals<row.awayGoals})[component.selection]?'WIN':'LOSS';
   case'DOUBLE_CHANCE_FULL_TIME':return ({'1X':row.homeGoals>=row.awayGoals,'X2':row.awayGoals>=row.homeGoals,'12':row.homeGoals!==row.awayGoals})[component.selection]?'WIN':'LOSS';
@@ -106,10 +116,12 @@ export function recomputeJointSelection(distribution,components,{jointOdds=null,
  const jointUnconditionalWinProbability=distribution.rows.reduce((s,r)=>s+(components.every(component=>selectionOutcome(component,r)==='WIN')?r.probability:0),0);
  const jointPushProbability=distribution.rows.reduce((s,r)=>{const states=components.map(component=>selectionOutcome(component,r));return s+(states.includes('PUSH')&&!states.includes('LOSS')?r.probability:0);},0);
  const jointProbability=jointPushProbability<1?jointUnconditionalWinProbability/(1-jointPushProbability):null;
- const independentProduct=componentProbabilities.reduce((p,x)=>p*x,1);
- const dependency=jointProbability===null?null:jointProbability-independentProduct;
+ const activeMass=1-jointPushProbability;
+ const jointConditionedComponentProbabilities=activeMass>0?components.map(component=>distribution.rows.reduce((s,row)=>{const states=components.map(item=>selectionOutcome(item,row));const jointPush=states.includes('PUSH')&&!states.includes('LOSS');return s+(!jointPush&&selectionOutcome(component,row)==='WIN'?row.probability:0);},0)/activeMass):components.map(()=>null);
+ const independentProduct=jointConditionedComponentProbabilities.every(Number.isFinite)?jointConditionedComponentProbabilities.reduce((p,x)=>p*x,1):null;
+ const dependency=jointProbability===null||independentProduct===null?null:jointProbability-independentProduct;
  const rawJoint=jointMarketProbability??(jointOdds>1?1/jointOdds:null);
- return deepFreeze({status:'MODELLED',component_probabilities:componentProbabilities,dependency,joint_probability:jointProbability,joint_unconditional_win_probability:jointUnconditionalWinProbability,joint_push_probability:jointPushProbability,
+ return deepFreeze({status:'MODELLED',component_probabilities:componentProbabilities,joint_conditioned_component_probabilities:jointConditionedComponentProbabilities,dependency,joint_probability:jointProbability,joint_unconditional_win_probability:jointUnconditionalWinProbability,joint_push_probability:jointPushProbability,
   joint_market_probability:rawJoint,joint_edge:rawJoint===null||jointProbability===null?null:jointProbability-rawJoint,confidence:dependency===null?0:clamp(1-Math.abs(dependency))});
 }
 
@@ -196,6 +208,7 @@ export function buildFullMarketInference({
 
 export function settleSystemSignalAndUserExecution({systemSignal,userExecution,homeScore,awayScore,settledAt}){
  if(!systemSignal?.immutable)throw new Error('IMMUTABLE_SYSTEM_SIGNAL_REQUIRED');
+ if(!Number.isInteger(homeScore)||homeScore<0||!Number.isInteger(awayScore)||awayScore<0)throw new Error('FINAL_SCORE_INVALID');
  const row={homeGoals:homeScore,awayGoals:awayScore,totalGoals:homeScore+awayScore};
  const settleComponent=c=>({component:c,status:selectionOutcome(c,row)});
  const systemComponents=systemSignal.components??[systemSignal];
