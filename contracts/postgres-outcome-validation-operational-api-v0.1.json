@@ -10,7 +10,8 @@
     "environment": "PREDICTION_OUTCOME_INGEST_TOKEN",
     "minimum_secret_length": 32,
     "constant_time_comparison": true,
-    "fail_closed_when_unconfigured": true
+    "fail_closed_when_unconfigured": true,
+    "comparison_input": "SHA256_FIXED_LENGTH_DIGESTS"
   },
   "invariants": {
     "route_identity_exact": true,
@@ -26,6 +27,9 @@
     "capital_state": "LOCKED",
     "real_money": "NO",
     "gate1": "AUTHORITATIVE_TRUTH_OWNER",
-    "gate6": "CAPITAL_AUTHORITY"
+    "gate6": "CAPITAL_AUTHORITY",
+    "upstream_prediction_lineage_attested": true,
+    "outcome_follows_exact_lineage_kickoff": true,
+    "startup_and_runtime_schema_health_checked": true
   }
 }
