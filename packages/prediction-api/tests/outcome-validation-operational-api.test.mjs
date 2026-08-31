@@ -74,3 +74,14 @@ test('startup health failure closes every initialized persistence adapter',async
   await assert.rejects(startPredictionApi({port:0,host:'127.0.0.1',persistence:prediction,outcomeValidationPersistence:outcomeAdapter,outcomeIngestionToken:token}),/POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE/);
   assert.deepEqual(closed.sort(),['outcome','prediction']);
 });
+
+test('startup and health reject undersized outcome ingestion tokens and close adapters',async()=>{
+  const closed=[];
+  const prediction={mode:'POSTGRES',async healthCheck(){return {status:'ok'};},async close(){closed.push('prediction');}};
+  const outcomeAdapter={mode:'POSTGRES',async healthCheck(){throw new Error('must not health-check with invalid token');},async close(){closed.push('outcome');}};
+  await assert.rejects(startPredictionApi({port:0,host:'127.0.0.1',persistence:prediction,outcomeValidationPersistence:outcomeAdapter,outcomeIngestionToken:'short'}),error=>error.statusCode===500&&error.message==='OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED');
+  assert.deepEqual(closed.sort(),['outcome','prediction']);
+  await withServer({outcomeValidationPersistence:outcomeAdapter,outcomeIngestionToken:'short'},async base=>{
+    const response=await fetch(base+'/health');assert.equal(response.status,503);assert.equal((await response.json()).error,'OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED');
+  });
+});
