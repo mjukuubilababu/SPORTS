@@ -22,6 +22,7 @@ export function normalizeObservation(batch,row){
   if(batch.dataset_type!==DATASET_TYPE||batch.pattern_id!==null)throw new Error('P002_ISOLATION_VIOLATION');
   if(batch.status!==STATUS)throw new Error('OBSERVATIONAL_STATUS_REQUIRED');
   if(!SOURCES.has(batch.observation_source)||!ORIGINS.has(batch.origin_decision))throw new Error('INVALID_ORIGIN');
+  if(batch.observation_source==='SYSTEM_FROZEN_1X2_SIGNAL'&&batch.origin_decision==='USER_DECISION')throw new Error('SETTLED_USER_OBSERVATION_CANNOT_BECOME_FROZEN_SIGNAL');
   if(batch.provider!=='BetPawa')throw new Error('INITIAL_PROVIDER_MUST_BE_BETPAWA');
   if(!SELECTIONS.has(row.selection)||!CLASSIFICATIONS.has(row.failure_classification))throw new Error('INVALID_OBSERVATION_ENUM');
   if(typeof row.entry_odds!=='number'||row.entry_odds<=1)throw new Error('INVALID_ENTRY_ODDS');
