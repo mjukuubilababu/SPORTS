@@ -96,7 +96,7 @@ function selectionOutcome(component,row){
 }
 function selectionPredicate(component){return selectionOutcome(component,{homeGoals:0,awayGoals:0,totalGoals:0})==='UNSUPPORTED'?null:(row=>selectionOutcome(component,row)==='WIN');}
 function distributionMass(distribution,component,outcome){return distribution.rows.reduce((s,row)=>s+(selectionOutcome(component,row)===outcome?row.probability:0),0);}
-function distributionProbability(distribution,component){const probe=selectionOutcome(component,distribution.rows[0]);if(probe==='UNSUPPORTED')return null;const win=distributionMass(distribution,component,'WIN'),loss=distributionMass(distribution,component,'LOSS');return component.marketFamily==='DRAW_NO_BET_FULL_TIME'&&win+loss>0?win/(win+loss):win;}
+function distributionProbability(distribution,component){const probe=selectionOutcome(component,distribution.rows[0]);if(probe==='UNSUPPORTED')return null;const win=distributionMass(distribution,component,'WIN'),loss=distributionMass(distribution,component,'LOSS'),push=distributionMass(distribution,component,'PUSH');return push>0&&win+loss>0?win/(win+loss):win;}
 
 export function recomputeJointSelection(distribution,components,{jointOdds=null,jointMarketProbability=null}={}){
  if(!Array.isArray(components)||components.length<2)throw new Error('JOINT_COMPONENTS_REQUIRED');
@@ -141,7 +141,7 @@ export function buildMarketConsistencyGraph(observations){
 
 function candidateKey(x){return `${x.marketFamily}|${x.selection}|${x.line??''}`;}
 export function rankFullMarketCandidates({reasoning,distribution,selections,observations,teamAState,teamBState,modelConfidence=1,worlds,contradictions}){
- const obsByKey=new Map(observations.map(o=>[candidateKey(o),o]));
+ const obsByKey=new Map();for(const observation of observations){const key=candidateKey(observation);if(obsByKey.has(key))throw new Error('AMBIGUOUS_MARKET_SELECTION_OBSERVATION');obsByKey.set(key,observation);}
  const completeness=(teamAState.data_completeness+teamBState.data_completeness)/2;
  const earlyPenalty=(teamAState.early_season_penalty+teamBState.early_season_penalty)/2;
  const xi=Math.min(teamAState.xi_confidence??0.5,teamBState.xi_confidence??0.5);
@@ -169,11 +169,13 @@ export function buildFullMarketInference({
 }){
  if(!eventId||!modelVersion||!featureVersion||!marketSnapshotId)throw new Error('INFERENCE_IDENTITY_REQUIRED');
  if(timestamp(analysisTimestamp,'ANALYSIS_TIMESTAMP')>timestamp(frozenAt,'FROZEN_AT'))throw new Error('ANALYSIS_AFTER_FREEZE');
+ const freezeMs=timestamp(frozenAt,'FROZEN_AT');if(timestamp(teamAState?.asOf,'TEAM_A_STATE_AS_OF')>freezeMs||timestamp(teamBState?.asOf,'TEAM_B_STATE_AS_OF')>freezeMs)throw new Error('TEAM_STATE_AFTER_FREEZE');
  const reasoning=buildBidirectionalMatchReasoning({eventId,homeTeam,awayTeam,homeLambda,awayLambda});
  const distribution=buildScoreDistribution({homeLambda,awayLambda});
  const observations=devigMarketObservations(marketObservations,frozenAt,kickoffAt);
- const graph=buildMarketConsistencyGraph(observations),worlds=buildMatchWorlds(distribution);
- const candidates=rankFullMarketCandidates({reasoning,distribution,selections:marketSelections,observations,teamAState,teamBState,modelConfidence,worlds,contradictions:graph.edges});
+ const selectedObservations=observations.filter(observation=>observation.marketSnapshotId===marketSnapshotId);
+ const graph=buildMarketConsistencyGraph(selectedObservations),worlds=buildMatchWorlds(distribution);
+ const candidates=rankFullMarketCandidates({reasoning,distribution,selections:marketSelections,observations:selectedObservations,teamAState,teamBState,modelConfidence,worlds,contradictions:graph.edges});
  const eligible=candidates.filter(x=>x.classification==='CANDIDATE');
  const abstainReasons=[];if(!eligible.length)abstainReasons.push('NO_EVIDENCE_GATED_VALUE_CANDIDATE');
  if(teamAState.xi_confidence===null||teamBState.xi_confidence===null)abstainReasons.push('XI_UNCERTAIN');
