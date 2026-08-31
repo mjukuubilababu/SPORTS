@@ -51,8 +51,8 @@ jobs:
       - name: Verify database sample and isolation
         run: |
           test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE batch_id='betpawa-user-slip-archive-001'")" = "5"
-          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE outcome='WIN'")" = "2"
-          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE outcome='LOSS'")" = "3"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE outcome='WIN' AND batch_id='betpawa-user-slip-archive-001'")" = "2"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE outcome='LOSS' AND batch_id='betpawa-user-slip-archive-001'")" = "3"
           test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE dataset_type='P002'")" = "0"
           test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE kickoff_at IS NOT NULL AND batch_id='betpawa-user-slip-archive-001'")" = "0"
       - name: Run existing P002/reference regressions
