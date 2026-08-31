@@ -1,0 +1,5 @@
+import fs from 'node:fs';import {evaluateBatch} from './observation.mjs';
+const batch=JSON.parse(fs.readFileSync(new URL('../data/betpawa-real-world-observation-batch-v0.1.json',import.meta.url)));
+const e=evaluateBatch(batch);
+const report={contract_version:'v0.1',batch_id:e.batch_id,dataset_type:e.dataset_type,status:e.status,provider:'BetPawa',n:e.n,wins:e.wins,losses:e.losses,hit_rate:e.hit_rate,average_entry_odds:e.average_entry_odds,median_entry_odds:e.median_entry_odds,bookmaker_implied_probability_benchmark_mean:e.bookmaker_implied_probability_benchmark_mean,brier:e.brier,log_loss:e.log_loss,clv_n:e.clv_n,note:e.metric_note,capital_state:'LOCKED',real_money:'NO',automatic_promotion_or_retuning:false,observations:e.observations.map(x=>({observation_id:x.observation_id,fixture:x.home_team+' vs '+x.away_team,selection:x.selection,entry_odds:x.entry_odds,outcome:x.outcome,failure_classification:x.failure_classification,kickoff_at:x.kickoff_at,event_id:x.event_id,closing_odds:x.closing_odds,clv:x.clv}))};
+console.log(JSON.stringify(report,null,2));

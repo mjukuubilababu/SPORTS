@@ -1,0 +1,72 @@
+name: 1X2 Real-World Observation Batch v0.1
+on:
+  pull_request:
+    branches: [import/decision-intelligence-v0.5-qualified-set]
+    paths:
+      - 'contracts/one-x-two-observation-v0.1.json'
+      - 'packages/one-x-two-observation/**'
+      - '.github/workflows/one-x-two-real-world-observation-v0.1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  one-x-two-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: decision_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U postgres -d decision_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/decision_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply isolated observation schema
+        run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/one-x-two-observation/migrations/0001_one_x_two_observation_v0_1.sql
+      - name: Install observation dependencies
+        working-directory: packages/one-x-two-observation
+        run: npm install --no-audit --no-fund
+      - name: Run observation contract and PostgreSQL 16 regressions
+        working-directory: packages/one-x-two-observation
+        run: |
+          npm test
+          npm run test:postgres
+          npm run report
+      - name: Verify database sample and isolation
+        run: |
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE batch_id='betpawa-user-slip-archive-001'")" = "5"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE outcome='WIN' AND batch_id='betpawa-user-slip-archive-001'")" = "2"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE outcome='LOSS' AND batch_id='betpawa-user-slip-archive-001'")" = "3"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE dataset_type='P002'")" = "0"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM one_x_two_observations WHERE kickoff_at IS NOT NULL AND batch_id='betpawa-user-slip-archive-001'")" = "0"
+      - name: Run existing P002/reference regressions
+        working-directory: packages/reference-e2e
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+      - name: Run existing 1X2 intelligence regressions
+        working-directory: packages/intelligence-engine
+        run: |
+          node --test tests/outcome-1x2.test.mjs
+          node --test tests/model-probability-orchestrator.test.mjs
+      - name: Install existing Prediction API dependencies
+        working-directory: packages/prediction-api
+        run: npm install --no-audit --no-fund
+      - name: Run unified repository verifier
+        run: env -u TEST_DATABASE_URL python scripts/verify_unified.py || { cat artifacts/unified-verification.log; exit 1; }

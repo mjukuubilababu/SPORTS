@@ -1,0 +1,63 @@
+{
+  "contract": "OneXTwoObservationContract",
+  "version": "v0.1",
+  "dataset_type": "1X2_REAL_WORLD_OBSERVATION",
+  "status": "OBSERVATIONAL_ONLY",
+  "isolation": {
+    "pattern_id": null,
+    "p002_effect": "NONE",
+    "validation_counter_effect": "NONE",
+    "capital_effect": "NONE",
+    "real_money_execution": "NO"
+  },
+  "observation_sources": [
+    "REAL_MONEY_USER_SLIP",
+    "PAPER_DECISION",
+    "SYSTEM_FROZEN_1X2_SIGNAL",
+    "EXTERNAL_BENCHMARK"
+  ],
+  "origin_decisions": [
+    "USER_DECISION",
+    "SYSTEM_DECISION",
+    "BENCHMARK_DECISION"
+  ],
+  "states": [
+    "OBSERVED",
+    "ENTRY_VERIFIED",
+    "STARTED",
+    "SETTLED",
+    "CLOSE_VERIFIED",
+    "EVALUATED"
+  ],
+  "selections": [
+    "HOME",
+    "DRAW",
+    "AWAY"
+  ],
+  "ingestion_timings": [
+    "PRE_KICKOFF_VERIFIED",
+    "POST_EVENT_ARCHIVAL"
+  ],
+  "failure_classifications": [
+    "DRAW_FAILURE_HIGH_SCORING",
+    "DRAW_FAILURE_LOW_EVENT",
+    "FAVORITE_WIN_SUCCESS",
+    "OUTRIGHT_FAVORITE_UPSET",
+    "UNDERDOG_WIN_SUCCESS",
+    "DRAW_SUCCESS",
+    "UNCLASSIFIED"
+  ],
+  "invariants": [
+    "P002_DATASET_AND_COUNTERS_UNTOUCHED",
+    "PREDICTION_NE_VALIDATION_NE_EXECUTION",
+    "NO_HINDSIGHT",
+    "UNKNOWN_EVIDENCE_IS_NULL",
+    "SETTLEMENT_CANNOT_REWRITE_DECISION_EVIDENCE",
+    "SETTLED_CANNOT_BECOME_SYSTEM_FROZEN_SIGNAL",
+    "CLV_REQUIRES_SAME_PROVIDER_VERIFIED_PREKICK_CLOSE",
+    "COUNTERFACTUAL_CUTOFF_NOT_AFTER_KICKOFF",
+    "COUNTERFACTUAL_INPUTS_EXCLUDE_POSTKICK_AND_SETTLEMENT",
+    "OBSERVATIONS_AND_REPLAYS_ARE_IMMUTABLE",
+    "STATUS_NEVER_VALIDATED_EXECUTION_APPROVED_OR_CHAMPION"
+  ]
+}
