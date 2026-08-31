@@ -66,4 +66,4 @@ jobs:
           node --test tests/outcome-1x2.test.mjs
           node --test tests/model-probability-orchestrator.test.mjs
       - name: Run unified repository verifier
-        run: python scripts/verify_unified.py
+        run: env -u TEST_DATABASE_URL python scripts/verify_unified.py
