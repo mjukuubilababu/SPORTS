@@ -113,6 +113,7 @@ function distributionProbability(distribution,component){if(!componentWithinDist
 
 export function recomputeJointSelection(distribution,components,{jointOdds=null,jointMarketProbability=null}={}){
  if(!Array.isArray(components)||components.length<2)throw new Error('JOINT_COMPONENTS_REQUIRED');
+ if(jointOdds!==null&&(!Number.isFinite(jointOdds)||jointOdds<=1))throw new Error('JOINT_ODDS_INVALID');if(jointMarketProbability!==null&&!finite01(jointMarketProbability))throw new Error('JOINT_MARKET_PROBABILITY_INVALID');
  const predicates=components.map(selectionPredicate);if(predicates.some(x=>x===null))return deepFreeze({status:'UNSUPPORTED',component_probabilities:components.map(()=>null),dependency:'UNKNOWN',joint_probability:null,joint_push_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
  const componentProbabilities=components.map(c=>distributionProbability(distribution,c));if(componentProbabilities.some(probability=>!Number.isFinite(probability)))return deepFreeze({status:'UNSUPPORTED',component_probabilities:componentProbabilities,dependency:'UNKNOWN',joint_probability:null,joint_push_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
  const jointUnconditionalWinProbability=distribution.rows.reduce((s,r)=>s+(components.every(component=>selectionOutcome(component,r)==='WIN')?r.probability:0),0);
