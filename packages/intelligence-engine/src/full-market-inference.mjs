@@ -129,11 +129,12 @@ export function recomputeJointSelection(distribution,components,{jointOdds=null,
 export function devigMarketObservations(observations,frozenAt,kickoffAt){
  const freeze=timestamp(frozenAt,'FROZEN_AT'),kickoff=timestamp(kickoffAt,'KICKOFF_AT');if(freeze>=kickoff)throw new Error('SIGNAL_NOT_PREMATCH');
  const copied=observations.map((o,index)=>{
-  const provenanceReady=Boolean(o.provider&&o.source&&o.observedAt&&o.marketSnapshotId);
+  const provenanceReady=Boolean(o.observationId&&o.provider&&o.source&&o.observedAt&&o.marketSnapshotId);
   if(o.observedAt&&timestamp(o.observedAt,'MARKET_OBSERVED_AT')>freeze)throw new Error('MARKET_OBSERVATION_AFTER_FREEZE');
   return {...o,observationIndex:index,market_raw_probability:o.odds>1?1/o.odds:null,market_fair_probability:null,provenance_ready:provenanceReady};
  });
- const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId&&o.observedAt?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}|${o.observedAt}`:null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
+ const identities=copied.filter(o=>o.observationId).map(o=>o.observationId);if(new Set(identities).size!==identities.length)throw new Error('MARKET_OBSERVATION_IDENTITY_CONFLICT');
+ const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}`:null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
  for(const rows of groups.values()){if(rows.every(x=>x.completeMarket===true&&x.market_raw_probability!==null)){const z=rows.reduce((s,x)=>s+x.market_raw_probability,0);for(const row of rows)row.market_fair_probability=row.market_raw_probability/z;}}
  return deepFreeze(copied.map(o=>({...o,market_fair_probability:Number.isFinite(o.market_fair_probability)?o.market_fair_probability:null})));
 }
@@ -160,7 +161,7 @@ export function rankFullMarketCandidates({reasoning,distribution,selections,obse
  const completeness=(teamAState.data_completeness+teamBState.data_completeness)/2;
  const earlyPenalty=(teamAState.early_season_penalty+teamBState.early_season_penalty)/2;
  const xi=Math.min(teamAState.xi_confidence??0.5,teamBState.xi_confidence??0.5);
- const maxContradiction=contradictions.reduce((m,x)=>Math.max(m,x.severity),0);
+ const maxContradiction=contradictions.reduce((m,x)=>Math.max(m,x.severity*x.confidence),0);
  const rows=selections.map(selection=>{
   const mapped=mapReasoningToMarketSelection(reasoning,selection);const fallbackProbability=distributionProbability(distribution,selection);const modelProbability=mapped.status==='MODELLED'?mapped.modelProbability:fallbackProbability;const obs=obsByKey.get(candidateKey(selection));
   if(!Number.isFinite(modelProbability))return {...selection,classification:'UNSUPPORTED',model_probability:null,fair_market_probability:null,edge:null,confidence:0,tier:'UNSUPPORTED',supporting_worlds:[],supporting_evidence:[],contradicting_evidence:[]};
@@ -216,7 +217,7 @@ export function settleSystemSignalAndUserExecution({systemSignal,userExecution,h
  const systemComponents=systemSignal.components??[systemSignal];
  const userComponents=userExecution?.components??[];
  if(!Array.isArray(systemComponents)||systemComponents.length===0)throw new Error('SYSTEM_SIGNAL_COMPONENTS_REQUIRED');if(userExecution&&(!Array.isArray(userComponents)||userComponents.length===0))throw new Error('USER_EXECUTION_COMPONENTS_REQUIRED');
- const systemSettlement=systemComponents.map(settleComponent),userSettlement=userComponents.map(settleComponent);const aggregate=rows=>rows.some(x=>x.status==='LOSS')?'LOSS':rows.some(x=>x.status==='PUSH')?'PUSH':rows.every(x=>x.status==='WIN')?'WIN':'UNSUPPORTED';
+ const systemSettlement=systemComponents.map(settleComponent),userSettlement=userComponents.map(settleComponent);const aggregate=rows=>rows.some(x=>x.status==='UNSUPPORTED')?'UNSUPPORTED':rows.some(x=>x.status==='LOSS')?'LOSS':rows.some(x=>x.status==='PUSH')?'PUSH':rows.every(x=>x.status==='WIN')?'WIN':'UNSUPPORTED';
  return deepFreeze({signal_id:systemSignal.signal_id,system_signal:{components:systemSettlement,result:aggregate(systemSettlement)},
   user_execution:userExecution?{execution_id:userExecution.execution_id,components:userSettlement,result:aggregate(userSettlement)}:null,
   attribution:userExecution?'COMPONENT_LEVEL_SYSTEM_SIGNAL_SEPARATE_FROM_USER_EXECUTION':'SYSTEM_ONLY',final_score:{home:homeScore,away:awayScore},settled_at:settledAt,no_hindsight:true});
