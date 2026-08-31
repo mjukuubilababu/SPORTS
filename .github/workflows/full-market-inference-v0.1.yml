@@ -26,9 +26,61 @@ jobs:
       - name: Run full-market inference specification tests
         working-directory: packages/intelligence-engine
         run: node --test tests/full-market-inference.test.mjs
-      - name: Run complete existing intelligence-engine regression
-        working-directory: packages/intelligence-engine
-        run: npm test
+      - name: Compare full intelligence-engine regression with canonical base
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          rm -rf /tmp/full-market-base /tmp/full-market-head
+          git worktree add --detach /tmp/full-market-base "$BASE"
+          git worktree add --detach /tmp/full-market-head "$HEAD"
+          set +e
+          (cd /tmp/full-market-base/packages/intelligence-engine && npm test) > /tmp/full-market-base.log 2>&1
+          BASE_RC=$?
+          (cd /tmp/full-market-head/packages/intelligence-engine && npm test) > /tmp/full-market-head.log 2>&1
+          HEAD_RC=$?
+          set -e
+          printf '%s' "$BASE_RC" > /tmp/full-market-base.rc
+          printf '%s' "$HEAD_RC" > /tmp/full-market-head.rc
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          glyph=re.compile(r'^[✖×]\s+(.+?)(?:\s+\(|$)')
+          tap=re.compile(r'^not ok\s+\d+\s+-\s+(.+)      - name: Revalidate frozen Pattern Intelligence and P002 contracts
+        run: python scripts/test_pattern_intelligence_contract_v0_1.py
+      - name: Verify governance markers
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('contracts/full-market-inference-match-distribution-v0.1.json').read_text())
+          assert c['governance']['gate1_to_gate6_unchanged'] is True
+          assert c['governance']['prediction_weight']==0
+          assert c['governance']['capital_effect']=='NONE'
+          assert c['governance']['real_money']=='NO'
+          assert c['market_policy']['odds_are_evidence_not_truth'] is True
+          assert c['combinations']['same_match_joint_recomputed_from_score_distribution'] is True
+          print('FULL_MARKET_GOVERNANCE=PASS')
+          PY
+)
+          def failures(path):
+              out=set()
+              for line in Path(path).read_text(errors='replace').splitlines():
+                  m=tap.match(line.strip()) or glyph.match(line.strip())
+                  if m: out.add(m.group(1).strip())
+              return sorted(out)
+          base_rc=int(Path('/tmp/full-market-base.rc').read_text())
+          head_rc=int(Path('/tmp/full-market-head.rc').read_text())
+          base=failures('/tmp/full-market-base.log')
+          head=failures('/tmp/full-market-head.log')
+          if base_rc and not base: raise SystemExit('UNPARSED_CANONICAL_FAILURE')
+          if head_rc and not head: raise SystemExit('UNPARSED_HEAD_FAILURE')
+          if base_rc != head_rc: raise SystemExit(f'REGRESSION_EXIT_CODE_CHANGED base={base_rc} head={head_rc}')
+          if base != head: raise SystemExit(f'REGRESSION_FAILURE_SET_CHANGED base={base} head={head}')
+          print({'canonical_baseline_rc':base_rc,'head_rc':head_rc,'failure_names':head,'new_failure_delta':0})
+          PY
       - name: Revalidate frozen Pattern Intelligence and P002 contracts
         run: python scripts/test_pattern_intelligence_contract_v0_1.py
       - name: Verify governance markers
