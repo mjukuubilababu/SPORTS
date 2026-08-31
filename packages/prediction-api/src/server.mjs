@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { randomUUID, timingSafeEqual, createHash } from 'node:crypto';
 import { orchestrateModelProbabilities } from '../../intelligence-engine/src/model-probability-orchestrator.mjs';
 import { predictLive1X2 } from '../../intelligence-engine/src/live-outcome.mjs';
 import { createPostgresPredictionPersistence } from './postgres-persistence.mjs';
@@ -13,8 +13,8 @@ function authorizeOutcomeValidation(req,token){
   if(typeof token!=='string'||token.length<32)throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_NOT_CONFIGURED'),{statusCode:503});
   const authorization=String(req.headers.authorization||''),prefix='Bearer ';
   if(!authorization.startsWith(prefix))throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_REQUIRED'),{statusCode:401});
-  const supplied=authorization.slice(prefix.length),expected=Buffer.from(token),actual=Buffer.from(supplied);
-  if(actual.length!==expected.length||!timingSafeEqual(actual,expected))throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_FORBIDDEN'),{statusCode:403});
+  const supplied=authorization.slice(prefix.length),expected=createHash('sha256').update(token).digest(),actual=createHash('sha256').update(supplied).digest();
+  if(!timingSafeEqual(actual,expected))throw Object.assign(new Error('OUTCOME_VALIDATION_AUTH_FORBIDDEN'),{statusCode:403});
 }
 
 function json(res,status,payload){
@@ -134,11 +134,9 @@ export function createPredictionApiServer({persistence=null,outcomeValidationPer
     res.setHeader('x-outcome-validation-persistence-mode',outcomeValidationPersistence?.mode || (outcomeValidationPersistence?'CONFIGURED':'DISABLED'));
     try{
       if(req.method==='GET' && req.url==='/health'){
-        if(!persistence){
-          return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:{mode:'DISABLED',status:'disabled'},capitalState:'LOCKED',realMoney:'NO'});
-        }
-        const health=await persistence.healthCheck();
-        return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:health,capitalState:'LOCKED',realMoney:'NO'});
+        const predictionHealth=persistence?await persistence.healthCheck():{mode:'DISABLED',status:'disabled'};
+        const outcomeValidationHealth=outcomeValidationPersistence?await outcomeValidationPersistence.healthCheck():{mode:'DISABLED',status:'disabled'};
+        return json(res,200,{status:'ok',apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,persistence:predictionHealth,outcomeValidationPersistence:outcomeValidationHealth,capitalState:'LOCKED',realMoney:'NO'});
       }
       const lineageMatch=req.method==='GET'&&req.url?.match(/^\/v1\/predictions\/([0-9a-f-]+)\/lineage$/i);
       if(lineageMatch){
@@ -209,6 +207,7 @@ export async function startPredictionApi({port=Number(process.env.PORT || 8080),
   const activePersistence=persistence || (mode==='postgres'?await createPostgresPredictionPersistence():null);
   const activeOutcomeValidation=outcomeValidationPersistence || (mode==='postgres'&&outcomeIngestionToken?await createPostgresPredictionOutcomeValidationPersistence():null);
   if(activePersistence)await activePersistence.healthCheck();
+  if(activeOutcomeValidation)await activeOutcomeValidation.healthCheck();
   const server=createPredictionApiServer({persistence:activePersistence,outcomeValidationPersistence:activeOutcomeValidation,outcomeIngestionToken});
   server.listen(port,host,()=>console.log(JSON.stringify({apiVersion:API_VERSION,liveApiVersion:LIVE_API_VERSION,host,port,persistenceMode:activePersistence?.mode || 'DISABLED',capitalState:'LOCKED',realMoney:'NO'})));
   if(activePersistence?.close||activeOutcomeValidation?.close){
