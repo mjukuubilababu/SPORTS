@@ -87,6 +87,7 @@ function selectionOutcome(component,row){
  if(['TOTAL_GOALS_OVER_UNDER_FULL_TIME','HOME_TEAM_OVER_UNDER_FULL_TIME','AWAY_TEAM_OVER_UNDER_FULL_TIME'].includes(component.marketFamily)&&(!Number.isFinite(line)||line<0||!Number.isInteger(line*2)))return'UNSUPPORTED';
  if(component.marketFamily==='CORRECT_SCORE_FULL_TIME'&&!/^\d+-\d+$/.test(String(component.selection)))return'UNSUPPORTED';
  if(component.marketFamily==='TOTAL_GOALS_EXACT_FULL_TIME'){const exact=component.selection,validNumber=typeof exact==='number'&&Number.isInteger(exact)&&exact>=0,validString=typeof exact==='string'&&/^(0|[1-9]\d*)$/.test(exact);if(!validNumber&&!validString)return'UNSUPPORTED';}
+ if(component.marketFamily==='MULTIGOALS_FULL_TIME'){const hasSelection=component.selection!==undefined&&component.selection!==null&&component.selection!=='',bounds=hasSelection?String(component.selection).match(/^(\d+)-(\d+)$/):null;if(hasSelection&&!bounds)return'UNSUPPORTED';if(bounds&&component.minGoals!==undefined&&Number(bounds[1])!==component.minGoals)return'UNSUPPORTED';if(bounds&&component.maxGoals!==undefined&&Number(bounds[2])!==component.maxGoals)return'UNSUPPORTED';}
  switch(component.marketFamily){
   case'1X2_FULL_TIME':return ({HOME:row.homeGoals>row.awayGoals,DRAW:row.homeGoals===row.awayGoals,AWAY:row.homeGoals<row.awayGoals})[component.selection]?'WIN':'LOSS';
   case'DOUBLE_CHANCE_FULL_TIME':return ({'1X':row.homeGoals>=row.awayGoals,'X2':row.awayGoals>=row.homeGoals,'12':row.homeGoals!==row.awayGoals})[component.selection]?'WIN':'LOSS';
@@ -129,9 +130,9 @@ export function recomputeJointSelection(distribution,components,{jointOdds=null,
 export function devigMarketObservations(observations,frozenAt,kickoffAt){
  const freeze=timestamp(frozenAt,'FROZEN_AT'),kickoff=timestamp(kickoffAt,'KICKOFF_AT');if(freeze>=kickoff)throw new Error('SIGNAL_NOT_PREMATCH');
  const copied=observations.map((o,index)=>{
-  const provenanceReady=Boolean(o.observationId&&o.provider&&o.source&&o.observedAt&&o.marketSnapshotId);
+  const validOdds=Number.isFinite(o.odds)&&o.odds>1,provenanceReady=Boolean(o.observationId&&o.provider&&o.source&&o.observedAt&&o.marketSnapshotId&&validOdds);
   if(o.observedAt&&timestamp(o.observedAt,'MARKET_OBSERVED_AT')>freeze)throw new Error('MARKET_OBSERVATION_AFTER_FREEZE');
-  return {...o,observationIndex:index,market_raw_probability:o.odds>1?1/o.odds:null,market_fair_probability:null,provenance_ready:provenanceReady};
+  return {...o,observationIndex:index,market_raw_probability:validOdds?1/o.odds:null,market_fair_probability:null,provenance_ready:provenanceReady};
  });
  const identities=copied.filter(o=>o.observationId).map(o=>o.observationId);if(new Set(identities).size!==identities.length)throw new Error('MARKET_OBSERVATION_IDENTITY_CONFLICT');
  const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}`:null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
