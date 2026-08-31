@@ -56,9 +56,9 @@ export function createPredictionOutcomeValidationPersistence(pool,{attestPredict
   return Object.freeze({
     async healthCheck(){
       try{
-        const result=await pool.query("SELECT to_regclass('prediction_outcomes_v01')::text AS outcomes_table,to_regclass('prediction_validations_v01')::text AS validations_table");
+        const result=await pool.query("SELECT to_regclass('prediction_outcomes_v01')::text AS outcomes_table,to_regclass('prediction_validations_v01')::text AS validations_table,has_table_privilege(current_user,'prediction_outcomes_v01','SELECT,INSERT') AS outcomes_access,has_table_privilege(current_user,'prediction_validations_v01','SELECT,INSERT') AS validations_access");
         const row=result.rows?.[0];
-        if(row?.outcomes_table!=='prediction_outcomes_v01'||row?.validations_table!=='prediction_validations_v01')throw new Error('OUTCOME_VALIDATION_SCHEMA_NOT_READY');
+        if(row?.outcomes_table!=='prediction_outcomes_v01'||row?.validations_table!=='prediction_validations_v01'||row?.outcomes_access!==true||row?.validations_access!==true)throw new Error('OUTCOME_VALIDATION_SCHEMA_NOT_READY');
         return Object.freeze({status:'ok',mode:'POSTGRES',outcomesTable:'prediction_outcomes_v01',validationsTable:'prediction_validations_v01'});
       }catch(error){throw fail('POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE',503,error);}
     },
