@@ -113,7 +113,7 @@ function distributionProbability(distribution,component){if(!componentWithinDist
 export function recomputeJointSelection(distribution,components,{jointOdds=null,jointMarketProbability=null}={}){
  if(!Array.isArray(components)||components.length<2)throw new Error('JOINT_COMPONENTS_REQUIRED');
  const predicates=components.map(selectionPredicate);if(predicates.some(x=>x===null))return deepFreeze({status:'UNSUPPORTED',component_probabilities:components.map(()=>null),dependency:'UNKNOWN',joint_probability:null,joint_push_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
- const componentProbabilities=components.map(c=>distributionProbability(distribution,c));
+ const componentProbabilities=components.map(c=>distributionProbability(distribution,c));if(componentProbabilities.some(probability=>!Number.isFinite(probability)))return deepFreeze({status:'UNSUPPORTED',component_probabilities:componentProbabilities,dependency:'UNKNOWN',joint_probability:null,joint_push_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
  const jointUnconditionalWinProbability=distribution.rows.reduce((s,r)=>s+(components.every(component=>selectionOutcome(component,r)==='WIN')?r.probability:0),0);
  const jointPushProbability=distribution.rows.reduce((s,r)=>{const states=components.map(component=>selectionOutcome(component,r));return s+(states.includes('PUSH')&&!states.includes('LOSS')?r.probability:0);},0);
  const jointProbability=jointPushProbability<1?jointUnconditionalWinProbability/(1-jointPushProbability):null;
@@ -130,7 +130,7 @@ export function devigMarketObservations(observations,frozenAt,kickoffAt){
  const freeze=timestamp(frozenAt,'FROZEN_AT'),kickoff=timestamp(kickoffAt,'KICKOFF_AT');if(freeze>=kickoff)throw new Error('SIGNAL_NOT_PREMATCH');
  const copied=observations.map((o,index)=>{
   const provenanceReady=Boolean(o.provider&&o.source&&o.observedAt&&o.marketSnapshotId);
-  if(provenanceReady&&timestamp(o.observedAt,'MARKET_OBSERVED_AT')>freeze)throw new Error('MARKET_OBSERVATION_AFTER_FREEZE');
+  if(o.observedAt&&timestamp(o.observedAt,'MARKET_OBSERVED_AT')>freeze)throw new Error('MARKET_OBSERVATION_AFTER_FREEZE');
   return {...o,observationIndex:index,market_raw_probability:o.odds>1?1/o.odds:null,provenance_ready:provenanceReady};
  });
  const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId&&o.observedAt?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}|${o.observedAt}`:null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
@@ -154,7 +154,7 @@ export function buildMarketConsistencyGraph(observations){
  return deepFreeze({nodes:observations.map(o=>o.observationId),edges:contradictions,trap_claim_made:false});
 }
 
-function candidateKey(x){return `${x.marketFamily}|${x.selection}|${x.line??''}`;}
+function candidateKey(x){if(x.marketFamily==='MULTIGOALS_FULL_TIME'){const bounds=String(x.selection??'').match(/^(\d+)-(\d+)$/),min=x.minGoals??(bounds?Number(bounds[1]):''),max=x.maxGoals??(bounds?Number(bounds[2]):'');return `${x.marketFamily}|${min}-${max}|`;}return `${x.marketFamily}|${x.selection}|${x.line??''}`;}
 export function rankFullMarketCandidates({reasoning,distribution,selections,observations,teamAState,teamBState,modelConfidence=1,worlds,contradictions}){
  const obsByKey=new Map();for(const observation of observations){const key=candidateKey(observation);if(obsByKey.has(key))throw new Error('AMBIGUOUS_MARKET_SELECTION_OBSERVATION');obsByKey.set(key,observation);}
  const completeness=(teamAState.data_completeness+teamBState.data_completeness)/2;
