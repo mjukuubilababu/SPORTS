@@ -1,0 +1,47 @@
+name: Full-Market Inference & Match Distribution v0.1
+on:
+  pull_request:
+    branches: [import/decision-intelligence-v0.5-qualified-set]
+    paths:
+      - 'contracts/full-market-inference-match-distribution-v0.1.json'
+      - 'packages/intelligence-engine/src/full-market-inference.mjs'
+      - 'packages/intelligence-engine/tests/full-market-inference.test.mjs'
+      - 'packages/intelligence-engine/docs/FULL_MARKET_INFERENCE_MATCH_DISTRIBUTION_V0_1.md'
+      - '.github/workflows/full-market-inference-v0.1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-full-market-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run full-market inference specification tests
+        working-directory: packages/intelligence-engine
+        run: node --test tests/full-market-inference.test.mjs
+      - name: Run complete existing intelligence-engine regression
+        working-directory: packages/intelligence-engine
+        run: npm test
+      - name: Revalidate frozen Pattern Intelligence and P002 contracts
+        run: python scripts/test_pattern_intelligence_contract_v0_1.py
+      - name: Verify governance markers
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('contracts/full-market-inference-match-distribution-v0.1.json').read_text())
+          assert c['governance']['gate1_to_gate6_unchanged'] is True
+          assert c['governance']['prediction_weight']==0
+          assert c['governance']['capital_effect']=='NONE'
+          assert c['governance']['real_money']=='NO'
+          assert c['market_policy']['odds_are_evidence_not_truth'] is True
+          assert c['combinations']['same_match_joint_recomputed_from_score_distribution'] is True
+          print('FULL_MARKET_GOVERNANCE=PASS')
+          PY
