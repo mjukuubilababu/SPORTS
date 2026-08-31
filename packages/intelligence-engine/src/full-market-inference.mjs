@@ -149,7 +149,7 @@ export function rankFullMarketCandidates({reasoning,distribution,selections,obse
   return {...selection,classification:eligible?'CANDIDATE':(provenance?'ABSTAIN':'ABSTAIN_MISSING_PROVENANCE'),model_probability:mapped.modelProbability,
    market_raw_probability:obs?.market_raw_probability??null,fair_market_probability:fair,edge,uncertainty_adjusted_edge:edge===null?null:edge*confidence,
    confidence,score,tier:eligible?'PENDING_RANK':'ABSTAIN',supporting_worlds:worlds.filter(w=>w.probability>=0.10).slice(0,3).map(w=>w.world),
-   supporting_evidence:obs?[obs.observationId]:[],contradicting_evidence:contradictions.flatMap(x=>x.supporting_evidence)});
+   supporting_evidence:obs?[obs.observationId]:[],contradicting_evidence:contradictions.flatMap(x=>x.supporting_evidence)};
  }).sort((a,b)=>(b.score-a.score)||candidateKey(a).localeCompare(candidateKey(b)));
  let n=0;for(const row of rows){if(row.classification==='CANDIDATE'){n++;row.tier=n===1?'PRIMARY':n===2?'SECONDARY':n===3?'THIRD':'ALTERNATIVE';}}
  return deepFreeze(rows);
