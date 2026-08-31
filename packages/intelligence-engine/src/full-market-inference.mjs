@@ -28,7 +28,7 @@ export function buildIndependentTeamState({
  });
  const maturity=clamp(currentSeasonSample/10),currentSeasonWeight=maturity,priorWeight=1-maturity;
  const preseasonWeight=currentSeasonSample<5?0.1*(1-maturity):0;
- const keys=new Set([...Object.keys(previousSeason),...Object.keys(currentSeason),...Object.keys(preseason)]);
+ const keys=new Set([...Object.keys(previousSeason),...Object.keys(currentSeason),...Object.keys(preseason),...QUALITY_FIELDS]);
  const metrics={};
  for(const key of keys){
   let value=weighted(previousSeason[key],currentSeason[key],priorWeight,currentSeasonWeight);
@@ -74,32 +74,40 @@ export function buildMatchWorlds(distribution){
  return deepFreeze(worlds);
 }
 
-function selectionPredicate(component){
+function selectionOutcome(component,row){
  const line=component.line;
  switch(component.marketFamily){
-  case'1X2_FULL_TIME':return r=>({HOME:r.homeGoals>r.awayGoals,DRAW:r.homeGoals===r.awayGoals,AWAY:r.homeGoals<r.awayGoals})[component.selection]===true;
-  case'DOUBLE_CHANCE_FULL_TIME':return r=>({'1X':r.homeGoals>=r.awayGoals,'X2':r.awayGoals>=r.homeGoals,'12':r.homeGoals!==r.awayGoals})[component.selection]===true;
-  case'TOTAL_GOALS_OVER_UNDER_FULL_TIME':return r=>component.selection==='OVER'?r.totalGoals>line:r.totalGoals<line;
-  case'HOME_TEAM_OVER_UNDER_FULL_TIME':return r=>component.selection==='OVER'?r.homeGoals>line:r.homeGoals<line;
-  case'AWAY_TEAM_OVER_UNDER_FULL_TIME':return r=>component.selection==='OVER'?r.awayGoals>line:r.awayGoals<line;
-  case'BTTS_FULL_TIME':return r=>component.selection==='YES'?(r.homeGoals>0&&r.awayGoals>0):(r.homeGoals===0||r.awayGoals===0);
-  case'CLEAN_SHEET_HOME':return r=>component.selection==='YES'?r.awayGoals===0:r.awayGoals>0;
-  case'CLEAN_SHEET_AWAY':return r=>component.selection==='YES'?r.homeGoals===0:r.homeGoals>0;
-  case'CORRECT_SCORE_FULL_TIME':{const [h,a]=String(component.selection).split('-').map(Number);return r=>r.homeGoals===h&&r.awayGoals===a;}
-  default:return null;
+  case'1X2_FULL_TIME':return ({HOME:row.homeGoals>row.awayGoals,DRAW:row.homeGoals===row.awayGoals,AWAY:row.homeGoals<row.awayGoals})[component.selection]?'WIN':'LOSS';
+  case'DOUBLE_CHANCE_FULL_TIME':return ({'1X':row.homeGoals>=row.awayGoals,'X2':row.awayGoals>=row.homeGoals,'12':row.homeGoals!==row.awayGoals})[component.selection]?'WIN':'LOSS';
+  case'DRAW_NO_BET_FULL_TIME':if(row.homeGoals===row.awayGoals)return'PUSH';return component.selection==='HOME'?(row.homeGoals>row.awayGoals?'WIN':'LOSS'):(row.awayGoals>row.homeGoals?'WIN':'LOSS');
+  case'TOTAL_GOALS_OVER_UNDER_FULL_TIME':if(Number.isInteger(line)&&row.totalGoals===line)return'PUSH';return component.selection==='OVER'?(row.totalGoals>line?'WIN':'LOSS'):(row.totalGoals<line?'WIN':'LOSS');
+  case'HOME_TEAM_OVER_UNDER_FULL_TIME':if(Number.isInteger(line)&&row.homeGoals===line)return'PUSH';return component.selection==='OVER'?(row.homeGoals>line?'WIN':'LOSS'):(row.homeGoals<line?'WIN':'LOSS');
+  case'AWAY_TEAM_OVER_UNDER_FULL_TIME':if(Number.isInteger(line)&&row.awayGoals===line)return'PUSH';return component.selection==='OVER'?(row.awayGoals>line?'WIN':'LOSS'):(row.awayGoals<line?'WIN':'LOSS');
+  case'BTTS_FULL_TIME':return (component.selection==='YES'?(row.homeGoals>0&&row.awayGoals>0):(row.homeGoals===0||row.awayGoals===0))?'WIN':'LOSS';
+  case'CLEAN_SHEET_HOME':return (component.selection==='YES'?row.awayGoals===0:row.awayGoals>0)?'WIN':'LOSS';
+  case'CLEAN_SHEET_AWAY':return (component.selection==='YES'?row.homeGoals===0:row.homeGoals>0)?'WIN':'LOSS';
+  case'CORRECT_SCORE_FULL_TIME':{const [h,a]=String(component.selection).split('-').map(Number);return row.homeGoals===h&&row.awayGoals===a?'WIN':'LOSS';}
+  case'TOTAL_GOALS_EXACT_FULL_TIME':return row.totalGoals===Number(component.selection)?'WIN':'LOSS';
+  case'ODD_EVEN_FULL_TIME':return ((row.totalGoals%2===1?'ODD':'EVEN')===component.selection)?'WIN':'LOSS';
+  case'TEAM_TO_SCORE_4WAY_FULL_TIME':{const result=row.homeGoals>0&&row.awayGoals>0?'BOTH':row.homeGoals>0?'HOME_ONLY':row.awayGoals>0?'AWAY_ONLY':'NEITHER';return result===component.selection?'WIN':'LOSS';}
+  case'MULTIGOALS_FULL_TIME':{const bounds=String(component.selection).match(/(\d+)\D+(\d+)/);const min=component.minGoals??(bounds?Number(bounds[1]):null),max=component.maxGoals??(bounds?Number(bounds[2]):null);return Number.isFinite(min)&&Number.isFinite(max)?(row.totalGoals>=min&&row.totalGoals<=max?'WIN':'LOSS'):'UNSUPPORTED';}
+  default:return'UNSUPPORTED';
  }
 }
-function distributionProbability(distribution,component){const pred=selectionPredicate(component);return pred?distribution.rows.reduce((s,r)=>s+(pred(r)?r.probability:0),0):null;}
+function selectionPredicate(component){return selectionOutcome(component,{homeGoals:0,awayGoals:0,totalGoals:0})==='UNSUPPORTED'?null:(row=>selectionOutcome(component,row)==='WIN');}
+function distributionMass(distribution,component,outcome){return distribution.rows.reduce((s,row)=>s+(selectionOutcome(component,row)===outcome?row.probability:0),0);}
+function distributionProbability(distribution,component){const probe=selectionOutcome(component,distribution.rows[0]);if(probe==='UNSUPPORTED')return null;const win=distributionMass(distribution,component,'WIN'),loss=distributionMass(distribution,component,'LOSS');return component.marketFamily==='DRAW_NO_BET_FULL_TIME'&&win+loss>0?win/(win+loss):win;}
 
 export function recomputeJointSelection(distribution,components,{jointOdds=null,jointMarketProbability=null}={}){
  if(!Array.isArray(components)||components.length<2)throw new Error('JOINT_COMPONENTS_REQUIRED');
- const predicates=components.map(selectionPredicate);if(predicates.some(x=>x===null))return deepFreeze({status:'UNSUPPORTED',component_probabilities:components.map(()=>null),dependency:'UNKNOWN',joint_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
+ const predicates=components.map(selectionPredicate);if(predicates.some(x=>x===null))return deepFreeze({status:'UNSUPPORTED',component_probabilities:components.map(()=>null),dependency:'UNKNOWN',joint_probability:null,joint_push_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
  const componentProbabilities=components.map(c=>distributionProbability(distribution,c));
- const jointProbability=distribution.rows.reduce((s,r)=>s+(predicates.every(p=>p(r))?r.probability:0),0);
+ const jointProbability=distribution.rows.reduce((s,r)=>s+(components.every(component=>selectionOutcome(component,r)==='WIN')?r.probability:0),0);
+ const jointPushProbability=distribution.rows.reduce((s,r)=>{const states=components.map(component=>selectionOutcome(component,r));return s+(states.includes('PUSH')&&!states.includes('LOSS')?r.probability:0);},0);
  const independentProduct=componentProbabilities.reduce((p,x)=>p*x,1);
  const dependency=jointProbability-independentProduct;
  const rawJoint=jointMarketProbability??(jointOdds>1?1/jointOdds:null);
- return deepFreeze({status:'MODELLED',component_probabilities:componentProbabilities,dependency,joint_probability:jointProbability,
+ return deepFreeze({status:'MODELLED',component_probabilities:componentProbabilities,dependency,joint_probability:jointProbability,joint_push_probability:jointPushProbability,
   joint_market_probability:rawJoint,joint_edge:rawJoint===null?null:jointProbability-rawJoint,confidence:clamp(1-Math.abs(dependency))});
 }
 
@@ -110,7 +118,7 @@ export function devigMarketObservations(observations,frozenAt,kickoffAt){
   if(provenanceReady&&timestamp(o.observedAt,'MARKET_OBSERVED_AT')>freeze)throw new Error('MARKET_OBSERVATION_AFTER_FREEZE');
   return {...o,observationIndex:index,market_raw_probability:o.odds>1?1/o.odds:null,provenance_ready:provenanceReady};
  });
- const groups=new Map();for(const o of copied){const key=o.marketGroupId??null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
+ const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId&&o.observedAt?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}|${o.observedAt}`:null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
  for(const rows of groups.values()){if(rows.every(x=>x.completeMarket===true&&x.market_raw_probability!==null)){const z=rows.reduce((s,x)=>s+x.market_raw_probability,0);for(const row of rows)row.market_fair_probability=row.market_raw_probability/z;}}
  return deepFreeze(copied.map(o=>({...o,market_fair_probability:Number.isFinite(o.market_fair_probability)?o.market_fair_probability:null})));
 }
@@ -139,14 +147,14 @@ export function rankFullMarketCandidates({reasoning,distribution,selections,obse
  const xi=Math.min(teamAState.xi_confidence??0.5,teamBState.xi_confidence??0.5);
  const maxContradiction=contradictions.reduce((m,x)=>Math.max(m,x.severity),0);
  const rows=selections.map(selection=>{
-  const mapped=mapReasoningToMarketSelection(reasoning,selection);const obs=obsByKey.get(candidateKey(selection));
-  if(mapped.status!=='MODELLED')return {...selection,classification:'UNSUPPORTED',model_probability:null,fair_market_probability:null,edge:null,confidence:0,tier:'UNSUPPORTED',supporting_worlds:[],supporting_evidence:[],contradicting_evidence:[]};
-  const fair=obs?.market_fair_probability??null,edge=fair===null?null:mapped.modelProbability-fair;
+  const mapped=mapReasoningToMarketSelection(reasoning,selection);const fallbackProbability=distributionProbability(distribution,selection);const modelProbability=mapped.status==='MODELLED'?mapped.modelProbability:fallbackProbability;const obs=obsByKey.get(candidateKey(selection));
+  if(!Number.isFinite(modelProbability))return {...selection,classification:'UNSUPPORTED',model_probability:null,fair_market_probability:null,edge:null,confidence:0,tier:'UNSUPPORTED',supporting_worlds:[],supporting_evidence:[],contradicting_evidence:[]};
+  const fair=obs?.market_fair_probability??null,edge=fair===null?null:modelProbability-fair;
   const provenance=obs?.provenance_ready===true;
   const confidence=clamp(modelConfidence*completeness*(1-earlyPenalty)*xi*(1-0.5*maxContradiction));
   const eligible=provenance&&edge!==null&&edge>0&&confidence>=0.20;
-  const score=eligible?(0.30*mapped.modelProbability+0.40*clamp(edge*5)+0.30*confidence):-Infinity;
-  return {...selection,classification:eligible?'CANDIDATE':(provenance?'ABSTAIN':'ABSTAIN_MISSING_PROVENANCE'),model_probability:mapped.modelProbability,
+  const score=eligible?(0.30*modelProbability+0.40*clamp(edge*5)+0.30*confidence):-Infinity;
+  return {...selection,classification:eligible?'CANDIDATE':(provenance?'ABSTAIN':'ABSTAIN_MISSING_PROVENANCE'),model_probability:modelProbability,
    market_raw_probability:obs?.market_raw_probability??null,fair_market_probability:fair,edge,uncertainty_adjusted_edge:edge===null?null:edge*confidence,
    confidence,score,tier:eligible?'PENDING_RANK':'ABSTAIN',supporting_worlds:worlds.filter(w=>w.probability>=0.10).slice(0,3).map(w=>w.world),
    supporting_evidence:obs?[obs.observationId]:[],contradicting_evidence:contradictions.flatMap(x=>x.supporting_evidence)};
@@ -185,7 +193,7 @@ export function buildFullMarketInference({
 export function settleSystemSignalAndUserExecution({systemSignal,userExecution,homeScore,awayScore,settledAt}){
  if(!systemSignal?.immutable)throw new Error('IMMUTABLE_SYSTEM_SIGNAL_REQUIRED');
  const row={homeGoals:homeScore,awayGoals:awayScore,totalGoals:homeScore+awayScore};
- const settleComponent=c=>{const pred=selectionPredicate(c);return {component:c,status:pred?(pred(row)?'WIN':'LOSS'):'UNSUPPORTED'};};
+ const settleComponent=c=>({component:c,status:selectionOutcome(c,row)});
  const systemComponents=systemSignal.components??[systemSignal];
  const userComponents=userExecution?.components??[];
  const systemSettlement=systemComponents.map(settleComponent),userSettlement=userComponents.map(settleComponent);
