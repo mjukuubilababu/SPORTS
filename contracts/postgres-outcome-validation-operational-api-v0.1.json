@@ -1,0 +1,35 @@
+{
+  "version": "POSTGRES_OUTCOME_VALIDATION_OPERATIONAL_API_V0_1",
+  "base_lineage": "POSTGRES_PREDICTION_OUTCOME_VALIDATION_LINEAGE_V0_1",
+  "routes": {
+    "persist": "POST /v1/predictions/{predictionSnapshotId}/outcome-validation",
+    "attest": "GET /v1/predictions/{predictionSnapshotId}/outcome-validation"
+  },
+  "authorization": {
+    "scheme": "Bearer",
+    "environment": "PREDICTION_OUTCOME_INGEST_TOKEN",
+    "minimum_secret_length": 32,
+    "constant_time_comparison": true,
+    "fail_closed_when_unconfigured": true,
+    "comparison_input": "SHA256_FIXED_LENGTH_DIGESTS"
+  },
+  "invariants": {
+    "route_identity_exact": true,
+    "existing_postgresql_tables_reused": true,
+    "existing_persistence_adapter_reused": true,
+    "exact_replay_idempotent": true,
+    "changed_identity_rejected": true,
+    "raw_evidence_returned_by_audit": false,
+    "fingerprints_recomputed_on_read": true,
+    "prediction_is_validation": false,
+    "validation_is_execution": false,
+    "authorizes_execution": false,
+    "capital_state": "LOCKED",
+    "real_money": "NO",
+    "gate1": "AUTHORITATIVE_TRUTH_OWNER",
+    "gate6": "CAPITAL_AUTHORITY",
+    "upstream_prediction_lineage_attested": true,
+    "outcome_follows_exact_lineage_kickoff": true,
+    "startup_and_runtime_schema_health_checked": true
+  }
+}

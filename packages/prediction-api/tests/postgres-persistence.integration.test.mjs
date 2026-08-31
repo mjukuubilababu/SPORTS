@@ -131,6 +131,35 @@ test('Prediction API persists prematch and live snapshots in PostgreSQL with ide
   await assert.rejects(outcomePool.query('UPDATE prediction_outcomes_v01 SET official_source=official_source WHERE outcome_id=$1',[outcome.outcomeId]),/immutable/);
   await assert.rejects(outcomePool.query('DELETE FROM prediction_validations_v01 WHERE validation_id=$1',[validation.validationId]),/immutable/);
 
+  const outcomeAttestation=await outcomePersistence.attest({predictionSnapshotId:stored.snapshot_id});
+  assert.equal(outcomeAttestation.status,'ATTESTED');
+  assert.equal(outcomeAttestation.eventId,'PG-E1');
+  assert.equal(outcomeAttestation.outcomeFingerprint,outcomeStored.outcomeFingerprint);
+  assert.equal(outcomeAttestation.validationFingerprint,outcomeStored.validationFingerprint);
+  assert.equal(outcomeAttestation.allFingerprintsRecomputed,true);
+  assert.equal(outcomeAttestation.exactEventBound,true);
+  assert.equal(outcomeAttestation.predictionIsValidation,false);
+  assert.equal(outcomeAttestation.validationIsExecution,false);
+  assert.equal(outcomeAttestation.authorizesExecution,false);
+  const operationalToken='postgres-integration-outcome-token-00000001';
+  const outcomeServer=createPredictionApiServer({outcomeValidationPersistence:outcomePersistence,outcomeIngestionToken:operationalToken});
+  const outcomeBase=await listen(outcomeServer);
+  t.after(async()=>{if(outcomeServer.listening)await new Promise(resolve=>outcomeServer.close(resolve));});
+  const operationalUrl=`${outcomeBase}/v1/predictions/${stored.snapshot_id}/outcome-validation`;
+  const unauthorizedOutcome=await fetch(operationalUrl);
+  assert.equal(unauthorizedOutcome.status,401);
+  assert.equal((await unauthorizedOutcome.json()).error,'OUTCOME_VALIDATION_AUTH_REQUIRED');
+  const auditResponse=await fetch(operationalUrl,{headers:{authorization:'Bearer '+operationalToken}});
+  assert.equal(auditResponse.status,200);
+  const auditBody=await auditResponse.json();
+  assert.equal(auditBody.outcomeValidationAttestation.status,'ATTESTED');
+  assert.equal(auditBody.outcomeValidationAttestation.authorizesExecution,false);
+  assert.equal(JSON.stringify(auditBody).includes('sourcePayload'),false);
+  assert.equal(JSON.stringify(auditBody).includes('validationPayload'),false);
+  const replayResponse=await fetch(operationalUrl,{method:'POST',headers:{authorization:'Bearer '+operationalToken,'content-type':'application/json'},body:JSON.stringify({outcome,validation})});
+  assert.equal(replayResponse.status,200);
+  assert.equal((await replayResponse.json()).outcomeValidation.status,'ALREADY_PERSISTED');
+
   const duplicate=await fetch(`${base}/v1/predict`,{method:'POST',headers:{'content-type':'application/json','x-request-id':requestId},body:JSON.stringify(input)});
   assert.equal(duplicate.status,200);
   const sameRow=await persistence.getByRequest({requestId,endpoint:'/v1/predict'});
