@@ -47,10 +47,11 @@ export function buildIndependentTeamState({
   quality_separation:{PLAYER_QUALITY:metrics.playerQuality,TEAM_QUALITY:metrics.teamQuality,TEAM_COHESION:metrics.teamCohesion,TACTICAL_QUALITY:metrics.tacticalQuality}});
 }
 
-export function buildMatchupAudit(teamAState,teamBState,conceptEvidence={}){
+export function buildMatchupAudit(teamAState,teamBState,conceptEvidence={},asOf=null){
  const concepts={};
  for(const concept of MATCHUP_CONCEPTS){
   const row=conceptEvidence[concept]??null;
+  if(row?.observedAt&&asOf&&timestamp(row.observedAt,'MATCHUP_EVIDENCE_OBSERVED_AT')>timestamp(asOf,'MATCHUP_AUDIT_AS_OF'))throw new Error('MATCHUP_EVIDENCE_AFTER_FREEZE');
   concepts[concept]=row&&finite01(row.confidence)&&Number.isFinite(row.differential)&&row.source&&row.observedAt
     ? {status:'OBSERVED',differential:clamp(row.differential,-1,1),confidence:row.confidence,source:row.source,observedAt:row.observedAt}
     : {status:'UNKNOWN',differential:null,confidence:0,source:null,observedAt:null};
@@ -102,13 +103,14 @@ export function recomputeJointSelection(distribution,components,{jointOdds=null,
  if(!Array.isArray(components)||components.length<2)throw new Error('JOINT_COMPONENTS_REQUIRED');
  const predicates=components.map(selectionPredicate);if(predicates.some(x=>x===null))return deepFreeze({status:'UNSUPPORTED',component_probabilities:components.map(()=>null),dependency:'UNKNOWN',joint_probability:null,joint_push_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
  const componentProbabilities=components.map(c=>distributionProbability(distribution,c));
- const jointProbability=distribution.rows.reduce((s,r)=>s+(components.every(component=>selectionOutcome(component,r)==='WIN')?r.probability:0),0);
+ const jointUnconditionalWinProbability=distribution.rows.reduce((s,r)=>s+(components.every(component=>selectionOutcome(component,r)==='WIN')?r.probability:0),0);
  const jointPushProbability=distribution.rows.reduce((s,r)=>{const states=components.map(component=>selectionOutcome(component,r));return s+(states.includes('PUSH')&&!states.includes('LOSS')?r.probability:0);},0);
+ const jointProbability=jointPushProbability<1?jointUnconditionalWinProbability/(1-jointPushProbability):null;
  const independentProduct=componentProbabilities.reduce((p,x)=>p*x,1);
- const dependency=jointProbability-independentProduct;
+ const dependency=jointProbability===null?null:jointProbability-independentProduct;
  const rawJoint=jointMarketProbability??(jointOdds>1?1/jointOdds:null);
- return deepFreeze({status:'MODELLED',component_probabilities:componentProbabilities,dependency,joint_probability:jointProbability,joint_push_probability:jointPushProbability,
-  joint_market_probability:rawJoint,joint_edge:rawJoint===null?null:jointProbability-rawJoint,confidence:clamp(1-Math.abs(dependency))});
+ return deepFreeze({status:'MODELLED',component_probabilities:componentProbabilities,dependency,joint_probability:jointProbability,joint_unconditional_win_probability:jointUnconditionalWinProbability,joint_push_probability:jointPushProbability,
+  joint_market_probability:rawJoint,joint_edge:rawJoint===null||jointProbability===null?null:jointProbability-rawJoint,confidence:dependency===null?0:clamp(1-Math.abs(dependency))});
 }
 
 export function devigMarketObservations(observations,frozenAt,kickoffAt){
@@ -172,8 +174,8 @@ export function buildFullMarketInference({
  const freezeMs=timestamp(frozenAt,'FROZEN_AT');if(timestamp(teamAState?.asOf,'TEAM_A_STATE_AS_OF')>freezeMs||timestamp(teamBState?.asOf,'TEAM_B_STATE_AS_OF')>freezeMs)throw new Error('TEAM_STATE_AFTER_FREEZE');
  const reasoning=buildBidirectionalMatchReasoning({eventId,homeTeam,awayTeam,homeLambda,awayLambda});
  const distribution=buildScoreDistribution({homeLambda,awayLambda});
- const observations=devigMarketObservations(marketObservations,frozenAt,kickoffAt);
- const selectedObservations=observations.filter(observation=>observation.marketSnapshotId===marketSnapshotId);
+ const selectedObservations=devigMarketObservations(marketObservations.filter(observation=>observation.marketSnapshotId===marketSnapshotId),frozenAt,kickoffAt);
+ const observations=selectedObservations;
  const graph=buildMarketConsistencyGraph(selectedObservations),worlds=buildMatchWorlds(distribution);
  const candidates=rankFullMarketCandidates({reasoning,distribution,selections:marketSelections,observations:selectedObservations,teamAState,teamBState,modelConfidence,worlds,contradictions:graph.edges});
  const eligible=candidates.filter(x=>x.classification==='CANDIDATE');
@@ -181,7 +183,7 @@ export function buildFullMarketInference({
  if(teamAState.xi_confidence===null||teamBState.xi_confidence===null)abstainReasons.push('XI_UNCERTAIN');
  if(observations.some(x=>!x.provenance_ready))abstainReasons.push('MARKET_PROVENANCE_MISSING');
  const core={event_id:eventId,analysis_timestamp:analysisTimestamp,team_a_state:teamAState,team_b_state:teamBState,
-  matchup_audit:buildMatchupAudit(teamAState,teamBState,matchupConceptEvidence),data_completeness:(teamAState.data_completeness+teamBState.data_completeness)/2,
+  matchup_audit:buildMatchupAudit(teamAState,teamBState,matchupConceptEvidence,frozenAt),data_completeness:(teamAState.data_completeness+teamBState.data_completeness)/2,
   sample_size:{team_a:teamAState.sample_size,team_b:teamBState.sample_size},early_season_penalty:(teamAState.early_season_penalty+teamBState.early_season_penalty)/2,
   expected_home_goals:homeLambda,expected_away_goals:awayLambda,expected_total_goals:homeLambda+awayLambda,
   home_probability:reasoning.matchReality.homeWin,draw_probability:reasoning.matchReality.draw,away_probability:reasoning.matchReality.awayWin,
