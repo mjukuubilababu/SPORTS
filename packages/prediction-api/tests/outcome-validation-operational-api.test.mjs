@@ -48,7 +48,19 @@ test('database attestation recomputes exact outcome and validation fingerprints 
   const preparedOutcome=preparePredictionOutcome(outcome),preparedValidation=preparePredictionValidation(validation,preparedOutcome);
   const row={snapshot_id:snapshotId,event_id:outcome.eventId,prediction_capital:'LOCKED',prediction_money:'NO',outcome_id:outcome.outcomeId,outcome_kind:'OFFICIAL_RESULT',home_goals:2,away_goals:1,official_source:'LEAGUE',source_payload:outcome.sourcePayload,source_payload_fingerprint:preparedOutcome.sourcePayloadFingerprint,outcome_fingerprint:preparedOutcome.outcomeFingerprint,occurred_at:new Date(outcome.occurredAt),observed_at:new Date(outcome.observedAt),outcome_capital:'LOCKED',outcome_money:'NO',validation_id:validation.validationId,validation_payload:validation.validationPayload,validation_payload_fingerprint:preparedValidation.validationPayloadFingerprint,validation_fingerprint:preparedValidation.validationFingerprint,validated_at:new Date(validation.validatedAt),validation_capital:'LOCKED',validation_money:'NO'};
   const poolFor=activeRow=>({async connect(){throw new Error('not used');},async query(text){if(String(text).includes('FROM prediction_snapshots_v01 p'))return {rowCount:1,rows:[activeRow]};throw new Error('unexpected query');}});
-  const attested=await createPredictionOutcomeValidationPersistence(poolFor(row)).attest({predictionSnapshotId:snapshotId});
-  assert.equal(attested.status,'ATTESTED');assert.equal(attested.allFingerprintsRecomputed,true);assert.equal(attested.authorizesExecution,false);
-  await assert.rejects(createPredictionOutcomeValidationPersistence(poolFor({...row,source_payload:{home:9,away:1}})).attest({predictionSnapshotId:snapshotId}),/OUTCOME_VALIDATION_ATTESTATION_FAILED/);
+  const upstream=async()=>({status:'ATTESTED',allFingerprintsRecomputed:true,exactEventBound:true});
+  const attested=await createPredictionOutcomeValidationPersistence(poolFor(row),{attestPredictionLineage:upstream}).attest({predictionSnapshotId:snapshotId});
+  assert.equal(attested.status,'ATTESTED');assert.equal(attested.upstreamPredictionLineageAttested,true);assert.equal(attested.allFingerprintsRecomputed,true);assert.equal(attested.authorizesExecution,false);
+  await assert.rejects(createPredictionOutcomeValidationPersistence(poolFor({...row,source_payload:{home:9,away:1}}),{attestPredictionLineage:upstream}).attest({predictionSnapshotId:snapshotId}),/OUTCOME_VALIDATION_ATTESTATION_FAILED/);
+  await assert.rejects(createPredictionOutcomeValidationPersistence(poolFor(row),{attestPredictionLineage:async()=>{throw Object.assign(new Error('PREDICTION_LINEAGE_ATTESTATION_FAILED'),{statusCode:409});}}).attest({predictionSnapshotId:snapshotId}),/PREDICTION_LINEAGE_ATTESTATION_FAILED/);
+});
+
+test('health fails closed when outcome validation storage is unavailable',async()=>{
+  const unavailable=Object.assign(new Error('POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE'),{statusCode:503});
+  await withServer({outcomeValidationPersistence:{mode:'POSTGRES',async healthCheck(){throw unavailable;}},outcomeIngestionToken:token},async base=>{
+    const response=await fetch(base+'/health');assert.equal(response.status,503);assert.equal((await response.json()).error,'POSTGRES_OUTCOME_VALIDATION_UNAVAILABLE');
+  });
+  const pool={async connect(){throw new Error('unused');},async query(){return {rowCount:1,rows:[{outcomes_table:'prediction_outcomes_v01',validations_table:'prediction_validations_v01'}]};}};
+  const health=await createPredictionOutcomeValidationPersistence(pool,{attestPredictionLineage:async()=>null}).healthCheck();
+  assert.equal(health.status,'ok');assert.equal(health.outcomesTable,'prediction_outcomes_v01');assert.equal(health.validationsTable,'prediction_validations_v01');
 });
