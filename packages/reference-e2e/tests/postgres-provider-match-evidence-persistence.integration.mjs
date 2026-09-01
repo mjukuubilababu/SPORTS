@@ -332,7 +332,7 @@ test('database requires feature JSON to equal the record at the exact path in th
   }
 });
 
-test('database rejects forged identity, missing kickoff, and post-kickoff payloads with well-formed fingerprints', {
+test('database rejects forged identity, missing/infinite kickoff, and post-kickoff payloads with well-formed fingerprints', {
   skip: !connectionString
 }, async () => {
   const pool = new Pool({ connectionString });
@@ -360,6 +360,18 @@ test('database rejects forged identity, missing kickoff, and post-kickoff payloa
       }
     }
   });
+  const forgedInfiniteKickoff = prepareIngestionObservation({
+    ...bridge.observation,
+    provenanceId: 'PROV-MATCH-EVIDENCE-DB-INFINITE-KICKOFF',
+    observationId: 'OBS-MATCH-EVIDENCE-DB-INFINITE-KICKOFF',
+    payload: {
+      ...bridge.observation.payload,
+      snapshot: {
+        ...bridge.observation.payload.snapshot,
+        kickoff_at: 'infinity'
+      }
+    }
+  });
   const { kickoff_at: omittedKickoff, ...snapshotWithoutKickoff } =
     bridge.observation.payload.snapshot;
   assert.equal(omittedKickoff, KICKOFF);
@@ -375,6 +387,7 @@ test('database rejects forged identity, missing kickoff, and post-kickoff payloa
   try {
     await assert.rejects(insertObservationDirect(pool, forgedIdentity), (error) => error?.code === 'P0001');
     await assert.rejects(insertObservationDirect(pool, forgedTime), (error) => error?.code === 'P0001');
+    await assert.rejects(insertObservationDirect(pool, forgedInfiniteKickoff), (error) => error?.code === 'P0001');
     await assert.rejects(insertObservationDirect(pool, forgedMissingKickoff), (error) => error?.code === 'P0001');
   } finally {
     await pool.end();
