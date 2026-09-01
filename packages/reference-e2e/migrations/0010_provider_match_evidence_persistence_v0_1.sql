@@ -89,7 +89,10 @@ BEGIN
      OR payload->>'feature_name' IS DISTINCT FROM NEW.feature_name
      OR COALESCE(payload->>'feature_path', '') !~ '^[a-z0-9_]+(\.[a-z0-9_]+)*$'
      OR NEW.feature_name IS DISTINCT FROM 'match_evidence.' || (payload->>'feature_path')
-     OR ((snapshot->'features') #> string_to_array(payload->>'feature_path', '.')) IS DISTINCT FROM feature
+     OR jsonb_extract_path(
+          snapshot->'features',
+          VARIADIC string_to_array(payload->>'feature_path', '.')
+        ) IS DISTINCT FROM feature
      OR jsonb_typeof(feature) IS DISTINCT FROM 'object'
      OR feature->>'feature_version' IS DISTINCT FROM NEW.feature_version
      OR feature->>'provider' IS DISTINCT FROM source_observation.provider
