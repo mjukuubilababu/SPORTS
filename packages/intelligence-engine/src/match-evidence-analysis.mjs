@@ -817,14 +817,18 @@ export function analyzeMatchEvidence({
     (candidate.marketFamily === 'TOTAL_GOALS_OVER_UNDER_FULL_TIME' && candidate.selection === 'UNDER' && candidate.line === 3.5)
   ));
   const primary = primaryPool[0] ?? candidates[0] ?? null;
-  const secondary = primary ? candidates.find((candidate) => compatibleWithAll(distribution, candidate, [primary])) ?? null : null;
-  const selected = [primary, secondary].filter(Boolean);
   const safer = primary
     ? candidates.find((candidate) =>
-      !selected.some((item) => marketKey(item) === marketKey(candidate)) &&
+      marketKey(candidate) !== marketKey(primary) &&
       candidate.model_probability >= primary.model_probability &&
       candidate.probability_variance <= primary.probability_variance &&
-      compatibleWithAll(distribution, candidate, selected)) ?? null
+      compatibleWithAll(distribution, candidate, [primary])) ?? null
+    : null;
+  const protectedRoles = [primary, safer].filter(Boolean);
+  const secondary = primary
+    ? candidates.find((candidate) =>
+      !protectedRoles.some((item) => marketKey(item) === marketKey(candidate)) &&
+      compatibleWithAll(distribution, candidate, protectedRoles)) ?? null
     : null;
   const cluster = Object.freeze([primary, secondary, safer].filter(Boolean));
   const matrix = buildMarketCompatibilityMatrix(distribution, candidates);
