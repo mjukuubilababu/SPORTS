@@ -1,0 +1,63 @@
+{
+  "contract": "postgres-provider-match-evidence-persistence",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "owner": {
+    "package": "packages/reference-e2e",
+    "canonical_feature_builder": "packages/intelligence-engine/src/match-evidence-analysis.mjs",
+    "canonical_provider_adapter": "packages/intelligence-engine/src/real-provider-match-evidence-ingestion.mjs",
+    "parallel_match_evidence_store": false,
+    "authoritative_truth_owner": "GATE1"
+  },
+  "persistence": {
+    "observation_table": "reference_ingestion_observations_v01",
+    "feature_lineage_table": "reference_feature_provenance_lineage_v01",
+    "model_table": "reference_model_snapshots_v01",
+    "frozen_signal_table": "reference_frozen_signal_snapshots_v01",
+    "evidence_kind": "MATCH_EVIDENCE_SNAPSHOT",
+    "exact_snapshot_payload_archived": true,
+    "provider_payload_fingerprint_archived": true,
+    "snapshot_fingerprint_archived": true,
+    "one_observation_and_all_features_one_transaction": true,
+    "pg_pool_uses_one_dedicated_pool_client": true,
+    "exact_replay_idempotent": true,
+    "changed_payload_same_identity_rejected": true,
+    "update_delete_rejected": true
+  },
+  "lineage": {
+    "feature_payload_is_exact_record": true,
+    "feature_source_provenance_id_required": true,
+    "feature_source_evidence_fingerprint_required": true,
+    "event_aware_foreign_key": true,
+    "database_event_source_time_guard": true,
+    "eligible_feature_can_feed_existing_model_store": true,
+    "unverified_or_late_feature_cannot_feed_model": true,
+    "frozen_signal_uses_existing_model_lineage": true
+  },
+  "time_and_truth_boundaries": {
+    "snapshot_captured_before_kickoff": true,
+    "prediction_cutoff_before_kickoff": true,
+    "feature_event_time_not_after_snapshot": true,
+    "post_kickoff_evidence_rejected": true,
+    "settlement_separate": true,
+    "prediction_validation_execution_separate": true,
+    "missing_evidence_remains_explicit": true
+  },
+  "database": {
+    "engine": "PostgreSQL",
+    "ci_major_version": 16,
+    "migration": "packages/reference-e2e/migrations/0010_provider_match_evidence_persistence_v0_1.sql",
+    "new_parallel_tables": 0,
+    "critical_invariants_enforced_with_insert_triggers": true,
+    "existing_immutable_update_delete_triggers_reused": true
+  },
+  "governance": {
+    "p002_changed": false,
+    "gate1_to_gate6_ownership_changed": false,
+    "capital_authority": "GATE6",
+    "capital_state": "LOCKED",
+    "capital_effect": "NONE",
+    "real_money": "NO",
+    "automatic_promotion_or_retuning": false
+  }
+}
