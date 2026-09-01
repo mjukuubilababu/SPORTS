@@ -279,6 +279,46 @@ test('cross-event snapshot reuse is rejected by the bridge and cross-event featu
   }
 });
 
+test('database requires feature JSON to equal the record at the exact path in the archived snapshot', {
+  skip: !connectionString
+}, async () => {
+  const pool = new Pool({ connectionString });
+  const row = providerRow('FORGED-FEATURE');
+  const bridge = prepareProviderMatchEvidencePersistence(persistenceInput(row));
+  const original = bridge.featureLineage[0];
+  const forged = prepareFeatureProvenanceLineage({
+    ...original,
+    lineageId: 'LINEAGE-MATCH-EVIDENCE-FORGED-FEATURE',
+    featureId: 'FEATURE-MATCH-EVIDENCE-FORGED-FEATURE',
+    featurePayload: {
+      ...original.featurePayload,
+      feature: {
+        ...original.featurePayload.feature,
+        value: 'FORGED_VALUE'
+      }
+    }
+  });
+  try {
+    await archiveIngestionProvenanceBundle({
+      client: pool,
+      observations: [bridge.observation]
+    });
+    await assert.rejects(
+      insertLineageDirect(pool, forged),
+      (error) => error?.code === 'P0001'
+    );
+    const count = await pool.query(
+      `SELECT count(*)::int AS count
+         FROM reference_feature_provenance_lineage_v01
+        WHERE event_id=$1 AND feature_name LIKE 'match_evidence.%'`,
+      [row.event_id]
+    );
+    assert.equal(count.rows[0].count, 0);
+  } finally {
+    await pool.end();
+  }
+});
+
 test('database rejects forged snapshot identity and post-kickoff payloads even when generic fingerprints are well-formed', {
   skip: !connectionString
 }, async () => {
