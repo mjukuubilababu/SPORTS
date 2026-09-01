@@ -121,9 +121,10 @@ export function recomputeJointSelection(distribution,components,{jointOdds=null,
  const componentProbabilities=components.map(c=>distributionProbability(distribution,c));if(componentProbabilities.some(probability=>!Number.isFinite(probability)))return deepFreeze({status:'UNSUPPORTED',component_probabilities:componentProbabilities,dependency:'UNKNOWN',joint_probability:null,joint_push_probability:null,joint_market_probability:null,joint_edge:null,confidence:0});
  const jointUnconditionalWinProbability=distribution.rows.reduce((s,r)=>s+(components.every(component=>selectionOutcome(component,r)==='WIN')?r.probability:0),0);
  const jointPushProbability=distribution.rows.reduce((s,r)=>{const states=components.map(component=>selectionOutcome(component,r));return s+(states.includes('PUSH')&&!states.includes('LOSS')?r.probability:0);},0);
- const jointProbability=jointPushProbability<1?jointUnconditionalWinProbability/(1-jointPushProbability):null;
- const activeMass=1-jointPushProbability;
- const jointConditionedComponentProbabilities=activeMass>0?components.map(component=>distribution.rows.reduce((s,row)=>{const states=components.map(item=>selectionOutcome(item,row));const jointPush=states.includes('PUSH')&&!states.includes('LOSS');return s+(!jointPush&&selectionOutcome(component,row)==='WIN'?row.probability:0);},0)/activeMass):components.map(()=>null);
+ const activeMass=distribution.rows.reduce((s,row)=>{const states=components.map(component=>selectionOutcome(component,row));const jointPush=states.includes('PUSH')&&!states.includes('LOSS');return s+(!jointPush?row.probability:0);},0);
+ if(!Number.isFinite(activeMass)||activeMass<=0)return deepFreeze({status:'UNSUPPORTED',component_probabilities:componentProbabilities,dependency:'UNKNOWN',joint_probability:null,joint_push_probability:jointPushProbability,joint_market_probability:null,joint_edge:null,confidence:0});
+ const jointProbability=jointUnconditionalWinProbability/activeMass;
+ const jointConditionedComponentProbabilities=components.map(component=>distribution.rows.reduce((s,row)=>{const states=components.map(item=>selectionOutcome(item,row));const jointPush=states.includes('PUSH')&&!states.includes('LOSS');return s+(!jointPush&&selectionOutcome(component,row)==='WIN'?row.probability:0);},0)/activeMass);
  const independentProduct=jointConditionedComponentProbabilities.every(Number.isFinite)?jointConditionedComponentProbabilities.reduce((p,x)=>p*x,1):null;
  const dependency=jointProbability===null||independentProduct===null?null:jointProbability-independentProduct;
  const rawJoint=jointMarketProbability??(jointOdds>1?1/jointOdds:null);
