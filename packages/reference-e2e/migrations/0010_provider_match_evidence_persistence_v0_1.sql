@@ -33,6 +33,9 @@ BEGIN
      OR snapshot #>> '{source,source_type}' IS DISTINCT FROM NEW.source_type
      OR snapshot #>> '{source,source_reference}' IS DISTINCT FROM NEW.source
      OR (snapshot #>> '{source,verified}')::boolean IS DISTINCT FROM NEW.is_verified
+     OR jsonb_typeof(snapshot->'captured_at') IS DISTINCT FROM 'string'
+     OR jsonb_typeof(snapshot->'kickoff_at') IS DISTINCT FROM 'string'
+     OR jsonb_typeof(snapshot #> '{source,captured_at}') IS DISTINCT FROM 'string'
      OR (snapshot->>'captured_at')::timestamptz IS DISTINCT FROM NEW.captured_at
      OR (snapshot #>> '{source,captured_at}')::timestamptz IS DISTINCT FROM NEW.captured_at
      OR (snapshot->>'kickoff_at')::timestamptz <= NEW.captured_at
