@@ -514,7 +514,9 @@ export function buildMatchEvidenceSnapshot({
     away_away_goals_for: awayAtAway.goalsFor,
     away_away_goals_against: awayAtAway.goalsAgainst,
     recent_goal_difference: featureRecord(
-      homeOverall.goalsFor.value - homeOverall.goalsAgainst.value - awayOverall.goalsFor.value + awayOverall.goalsAgainst.value,
+      [homeOverall.goalsFor.value, homeOverall.goalsAgainst.value, awayOverall.goalsFor.value, awayOverall.goalsAgainst.value].every(Number.isFinite)
+        ? homeOverall.goalsFor.value - homeOverall.goalsAgainst.value - awayOverall.goalsFor.value + awayOverall.goalsAgainst.value
+        : null,
       { source, featureVersion, sampleSize: Math.min(homeRecent.length, awayRecent.length), confidence: Math.min(homeOverall.ppg.confidence, awayOverall.ppg.confidence), eventTime: captured }
     ),
     recent_win_rate: deepFreeze({ home: homeOverall.winRate, away: awayOverall.winRate }),
@@ -810,7 +812,11 @@ export function analyzeMatchEvidence({
     .map((row) => decorateCandidate(snapshot, row, confidence, conflictAudit))
     .sort((a, b) => (b.ranking_score - a.ranking_score) || (b.model_probability - a.model_probability) || marketKey(a).localeCompare(marketKey(b)));
 
-  const primary = candidates[0] ?? null;
+  const primaryPool = candidates.filter((candidate) => !(
+    candidate.marketFamily === 'DOUBLE_CHANCE_FULL_TIME' ||
+    (candidate.marketFamily === 'TOTAL_GOALS_OVER_UNDER_FULL_TIME' && candidate.selection === 'UNDER' && candidate.line === 3.5)
+  ));
+  const primary = primaryPool[0] ?? candidates[0] ?? null;
   const secondary = primary ? candidates.find((candidate) => compatibleWithAll(distribution, candidate, [primary])) ?? null : null;
   const selected = [primary, secondary].filter(Boolean);
   const safer = primary
