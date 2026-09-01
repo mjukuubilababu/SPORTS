@@ -41,3 +41,4 @@ export * from './transfer-impact-intelligence.mjs';
 export * from './real-player-profile-ingestion.mjs';
 export * from './matchup-market-conflict-intelligence.mjs';
 export * from './full-market-inference.mjs';
+export * from './match-evidence-analysis.mjs';

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SPORTS Match Evidence Analysis Layer v0.1",
+  "status": "IMPLEMENTED-ARTIFACT",
+  "version": "MATCH_EVIDENCE_ANALYSIS_V0_1",
+  "architecture_position": {
+    "flow": "SOURCE_EVIDENCE -> MATCH_EVIDENCE_SNAPSHOT -> STRUCTURED_FEATURES -> EXISTING_MODEL_AND_MARKET_MAPPING -> EXISTING_DECISION_GATES",
+    "feature_layer_only": true,
+    "replaces_intelligence_engine": false,
+    "replaces_gate1_to_gate6": false,
+    "new_prediction_store": false,
+    "new_settlement_store": false
+  },
+  "snapshot": {
+    "name": "MatchEvidenceSnapshot",
+    "immutable": true,
+    "fingerprinted": true,
+    "required_identity": [
+      "evidence_snapshot_id",
+      "event_id",
+      "kickoff_at",
+      "captured_at",
+      "source_provider",
+      "source_type",
+      "source_reference",
+      "feature_version"
+    ],
+    "unknown_values": "NULL_WITH_EXPLICIT_STATUS",
+    "manual_capture_type": "MANUAL_SCREENSHOT_CAPTURE",
+    "manual_capture_requires_independent_verification_for_verified_truth": true,
+    "provider_market_mixing": "REJECT",
+    "market_snapshot_mixing": "REJECT",
+    "post_kickoff_prematch_evidence": "REJECT"
+  },
+  "versioned_configuration": {
+    "recency": {
+      "version": "RECENCY_WEIGHTS_V1",
+      "weights": [1.0, 0.85, 0.7, 0.55, 0.4]
+    },
+    "form_context": {
+      "version": "FORM_CONTEXT_WEIGHTS_V1",
+      "overall": 0.4,
+      "venue": 0.6
+    },
+    "h2h_decay": {
+      "version": "H2H_DECAY_V1",
+      "half_life_days": 730,
+      "full_confidence_sample": 10
+    },
+    "confidence": {
+      "version": "MATCH_EVIDENCE_CONFIDENCE_V1",
+      "deterministic": true,
+      "components": [
+        "base_model_confidence",
+        "sample_confidence",
+        "provenance_confidence",
+        "context_confidence",
+        "market_confidence",
+        "conflict_penalty",
+        "missing_data_penalty"
+      ]
+    }
+  },
+  "feature_domains": {
+    "overall_recent_form": "IMPLEMENTED-ARTIFACT",
+    "venue_specific_form": "IMPLEMENTED-ARTIFACT",
+    "opponent_strength_adjustment": "IMPLEMENTED-ARTIFACT_WITH_EXPLICIT_UNKNOWN_FALLBACK",
+    "h2h_temporal_decay": "IMPLEMENTED-ARTIFACT",
+    "goal_environment": "IMPLEMENTED-ARTIFACT_SUPPORTING_EVIDENCE_ONLY",
+    "scoring_conceding_segments": "IMPLEMENTED-ARTIFACT_ONLY_WHEN_MINUTE_DATA_EXISTS",
+    "market_disagreement_and_traps": "IMPLEMENTED-ARTIFACT_NON_REVERSING",
+    "evidence_completeness": "IMPLEMENTED-ARTIFACT",
+    "computed_confidence": "IMPLEMENTED-ARTIFACT"
+  },
+  "model_reuse": {
+    "score_distribution": "bidirectional-match-reasoning.mjs#buildScoreDistribution",
+    "market_mapping": "market-mapping.mjs#mapReasoningToMarketSelection",
+    "joint_compatibility": "full-market-inference.mjs#recomputeJointSelection",
+    "settlement": "full-market-inference.mjs#settleSystemSignalAndUserExecution",
+    "ad_hoc_probability_rules": false
+  },
+  "outcome_cluster": {
+    "maximum_count": 3,
+    "roles": ["PRIMARY", "SECONDARY", "SAFER_ALTERNATIVE"],
+    "contradictory_pairs": "FORBIDDEN",
+    "safer_definition": "MODEL_PROBABILITY_GTE_PRIMARY_AND_VARIANCE_LTE_PRIMARY",
+    "odds_define_safer": false,
+    "unsupported_market_probability": "NULL_WITH_EXPLICIT_STATUS"
+  },
+  "decisions": ["REJECT", "WATCH", "QUALIFIED", "ABSTAIN"],
+  "abstention_reasons": [
+    "INSUFFICIENT_DATA",
+    "STALE_DATA",
+    "MARKET_MISSING",
+    "LINEUP_UNKNOWN",
+    "HIGH_EVIDENCE_CONFLICT",
+    "LOW_SAMPLE_SIZE",
+    "MODEL_MARKET_EXTREME_DISAGREEMENT",
+    "VENUE_SPLIT_UNAVAILABLE",
+    "SOURCE_UNVERIFIED"
+  ],
+  "governance": {
+    "p002_unchanged": true,
+    "gate1_truth_owner_unchanged": true,
+    "gate6_capital_owner_unchanged": true,
+    "gate1_to_gate6_unchanged": true,
+    "prediction_not_validation_not_execution": true,
+    "no_hindsight": true,
+    "settlement_separate": true,
+    "odds_are_evidence_not_truth": true,
+    "abstention_always_allowed": true,
+    "prediction_weight": 0,
+    "capital_effect": "NONE",
+    "capital": "LOCKED",
+    "real_money": "NO",
+    "automatic_promotion_or_retuning": false
+  },
+  "tests": {
+    "required_cases": [
+      "venue_form_differs_from_overall",
+      "old_h2h_lower_weight",
+      "small_h2h_lowers_confidence",
+      "missing_xg_safe",
+      "conflict_reduces_confidence",
+      "severe_conflict_abstains",
+      "contradictory_cluster_forbidden",
+      "safer_probability_and_variance",
+      "post_kickoff_rejected",
+      "manual_screenshot_tagged",
+      "market_provider_mixing_rejected",
+      "recency_deterministic",
+      "same_input_same_output",
+      "settlement_cannot_mutate_prediction"
+    ]
+  }
+}
