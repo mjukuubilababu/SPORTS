@@ -87,7 +87,6 @@ BEGIN
      OR payload->>'evidence_snapshot_fingerprint'
           IS DISTINCT FROM source_observation.payload_json->>'evidence_snapshot_fingerprint'
      OR payload->>'feature_name' IS DISTINCT FROM NEW.feature_name
-     OR COALESCE(payload->>'feature_path', '') !~ '^[a-z0-9_]+(\.[a-z0-9_]+)*$'
      OR NEW.feature_name IS DISTINCT FROM 'match_evidence.' || (payload->>'feature_path')
      OR jsonb_extract_path(
           snapshot->'features',
