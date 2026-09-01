@@ -133,8 +133,16 @@ function acceptedRow(batch, event) {
   assertProviderBoundary(batch, event);
   const snapshot = buildMatchEvidenceSnapshot(matchEvidenceInput(batch, event));
   verifyMatchEvidenceSnapshot(snapshot);
-  const model = modelState(event.model, event.eventId, batch.capturedAt, event.kickoffAt);
+  let model;
+  try {
+    model = modelState(event.model, event.eventId, batch.capturedAt, event.kickoffAt);
+  } catch (error) {
+    model = deepFreeze({ state: 'INDEPENDENT_MODEL_REJECTED', reason: error?.message ?? 'MODEL_CONTRACT_INVALID' });
+  }
   const analysis = buildAnalysis(snapshot, event, model);
+  const state = analysis
+    ? 'ANALYZED'
+    : (model.state === 'INDEPENDENT_MODEL_REJECTED' ? 'EVIDENCE_READY_MODEL_REJECTED' : 'EVIDENCE_READY_MODEL_PENDING');
   return deepFreeze({
     event_id: event.eventId,
     evidence_snapshot_id: snapshot.evidence_snapshot_id,
@@ -142,7 +150,7 @@ function acceptedRow(batch, event) {
     provider_payload_fingerprint: payloadFingerprint({ provider: batch.provider, capturedAt: batch.capturedAt, event }),
     provider_event_id: event.providerEventId ?? null,
     provider: batch.provider,
-    state: analysis ? 'ANALYZED' : 'EVIDENCE_READY_MODEL_PENDING',
+    state,
     decision: analysis?.decision ?? 'ABSTAIN',
     reasons: analysis ? analysis.abstain_reasons : Object.freeze([model.reason]),
     snapshot,
