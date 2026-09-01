@@ -371,3 +371,58 @@ test('compatibility matrix derives contradiction from canonical score distributi
   const matrix = buildMarketCompatibilityMatrix(distribution, candidates);
   assert.equal(matrix[0].compatibility, 'CONTRADICTORY');
 });
+
+
+test('review regression: market observation after snapshot capture is rejected', () => {
+  assert.throws(() => buildMatchEvidenceSnapshot(baseInput({
+    marketObservations: [{
+      observationId: 'future-to-snapshot',
+      marketSnapshotId: 'future-market-snapshot',
+      marketFamily: '1X2_FULL_TIME',
+      selection: 'HOME',
+      odds: 2,
+      provider: 'VERIFIED_PROVIDER_A',
+      observedAt: '2026-08-30T12:30:00.000Z'
+    }]
+  })), /MARKET_OBSERVATION_AFTER_SNAPSHOT/);
+});
+
+test('review regression: primary and secondary are always distinct', () => {
+  const snapshot = buildMatchEvidenceSnapshot(baseInput());
+  const result = analyze(snapshot, {
+    marketSelections: [
+      { marketFamily: '1X2_FULL_TIME', selection: 'HOME' },
+      { marketFamily: '1X2_FULL_TIME', selection: 'DRAW' },
+      { marketFamily: '1X2_FULL_TIME', selection: 'AWAY' }
+    ]
+  });
+  assert.ok(result.primary_outcome);
+  assert.ok(result.secondary_outcome);
+  assert.notEqual(
+    result.primary_outcome.marketFamily + '|' + result.primary_outcome.selection,
+    result.secondary_outcome.marketFamily + '|' + result.secondary_outcome.selection
+  );
+  assert.equal(
+    new Set(result.compatible_outcome_cluster.map((row) => row.marketFamily + '|' + row.selection + '|' + row.line)).size,
+    result.compatible_outcome_cluster.length
+  );
+});
+
+test('review regression: unsupported half/full joint models cannot enter one cluster', () => {
+  const snapshot = buildMatchEvidenceSnapshot(baseInput());
+  const halfReasoning = {
+    model: { verified: true },
+    firstHalf: { matchReality: { homeWin: 0.90, draw: 0.05, awayWin: 0.05 } },
+    secondHalf: { matchReality: { homeWin: 0.40, draw: 0.30, awayWin: 0.30 } },
+    crossHalf: {}
+  };
+  const result = analyze(snapshot, {
+    halfReasoning,
+    marketSelections: [
+      { marketFamily: '1X2_FIRST_HALF', selection: 'HOME' },
+      { marketFamily: '1X2_FULL_TIME', selection: 'HOME' }
+    ]
+  });
+  assert.equal(result.market_compatibility_rules[0].compatibility, 'UNSUPPORTED');
+  assert.equal(result.compatible_outcome_cluster.length, 1);
+});
