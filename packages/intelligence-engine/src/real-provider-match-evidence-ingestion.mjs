@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   analyzeMatchEvidence,
   buildMatchEvidenceSnapshot,
@@ -6,6 +7,18 @@ import {
 
 export const REAL_PROVIDER_MATCH_EVIDENCE_INGESTION_VERSION = 'REAL_PROVIDER_MATCH_EVIDENCE_INGESTION_V0_1';
 export const CANONICAL_PROVIDER_MATCH_EVIDENCE_SCHEMA_VERSION = 'CANONICAL_PROVIDER_MATCH_EVIDENCE_V0_1';
+
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().filter((key) => value[key] !== undefined).map((key) => [key, canonicalize(value[key])]));
+  }
+  return value;
+}
+
+function payloadFingerprint(value) {
+  return createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex');
+}
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -126,6 +139,7 @@ function acceptedRow(batch, event) {
     event_id: event.eventId,
     evidence_snapshot_id: snapshot.evidence_snapshot_id,
     evidence_snapshot_fingerprint: snapshot.fingerprint,
+    provider_payload_fingerprint: payloadFingerprint({ provider: batch.provider, capturedAt: batch.capturedAt, event }),
     provider_event_id: event.providerEventId ?? null,
     provider: batch.provider,
     state: analysis ? 'ANALYZED' : 'EVIDENCE_READY_MODEL_PENDING',
@@ -200,7 +214,7 @@ export function ingestRealProviderMatchEvidenceBatch(batch) {
       if (existingEvent || existingSnapshot) {
         const existing = existingEvent ?? existingSnapshot;
         const sameIdentity = existing.event_id === eventId && existing.evidence_snapshot_id === snapshotId;
-        const samePayload = existing.evidence_snapshot_fingerprint === row.evidence_snapshot_fingerprint;
+        const samePayload = existing.provider_payload_fingerprint === row.provider_payload_fingerprint;
         if (!sameIdentity) throw new Error('CROSS_EVENT_SNAPSHOT_IDENTITY_REUSE');
         if (!samePayload) throw new Error('PROVIDER_EVIDENCE_IDENTITY_PAYLOAD_CONFLICT');
         row = deepFreeze({
