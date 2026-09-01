@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Real Provider Match Evidence Ingestion v0.1",
+  "status": "IMPLEMENTED-ARTIFACT",
+  "version": "REAL_PROVIDER_MATCH_EVIDENCE_INGESTION_V0_1",
+  "input_schema_version": "CANONICAL_PROVIDER_MATCH_EVIDENCE_V0_1",
+  "architecture": {
+    "flow": "VERIFIED_PROVIDER_PACKAGE -> EXISTING_MATCH_EVIDENCE_SNAPSHOT -> EXISTING_MATCH_EVIDENCE_ANALYSIS -> EXISTING_GATES",
+    "new_evidence_store": false,
+    "new_feature_store": false,
+    "new_model_store": false,
+    "new_prediction_store": false,
+    "canonical_snapshot_builder_reused": true,
+    "canonical_model_and_market_mapping_reused": true
+  },
+  "provider_boundary": {
+    "batch_provider_required": true,
+    "event_provider_must_match_batch_when_declared": true,
+    "source_reference_required": true,
+    "capture_timestamp_required": true,
+    "unknown_data": "NULL_OR_EMPTY_WITH_EXPLICIT_UNKNOWN_FEATURE_STATUS",
+    "season_aggregate_to_match_row_inference": "FORBIDDEN",
+    "manual_screenshot_type": "MANUAL_SCREENSHOT_CAPTURE",
+    "manual_screenshot_self_verification": "FORBIDDEN",
+    "market_provider_mixing_within_snapshot": "REJECT"
+  },
+  "identity_and_replay": {
+    "event_id_required": true,
+    "evidence_snapshot_id_required": true,
+    "provider_payload_sha256": true,
+    "exact_replay": "IDEMPOTENT_REPLAY",
+    "changed_payload_same_identity": "REJECT",
+    "cross_event_snapshot_identity_reuse": "REJECT"
+  },
+  "time_and_model_firewall": {
+    "post_kickoff_match_evidence": "REJECT",
+    "market_observation_after_snapshot_capture": "REJECT",
+    "post_kickoff_model": "REJECT_FOR_ANALYSIS",
+    "model_observed_after_snapshot": "REJECT_FOR_ANALYSIS",
+    "independent_model_verified_required": true,
+    "market_derived_lambdas": "FORBIDDEN",
+    "valid_evidence_survives_rejected_model": true
+  },
+  "states": [
+    "ANALYZED",
+    "EVIDENCE_READY_MODEL_PENDING",
+    "EVIDENCE_READY_MODEL_REJECTED",
+    "IDEMPOTENT_REPLAY",
+    "REJECTED"
+  ],
+  "governance": {
+    "p002_unchanged": true,
+    "gate1_truth_owner_unchanged": true,
+    "gate6_capital_owner_unchanged": true,
+    "gate1_to_gate6_unchanged": true,
+    "prediction_not_validation_not_execution": true,
+    "settlement_separate": true,
+    "no_hindsight": true,
+    "capital": "LOCKED",
+    "capital_effect": "NONE",
+    "real_money": "NO",
+    "automatic_promotion_or_retuning": false
+  },
+  "tests": {
+    "provider_to_canonical_snapshot": true,
+    "missing_evidence_unknown": true,
+    "provider_mismatch_rejected": true,
+    "exact_replay_idempotent": true,
+    "changed_payload_conflict_rejected": true,
+    "cross_event_snapshot_reuse_rejected": true,
+    "market_derived_model_rejected": true,
+    "future_model_rejected": true,
+    "post_kickoff_evidence_rejected": true,
+    "post_snapshot_market_rejected": true,
+    "market_provider_mixing_rejected": true,
+    "manual_screenshot_trust_bounded": true,
+    "deterministic_output": true
+  }
+}
