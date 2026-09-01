@@ -36,6 +36,12 @@ BEGIN
      OR jsonb_typeof(snapshot->'captured_at') IS DISTINCT FROM 'string'
      OR jsonb_typeof(snapshot->'kickoff_at') IS DISTINCT FROM 'string'
      OR jsonb_typeof(snapshot #> '{source,captured_at}') IS DISTINCT FROM 'string'
+     OR COALESCE(snapshot->>'captured_at', '') !~
+          '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$'
+     OR COALESCE(snapshot->>'kickoff_at', '') !~
+          '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$'
+     OR COALESCE(snapshot #>> '{source,captured_at}', '') !~
+          '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$'
      OR (snapshot->>'captured_at')::timestamptz IS DISTINCT FROM NEW.captured_at
      OR (snapshot #>> '{source,captured_at}')::timestamptz IS DISTINCT FROM NEW.captured_at
      OR (snapshot->>'kickoff_at')::timestamptz <= NEW.captured_at
