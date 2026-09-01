@@ -48,6 +48,10 @@ jobs:
           node --test tests/team-match-intelligence.test.mjs
           node --test tests/real-football-feature-ingestion.test.mjs
 
+      - name: Install prediction API dependencies for unified verification
+        working-directory: packages/prediction-api
+        run: npm install --ignore-scripts --no-audit --no-fund
+
       - name: Run unified repository verifier
         run: python scripts/verify_unified.py
 
