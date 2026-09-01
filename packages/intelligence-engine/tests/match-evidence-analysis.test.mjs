@@ -397,15 +397,12 @@ test('review regression: primary and secondary are always distinct', () => {
     ]
   });
   assert.ok(result.primary_outcome);
-  assert.ok(result.secondary_outcome);
-  assert.notEqual(
-    result.primary_outcome.marketFamily + '|' + result.primary_outcome.selection,
-    result.secondary_outcome.marketFamily + '|' + result.secondary_outcome.selection
-  );
+  assert.equal(result.secondary_outcome, null);
   assert.equal(
     new Set(result.compatible_outcome_cluster.map((row) => row.marketFamily + '|' + row.selection + '|' + row.line)).size,
     result.compatible_outcome_cluster.length
   );
+  assert.equal(result.compatible_outcome_cluster.length, 1);
 });
 
 test('review regression: unsupported half/full joint models cannot enter one cluster', () => {
