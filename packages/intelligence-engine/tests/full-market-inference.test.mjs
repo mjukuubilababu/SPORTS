@@ -48,9 +48,11 @@ test('match worlds form a coherent exhaustive partition',()=>{const worlds=build
 
 test('de-vig isolates provider and snapshot observations sharing a market group id',()=>{const rows=devigMarketObservations([
  {...obs({id:'p1h',family:'1X2_FULL_TIME',selection:'HOME',odds:2,group:'shared'}),provider:'P1',marketSnapshotId:'s1'},
- {...obs({id:'p1a',family:'1X2_FULL_TIME',selection:'AWAY',odds:2,group:'shared'}),provider:'P1',marketSnapshotId:'s1'},
+ {...obs({id:'p1d',family:'1X2_FULL_TIME',selection:'DRAW',odds:4,group:'shared'}),provider:'P1',marketSnapshotId:'s1'},
+ {...obs({id:'p1a',family:'1X2_FULL_TIME',selection:'AWAY',odds:4,group:'shared'}),provider:'P1',marketSnapshotId:'s1'},
  {...obs({id:'p2h',family:'1X2_FULL_TIME',selection:'HOME',odds:4,group:'shared'}),provider:'P2',marketSnapshotId:'s2'},
- {...obs({id:'p2a',family:'1X2_FULL_TIME',selection:'AWAY',odds:4/3,group:'shared'}),provider:'P2',marketSnapshotId:'s2'}
+ {...obs({id:'p2d',family:'1X2_FULL_TIME',selection:'DRAW',odds:4,group:'shared'}),provider:'P2',marketSnapshotId:'s2'},
+ {...obs({id:'p2a',family:'1X2_FULL_TIME',selection:'AWAY',odds:2,group:'shared'}),provider:'P2',marketSnapshotId:'s2'}
 ],frozenAt,kickoffAt);const sum=provider=>rows.filter(x=>x.provider===provider).reduce((s,x)=>s+x.market_fair_probability,0);assert.ok(Math.abs(sum('P1')-1)<1e-12);assert.ok(Math.abs(sum('P2')-1)<1e-12);assert.equal(rows.find(x=>x.observationId==='p1h').market_fair_probability,.5);assert.equal(rows.find(x=>x.observationId==='p2h').market_fair_probability,.25);});
 test('team-state completeness counts missing required quality dimensions',()=>{const x=buildIndependentTeamState({teamId:'sparse',asOf:frozenAt,currentSeasonSample:4,previousSeason:{attack:.6},currentSeason:{attack:.7},xiConfidence:.8,evidence:[{source:'gate1',observedAt:'2026-08-31T09:00:00Z',verified:true,type:'FORM'}]});assert.equal(x.data_completeness,.2);assert.equal(x.quality_separation.PLAYER_QUALITY,null);assert.equal(x.quality_separation.TACTICAL_QUALITY,null);});
 test('score-derived multigoals and any exact correct score remain modelled',()=>{const b=base({marketSelections:[{marketFamily:'MULTIGOALS_FULL_TIME',selection:'2-4'},{marketFamily:'CORRECT_SCORE_FULL_TIME',selection:'4-2'}]});b.marketObservations=[
