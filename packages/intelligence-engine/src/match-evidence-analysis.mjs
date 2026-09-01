@@ -814,7 +814,8 @@ export function analyzeMatchEvidence({
 
   const primaryPool = candidates.filter((candidate) => !(
     candidate.marketFamily === 'DOUBLE_CHANCE_FULL_TIME' ||
-    (candidate.marketFamily === 'TOTAL_GOALS_OVER_UNDER_FULL_TIME' && candidate.selection === 'UNDER' && candidate.line === 3.5)
+    (candidate.marketFamily === 'TOTAL_GOALS_OVER_UNDER_FULL_TIME' && candidate.selection === 'UNDER' && candidate.line === 3.5) ||
+    (['HOME_TEAM_OVER_UNDER_FULL_TIME', 'AWAY_TEAM_OVER_UNDER_FULL_TIME'].includes(candidate.marketFamily) && candidate.line === 0.5)
   ));
   const primary = primaryPool[0] ?? candidates[0] ?? null;
   const safer = primary
