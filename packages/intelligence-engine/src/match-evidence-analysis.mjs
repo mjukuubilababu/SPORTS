@@ -185,13 +185,14 @@ function normalizeMatches(matches, kickoffMs, source, prefix) {
     .sort((a, b) => Date.parse(b.played_at) - Date.parse(a.played_at)));
 }
 
-function normalizeMarketObservations(observations, kickoffMs, source) {
+function normalizeMarketObservations(observations, kickoffMs, capturedMs, source) {
   if (observations === null || observations === undefined) return Object.freeze([]);
   if (!Array.isArray(observations)) throw new Error('MARKET_OBSERVATIONS_INVALID');
   const normalized = observations.map((row, index) => {
     const provider = requireString(row.provider ?? source.provider, 'MARKET_PROVIDER_REQUIRED');
     const observedAt = iso(row.observedAt, 'MARKET_OBSERVED_AT_INVALID');
     if (Date.parse(observedAt) >= kickoffMs) throw new Error('POST_KICKOFF_MARKET_REJECTED');
+    if (Date.parse(observedAt) > capturedMs) throw new Error('MARKET_OBSERVATION_AFTER_SNAPSHOT');
     const rawProbability = row.odds === null || row.odds === undefined
       ? null
       : (row.odds > 1 ? 1 / row.odds : (() => { throw new Error('MARKET_ODDS_INVALID'); })());
@@ -484,7 +485,7 @@ export function buildMatchEvidenceSnapshot({
   const homeVenue = normalizeMatches(homeHomeMatches, kickoffMs, source, 'HOME_HOME');
   const awayVenue = normalizeMatches(awayAwayMatches, kickoffMs, source, 'AWAY_AWAY');
   const h2h = normalizeMatches(h2hMatches, kickoffMs, source, 'H2H');
-  const market = normalizeMarketObservations(marketObservations, kickoffMs, source);
+  const market = normalizeMarketObservations(marketObservations, kickoffMs, Date.parse(captured), source);
 
   const homeOverall = formFeatures(homeRecent, recency, source, featureVersion) ?? missingForm(source, featureVersion);
   const awayOverall = formFeatures(awayRecent, recency, source, featureVersion) ?? missingForm(source, featureVersion);
@@ -715,7 +716,10 @@ export function buildMarketCompatibilityMatrix(distribution, candidates) {
 }
 
 function compatibleWithAll(distribution, candidate, selected) {
-  return selected.every((other) => compatibilityRule(distribution, candidate, other).compatibility !== 'CONTRADICTORY');
+  return selected.every((other) => {
+    const state = compatibilityRule(distribution, candidate, other).compatibility;
+    return state === 'COMPATIBLE' || state === 'CONDITIONALLY_COMPATIBLE';
+  });
 }
 
 function evidenceSupport(snapshot) {
