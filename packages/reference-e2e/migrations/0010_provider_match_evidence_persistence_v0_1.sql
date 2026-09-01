@@ -87,7 +87,43 @@ BEGIN
      OR payload->>'evidence_snapshot_fingerprint'
           IS DISTINCT FROM source_observation.payload_json->>'evidence_snapshot_fingerprint'
      OR payload->>'feature_name' IS DISTINCT FROM NEW.feature_name
+     OR COALESCE(payload->>'feature_path', '') !~ '^[a-z0-9_]+(\\.[a-z0-9_]+)*
+     OR feature->>'feature_version' IS DISTINCT FROM NEW.feature_version
+     OR feature->>'provider' IS DISTINCT FROM source_observation.provider
+     OR feature->>'source_type' IS DISTINCT FROM source_observation.source_type
+     OR feature #>> '{source,provider}' IS DISTINCT FROM source_observation.provider
+     OR feature #>> '{source,source_type}' IS DISTINCT FROM source_observation.source_type
+     OR feature #>> '{source,source_reference}' IS DISTINCT FROM source_observation.source
+     OR (feature->>'captured_at')::timestamptz IS DISTINCT FROM source_observation.captured_at
+     OR (feature #>> '{source,captured_at}')::timestamptz IS DISTINCT FROM source_observation.captured_at
+     OR NEW.created_at IS DISTINCT FROM source_observation.captured_at
+     OR (
+       feature_event_time IS NOT NULL
+       AND (
+         feature_event_time::timestamptz > source_observation.captured_at
+         OR feature_event_time::timestamptz >= (snapshot->>'kickoff_at')::timestamptz
+       )
+     )
+  THEN
+    RAISE EXCEPTION 'match evidence feature lineage is not exact';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS reference_match_evidence_feature_lineage_guard_v01
+  ON reference_feature_provenance_lineage_v01;
+CREATE TRIGGER reference_match_evidence_feature_lineage_guard_v01
+BEFORE INSERT ON reference_feature_provenance_lineage_v01
+FOR EACH ROW EXECUTE FUNCTION enforce_reference_match_evidence_feature_lineage_v01();
+
+COMMENT ON FUNCTION enforce_reference_match_evidence_snapshot_observation_v01() IS
+  'DB-level event, source, verification, cutoff, and payload boundary for canonical MatchEvidenceSnapshot provenance.';
+COMMENT ON FUNCTION enforce_reference_match_evidence_feature_lineage_v01() IS
+  'DB-level exact event-aware MatchEvidence feature-to-snapshot provenance boundary.';
+
      OR NEW.feature_name IS DISTINCT FROM 'match_evidence.' || (payload->>'feature_path')
+     OR ((snapshot->'features') #> string_to_array(payload->>'feature_path', '.')) IS DISTINCT FROM feature
      OR jsonb_typeof(feature) IS DISTINCT FROM 'object'
      OR feature->>'feature_version' IS DISTINCT FROM NEW.feature_version
      OR feature->>'provider' IS DISTINCT FROM source_observation.provider
