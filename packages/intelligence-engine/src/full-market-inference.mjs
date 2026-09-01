@@ -7,8 +7,11 @@ const MATCHUP_CONCEPTS=['POSSESSION_QUALITY','SET_PIECE_MISMATCH','LOW_BLOCK_RES
 
 function clamp(x,min=0,max=1){return Math.max(min,Math.min(max,x));}
 function deepFreeze(x){if(x&&typeof x==='object'){for(const v of Object.values(x))deepFreeze(v);Object.freeze(x);}return x;}
+function deeplyFrozen(x,seen=new Set()){if(!x||typeof x!=='object'||seen.has(x))return true;if(!Object.isFrozen(x))return false;seen.add(x);return Object.values(x).every(value=>deeplyFrozen(value,seen));}
 function stable(x){if(Array.isArray(x))return x.map(stable);if(x&&typeof x==='object')return Object.fromEntries(Object.keys(x).sort().map(k=>[k,stable(x[k])]));return x;}
 function hash(x){return crypto.createHash('sha256').update(JSON.stringify(stable(x))).digest('hex');}
+export function freezeSystemSignal(signal){if(!signal?.signal_id)throw new Error('SYSTEM_SIGNAL_IDENTITY_REQUIRED');const {immutable:_immutable,fingerprint:_fingerprint,...core}=signal;return deepFreeze({...core,immutable:true,fingerprint:hash(core)});}
+function verifySystemSignal(signal){if(!signal?.immutable)throw new Error('IMMUTABLE_SYSTEM_SIGNAL_REQUIRED');const {immutable:_immutable,fingerprint,...core}=signal;if(!deeplyFrozen(signal)||typeof fingerprint!=='string'||fingerprint!==hash(core))throw new Error('SYSTEM_SIGNAL_INTEGRITY_INVALID');}
 function timestamp(x,name){const ms=Date.parse(x);if(!Number.isFinite(ms))throw new Error(name+'_INVALID');return ms;}
 function finite01(x){return Number.isFinite(x)&&x>=0&&x<=1;}
 function weighted(prior,current,pw,cw){if(!Number.isFinite(prior)&&!Number.isFinite(current))return null;if(!Number.isFinite(prior))return cw>0?current*cw:null;if(!Number.isFinite(current))return pw>0?prior*pw:null;return prior*pw+current*cw;}
@@ -128,6 +131,9 @@ export function recomputeJointSelection(distribution,components,{jointOdds=null,
   joint_market_probability:rawJoint,joint_edge:rawJoint===null||jointProbability===null?null:jointProbability-rawJoint,confidence:dependency===null?0:clamp(1-Math.abs(dependency))});
 }
 
+const COMPLETE_MARKET_OUTCOMES=Object.freeze({'1X2_FULL_TIME':['HOME','DRAW','AWAY'],'DOUBLE_CHANCE_FULL_TIME':['1X','X2','12'],'DRAW_NO_BET_FULL_TIME':['HOME','AWAY'],'TOTAL_GOALS_OVER_UNDER_FULL_TIME':['OVER','UNDER'],'HOME_TEAM_OVER_UNDER_FULL_TIME':['OVER','UNDER'],'AWAY_TEAM_OVER_UNDER_FULL_TIME':['OVER','UNDER'],'BTTS_FULL_TIME':['YES','NO'],'CLEAN_SHEET_HOME':['YES','NO'],'CLEAN_SHEET_AWAY':['YES','NO'],'ODD_EVEN_FULL_TIME':['ODD','EVEN'],'TEAM_TO_SCORE_4WAY_FULL_TIME':['BOTH','HOME_ONLY','AWAY_ONLY','NEITHER']});
+function hasCompleteOutcomeCoverage(rows){if(!rows.length)return false;const family=rows[0].marketFamily;if(rows.some(row=>row.marketFamily!==family))return false;const required=COMPLETE_MARKET_OUTCOMES[family];if(!required)return true;const actual=new Set(rows.map(row=>row.selection));if(rows.length!==required.length||actual.size!==required.length||!required.every(selection=>actual.has(selection)))return false;if(family.includes('OVER_UNDER'))return new Set(rows.map(row=>row.line)).size===1;return true;}
+
 export function devigMarketObservations(observations,frozenAt,kickoffAt){
  const freeze=timestamp(frozenAt,'FROZEN_AT'),kickoff=timestamp(kickoffAt,'KICKOFF_AT');if(freeze>=kickoff)throw new Error('SIGNAL_NOT_PREMATCH');
  const copied=observations.map((o,index)=>{
@@ -137,7 +143,7 @@ export function devigMarketObservations(observations,frozenAt,kickoffAt){
  });
  const identities=copied.filter(o=>o.observationId).map(o=>o.observationId);if(new Set(identities).size!==identities.length)throw new Error('MARKET_OBSERVATION_IDENTITY_CONFLICT');
  const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}`:null;if(key&&o.market_semantics_valid){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
- for(const rows of groups.values()){if(rows.every(x=>x.completeMarket===true&&x.market_raw_probability!==null)){const z=rows.reduce((s,x)=>s+x.market_raw_probability,0);for(const row of rows)row.market_fair_probability=row.market_raw_probability/z;}}
+ for(const rows of groups.values()){if(rows.every(x=>x.completeMarket===true&&x.market_raw_probability!==null)&&hasCompleteOutcomeCoverage(rows)){const z=rows.reduce((s,x)=>s+x.market_raw_probability,0);for(const row of rows)row.market_fair_probability=row.market_raw_probability/z;}}
  return deepFreeze(copied.map(o=>({...o,market_fair_probability:Number.isFinite(o.market_fair_probability)?o.market_fair_probability:null})));
 }
 
@@ -212,7 +218,7 @@ export function buildFullMarketInference({
 }
 
 export function settleSystemSignalAndUserExecution({systemSignal,userExecution,homeScore,awayScore,settledAt}){
- if(!systemSignal?.immutable)throw new Error('IMMUTABLE_SYSTEM_SIGNAL_REQUIRED');
+ verifySystemSignal(systemSignal);
  const settledMs=timestamp(settledAt,'SETTLED_AT');if(systemSignal.kickoff_at&&settledMs<timestamp(systemSignal.kickoff_at,'SIGNAL_KICKOFF_AT'))throw new Error('SETTLEMENT_BEFORE_KICKOFF');if(systemSignal.frozen_at&&settledMs<=timestamp(systemSignal.frozen_at,'SIGNAL_FROZEN_AT'))throw new Error('SETTLEMENT_NOT_AFTER_FREEZE');
  if(!Number.isInteger(homeScore)||homeScore<0||!Number.isInteger(awayScore)||awayScore<0)throw new Error('FINAL_SCORE_INVALID');
  const row={homeGoals:homeScore,awayGoals:awayScore,totalGoals:homeScore+awayScore};
