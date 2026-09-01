@@ -125,7 +125,26 @@ function assertProviderEventRow(row) {
   ) {
     throw fail('POSTGRES_PROVIDER_MATCH_EVIDENCE_ROW_SOURCE_MISMATCH');
   }
-  if (Date.parse(snapshot.captured_at) >= Date.parse(snapshot.kickoff_at)) {
+  const snapshotCapturedAt = iso(
+    'POSTGRES_PROVIDER_MATCH_EVIDENCE_SNAPSHOT_CAPTURED_AT',
+    snapshot.captured_at
+  );
+  const snapshotKickoffAt = iso(
+    'POSTGRES_PROVIDER_MATCH_EVIDENCE_SNAPSHOT_KICKOFF_AT',
+    snapshot.kickoff_at
+  );
+  const sourceCapturedAt = iso(
+    'POSTGRES_PROVIDER_MATCH_EVIDENCE_SOURCE_CAPTURED_AT',
+    snapshot.source?.captured_at
+  );
+  if (
+    snapshotCapturedAt !== snapshot.captured_at ||
+    snapshotKickoffAt !== snapshot.kickoff_at ||
+    sourceCapturedAt !== snapshotCapturedAt
+  ) {
+    throw fail('POSTGRES_PROVIDER_MATCH_EVIDENCE_SNAPSHOT_TIMESTAMP_NOT_CANONICAL');
+  }
+  if (Date.parse(snapshotCapturedAt) >= Date.parse(snapshotKickoffAt)) {
     throw fail('POSTGRES_PROVIDER_MATCH_EVIDENCE_POST_KICKOFF_SNAPSHOT');
   }
   if (row.analysis !== null && row.analysis !== undefined) {
