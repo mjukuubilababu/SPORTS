@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { Pool } from 'pg';
 
 import {
@@ -27,6 +28,18 @@ const CUTOFF = '2026-09-01T10:30:00.000Z';
 const KICKOFF = '2026-09-01T11:00:00.000Z';
 const OBSERVED = '2026-09-01T09:55:00.000Z';
 const AVAILABLE = '2026-09-01T09:56:00.000Z';
+
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]));
+  }
+  return value;
+}
+
+function fingerprint(value) {
+  return createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex');
+}
 
 function historicalMatch(id, goalsFor = 1, goalsAgainst = 0) {
   return {
@@ -319,7 +332,7 @@ test('database requires feature JSON to equal the record at the exact path in th
   }
 });
 
-test('database rejects forged snapshot identity and post-kickoff payloads even when generic fingerprints are well-formed', {
+test('database rejects forged identity, missing kickoff, and post-kickoff payloads with well-formed fingerprints', {
   skip: !connectionString
 }, async () => {
   const pool = new Pool({ connectionString });
@@ -347,9 +360,22 @@ test('database rejects forged snapshot identity and post-kickoff payloads even w
       }
     }
   });
+  const { kickoff_at: omittedKickoff, ...snapshotWithoutKickoff } =
+    bridge.observation.payload.snapshot;
+  assert.equal(omittedKickoff, KICKOFF);
+  const forgedMissingKickoff = prepareIngestionObservation({
+    ...bridge.observation,
+    provenanceId: 'PROV-MATCH-EVIDENCE-DB-MISSING-KICKOFF',
+    observationId: 'OBS-MATCH-EVIDENCE-DB-MISSING-KICKOFF',
+    payload: {
+      ...bridge.observation.payload,
+      snapshot: snapshotWithoutKickoff
+    }
+  });
   try {
     await assert.rejects(insertObservationDirect(pool, forgedIdentity), (error) => error?.code === 'P0001');
     await assert.rejects(insertObservationDirect(pool, forgedTime), (error) => error?.code === 'P0001');
+    await assert.rejects(insertObservationDirect(pool, forgedMissingKickoff), (error) => error?.code === 'P0001');
   } finally {
     await pool.end();
   }
@@ -567,6 +593,28 @@ test('bridge fails closed on non-prematch cutoff, rejected rows, and altered per
       providerEventRow: { ...row, state: 'REJECTED' }
     }),
     /POSTGRES_PROVIDER_MATCH_EVIDENCE_ROW_NOT_ACCEPTED/
+  );
+  const {
+    kickoff_at: omittedKickoff,
+    fingerprint: omittedFingerprint,
+    ...snapshotPayloadWithoutKickoff
+  } = row.snapshot;
+  assert.equal(omittedKickoff, KICKOFF);
+  assert.equal(omittedFingerprint, row.evidence_snapshot_fingerprint);
+  const snapshotWithoutKickoff = {
+    ...snapshotPayloadWithoutKickoff,
+    fingerprint: fingerprint(snapshotPayloadWithoutKickoff)
+  };
+  assert.throws(
+    () => prepareProviderMatchEvidencePersistence({
+      ...persistenceInput(row),
+      providerEventRow: {
+        ...row,
+        evidence_snapshot_fingerprint: snapshotWithoutKickoff.fingerprint,
+        snapshot: snapshotWithoutKickoff
+      }
+    }),
+    /POSTGRES_PROVIDER_MATCH_EVIDENCE_SNAPSHOT_KICKOFF_AT_REQUIRED/
   );
   const changedSnapshot = {
     ...row.snapshot,
