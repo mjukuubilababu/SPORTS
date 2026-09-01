@@ -131,12 +131,12 @@ export function recomputeJointSelection(distribution,components,{jointOdds=null,
 export function devigMarketObservations(observations,frozenAt,kickoffAt){
  const freeze=timestamp(frozenAt,'FROZEN_AT'),kickoff=timestamp(kickoffAt,'KICKOFF_AT');if(freeze>=kickoff)throw new Error('SIGNAL_NOT_PREMATCH');
  const copied=observations.map((o,index)=>{
-  const validOdds=Number.isFinite(o.odds)&&o.odds>1,provenanceReady=Boolean(o.observationId&&o.provider&&o.source&&o.observedAt&&o.marketSnapshotId&&validOdds);
+  const semanticsValid=selectionOutcome(o,{homeGoals:0,awayGoals:0,totalGoals:0})!=='UNSUPPORTED',validOdds=Number.isFinite(o.odds)&&o.odds>1,provenanceReady=Boolean(o.observationId&&o.provider&&o.source&&o.observedAt&&o.marketSnapshotId&&validOdds&&semanticsValid);
   if(o.observedAt&&timestamp(o.observedAt,'MARKET_OBSERVED_AT')>freeze)throw new Error('MARKET_OBSERVATION_AFTER_FREEZE');
-  return {...o,observationIndex:index,market_raw_probability:validOdds?1/o.odds:null,market_fair_probability:null,provenance_ready:provenanceReady};
+  return {...o,observationIndex:index,market_raw_probability:validOdds?1/o.odds:null,market_fair_probability:null,market_semantics_valid:semanticsValid,provenance_ready:provenanceReady};
  });
  const identities=copied.filter(o=>o.observationId).map(o=>o.observationId);if(new Set(identities).size!==identities.length)throw new Error('MARKET_OBSERVATION_IDENTITY_CONFLICT');
- const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}`:null;if(key){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
+ const groups=new Map();for(const o of copied){const key=o.marketGroupId&&o.provider&&o.marketSnapshotId?`${o.marketGroupId}|${o.provider}|${o.marketSnapshotId}`:null;if(key&&o.market_semantics_valid){const rows=groups.get(key)??[];rows.push(o);groups.set(key,rows);}}
  for(const rows of groups.values()){if(rows.every(x=>x.completeMarket===true&&x.market_raw_probability!==null)){const z=rows.reduce((s,x)=>s+x.market_raw_probability,0);for(const row of rows)row.market_fair_probability=row.market_raw_probability/z;}}
  return deepFreeze(copied.map(o=>({...o,market_fair_probability:Number.isFinite(o.market_fair_probability)?o.market_fair_probability:null})));
 }
@@ -204,7 +204,7 @@ export function buildFullMarketInference({
   sample_size:{team_a:teamAState.sample_size,team_b:teamBState.sample_size},early_season_penalty:(teamAState.early_season_penalty+teamBState.early_season_penalty)/2,
   expected_home_goals:homeLambda,expected_away_goals:awayLambda,expected_total_goals:homeLambda+awayLambda,
   home_probability:reasoning.matchReality.homeWin,draw_probability:reasoning.matchReality.draw,away_probability:reasoning.matchReality.awayWin,
-  match_worlds:worlds,market_probabilities:candidates.map(x=>({market:x.marketFamily,selection:x.selection,line:x.line??null,probability:x.model_probability,status:x.classification==='UNSUPPORTED'?'UNSUPPORTED':'MODELLED'})),
+  match_worlds:worlds,market_probabilities:candidates.map(x=>{const bounds=x.marketFamily==='MULTIGOALS_FULL_TIME'?String(x.selection??'').match(/^(\d+)-(\d+)$/):null,min=x.marketFamily==='MULTIGOALS_FULL_TIME'?(x.minGoals??(bounds?Number(bounds[1]):null)):null,max=x.marketFamily==='MULTIGOALS_FULL_TIME'?(x.maxGoals??(bounds?Number(bounds[2]):null)):null;return {market:x.marketFamily,selection:x.marketFamily==='MULTIGOALS_FULL_TIME'&&Number.isInteger(min)&&Number.isInteger(max)?`${min}-${max}`:x.selection,line:x.line??null,min_goals:min,max_goals:max,probability:x.model_probability,status:x.classification==='UNSUPPORTED'?'UNSUPPORTED':'MODELLED'};}),
   market_observations:observations,market_contradictions:graph.edges,candidate_outcomes:candidates,primary_candidate:eligible[0]??null,
   secondary_candidates:eligible.slice(1),abstain_reasons:abstainReasons,model_version:modelVersion,feature_version:featureVersion,market_snapshot_id:marketSnapshotId,frozen_at:frozenAt,
   governance:{bookmaker_price_is_not_prediction:true,existing_gates_required:true,prediction_weight:0,capital_effect:'NONE',real_money:'NO'}};
