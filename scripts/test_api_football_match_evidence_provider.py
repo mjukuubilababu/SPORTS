@@ -119,7 +119,7 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
             CUTOFF,
         )
         serialized = json.dumps(envelope)
-        self.assertNotIn("targetFixture", serialized)
+        self.assertNotIn('"errors"', serialized)
         self.assertNotIn('"response"', serialized)
         self.assertNotIn("APISPORTS_KEY", serialized)
         self.assertFalse(envelope["governance"]["rawProviderPayloadPersisted"])

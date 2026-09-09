@@ -107,7 +107,7 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
     assert.equal(envelope.governance.rawProviderPayloadPersisted, false);
     assert.equal(envelope.governance.capitalState, 'LOCKED');
     assert.equal(envelope.governance.realMoney, 'NO');
-    assert.equal(JSON.stringify(envelope).includes('targetFixture'), false);
+    assert.equal(JSON.stringify(envelope).includes('"errors"'), false);
     assert.equal(JSON.stringify(envelope).includes('"response"'), false);
 
     const prepared = prepareProviderMatchEvidenceBatchPersistence({
