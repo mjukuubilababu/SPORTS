@@ -36,7 +36,8 @@
     "verification_coupled_to_authenticated_fetch": true,
     "consumer_forces_replay_unverified": true,
     "persistence_forces_replay_unverified": true,
-    "postgres_rejects_verified_replay": true
+    "postgres_rejects_verified_replay": true,
+    "postgres_requires_replay_independent_verification_false": true
   },
   "canonical_mapping": {
     "home_recent_form": true,
@@ -98,6 +99,7 @@
     "caller_cannot_assert_authenticated_mode": true,
     "forged_replay_verification_forced_off": true,
     "postgres_verified_replay_insert_rejected": true,
+    "postgres_independently_verified_replay_insert_rejected": true,
     "non_settled_history_rejected": true,
     "exact_source_fingerprints": true,
     "exact_replay_idempotent": true,

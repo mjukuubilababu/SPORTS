@@ -46,7 +46,9 @@ the source-bundle fingerprint.
   PostgreSQL ingestion preparation both force replay verification off.
 - PostgreSQL migration
   `0011_api_football_replay_verification_firewall_v0_1.sql` adds a table-level
-  check that rejects any replay row marked verified or prematch eligible.
+  check that rejects any replay row marked verified or prematch eligible and
+  requires the archived snapshot's independent-verification flag to be exactly
+  false.
 - Exact replay is idempotent. Altered content under the same snapshot identity
   is rejected by the existing provider/runtime immutability boundary.
 - The existing dedicated PoolClient transaction, full rollback, readback

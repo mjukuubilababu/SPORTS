@@ -8,7 +8,12 @@ ALTER TABLE reference_ingestion_observations_v01
   ADD CONSTRAINT reference_ingestion_replay_unverified_ck
   CHECK (
     upper(btrim(source_type)) <> 'PROVIDER_API_REPLAY'
-    OR (is_verified = false AND pre_match_eligible = false)
+    OR (
+      is_verified = false
+      AND pre_match_eligible = false
+      AND jsonb_typeof(payload_json #> '{snapshot,source,independently_verified}') = 'boolean'
+      AND (payload_json #>> '{snapshot,source,independently_verified}')::boolean = false
+    )
   ) NOT VALID;
 
 ALTER TABLE reference_ingestion_observations_v01

@@ -116,6 +116,7 @@ jobs:
           assert contract['offline_replay']['consumer_forces_replay_unverified'] is True
           assert contract['offline_replay']['persistence_forces_replay_unverified'] is True
           assert contract['offline_replay']['postgres_rejects_verified_replay'] is True
+          assert contract['offline_replay']['postgres_requires_replay_independent_verification_false'] is True
           assert contract['canonical_mapping']['analysis_state_without_model']=='EVIDENCE_READY_MODEL_PENDING'
           assert contract['canonical_mapping']['decision_without_model']=='ABSTAIN'
           assert contract['persistence']['new_tables']==0
@@ -232,6 +233,7 @@ jobs:
             'consumer_forces_replay_unverified':True,
             'persistence_forces_replay_unverified':True,
             'postgres_rejects_verified_replay':True,
+            'postgres_requires_replay_independent_verification_false':True,
             'missing_evidence_explicit':True,
             'existing_dedicated_pool_client_runtime_reused':True,
             'existing_full_rollback_runtime_reused':True,
