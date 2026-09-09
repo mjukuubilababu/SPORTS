@@ -187,7 +187,8 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
          SELECT provenance_id || '-FORGED',observation_id || '-FORGED',event_id,entity_type,entity_id,
                 evidence_kind,provider,source,'PROVIDER_API_REPLAY',source_url,observed_at,available_at,
                 captured_at,prediction_cutoff,true,true,source_payload_fingerprint,evidence_fingerprint,
-                payload_json,persisted_at,capital_state,real_money
+                jsonb_set(payload_json, '{snapshot,source,verified}', 'true'::jsonb),
+                persisted_at,capital_state,real_money
            FROM reference_ingestion_observations_v01
           WHERE event_id=$1`,
         [eventId]
