@@ -11,8 +11,10 @@ ALTER TABLE reference_ingestion_observations_v01
     OR (
       is_verified = false
       AND pre_match_eligible = false
-      AND jsonb_typeof(payload_json #> '{snapshot,source,independently_verified}') = 'boolean'
-      AND (payload_json #>> '{snapshot,source,independently_verified}')::boolean = false
+      AND jsonb_typeof(payload_json #> '{snapshot,source,independently_verified}')
+            IS NOT DISTINCT FROM 'boolean'
+      AND (payload_json #>> '{snapshot,source,independently_verified}')::boolean
+            IS NOT DISTINCT FROM false
     )
   ) NOT VALID;
 

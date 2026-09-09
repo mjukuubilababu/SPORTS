@@ -37,7 +37,8 @@
     "consumer_forces_replay_unverified": true,
     "persistence_forces_replay_unverified": true,
     "postgres_rejects_verified_replay": true,
-    "postgres_requires_replay_independent_verification_false": true
+    "postgres_requires_replay_independent_verification_false": true,
+    "postgres_replay_independent_verification_check_null_safe": true
   },
   "canonical_mapping": {
     "home_recent_form": true,
@@ -100,6 +101,7 @@
     "forged_replay_verification_forced_off": true,
     "postgres_verified_replay_insert_rejected": true,
     "postgres_independently_verified_replay_insert_rejected": true,
+    "postgres_missing_independent_verification_replay_insert_rejected": true,
     "non_settled_history_rejected": true,
     "exact_source_fingerprints": true,
     "exact_replay_idempotent": true,
