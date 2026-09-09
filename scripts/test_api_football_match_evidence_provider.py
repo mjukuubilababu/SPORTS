@@ -170,6 +170,12 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
                 [target()], provider_package(), captured_at="2026-09-10T14:50:00Z"
             )
 
+    def test_provider_package_identity_is_exact(self):
+        package = provider_package()
+        package["provider"] = "OTHER_PROVIDER"
+        with self.assertRaisesRegex(ValueError, "API_FOOTBALL_PROVIDER_PACKAGE_PROVIDER_MISMATCH"):
+            build_runtime_envelope([target()], package, captured_at=CAPTURED)
+
     def test_duplicate_and_non_exact_package_sets_are_rejected(self):
         duplicated = provider_package()
         duplicated["events"].append(copy.deepcopy(duplicated["events"][0]))

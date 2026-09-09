@@ -228,6 +228,8 @@ def _document_manifest(bundle: Mapping[str, object]) -> list[dict]:
 def _package_index(provider_package: object) -> dict[int, dict]:
     if not isinstance(provider_package, dict):
         raise ValueError("API_FOOTBALL_PROVIDER_PACKAGE_OBJECT_REQUIRED")
+    if provider_package.get("provider") != "API_FOOTBALL":
+        raise ValueError("API_FOOTBALL_PROVIDER_PACKAGE_PROVIDER_MISMATCH")
     events = provider_package.get("events")
     if not isinstance(events, list) or not events:
         raise ValueError("API_FOOTBALL_PROVIDER_PACKAGE_EVENTS_REQUIRED")
