@@ -154,6 +154,12 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "API_FOOTBALL_POST_KICKOFF_HISTORY_REJECTED"):
             build_runtime_envelope([target()], package, captured_at=CAPTURED)
 
+    def test_post_capture_pre_kickoff_history_is_rejected(self):
+        package = provider_package()
+        package["events"][0]["homeHistory"]["response"][0]["fixture"]["date"] = "2026-09-10T13:00:00Z"
+        with self.assertRaisesRegex(ValueError, "API_FOOTBALL_POST_CAPTURE_HISTORY_REJECTED"):
+            build_runtime_envelope([target()], package, captured_at=CAPTURED)
+
     def test_non_settled_history_is_rejected(self):
         package = provider_package()
         package["events"][0]["homeHistory"]["response"][0]["fixture"]["status"]["short"] = "NS"

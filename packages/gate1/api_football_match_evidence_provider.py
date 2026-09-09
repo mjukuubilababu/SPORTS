@@ -162,10 +162,12 @@ def _map_history(
     *,
     subject_team_id: int,
     target_kickoff: str,
+    captured_at: str,
     code: str,
 ) -> list[tuple[dict, str]]:
     rows = _response(document, code)
     target_time = _timestamp(target_kickoff, "API_FOOTBALL_TARGET_KICKOFF_INVALID")
+    capture_time = _timestamp(captured_at, "API_FOOTBALL_CAPTURED_AT_INVALID")
     mapped: list[tuple[dict, str]] = []
     seen: set[int] = set()
     for row in rows:
@@ -177,8 +179,11 @@ def _map_history(
         if _status(fixture, code) not in SETTLED_STATUSES:
             raise ValueError(code + "_NON_SETTLED_FIXTURE_REJECTED")
         played_at = _utc(fixture.get("date"), code + "_PLAYED_AT_INVALID")
-        if _timestamp(played_at, code + "_PLAYED_AT_INVALID") >= target_time:
+        played_time = _timestamp(played_at, code + "_PLAYED_AT_INVALID")
+        if played_time >= target_time:
             raise ValueError("API_FOOTBALL_POST_KICKOFF_HISTORY_REJECTED")
+        if played_time > capture_time:
+            raise ValueError("API_FOOTBALL_POST_CAPTURE_HISTORY_REJECTED")
         home_id, _home_name = _team(teams.get("home"), code + "_HOME_TEAM")
         away_id, _away_name = _team(teams.get("away"), code + "_AWAY_TEAM")
         if subject_team_id == home_id:
@@ -289,18 +294,21 @@ def build_runtime_envelope(
             bundle.get("homeHistory"),
             subject_team_id=target["homeTeamId"],
             target_kickoff=target["kickoffAt"],
+            captured_at=captured,
             code="API_FOOTBALL_HOME_HISTORY",
         )
         away_history = _map_history(
             bundle.get("awayHistory"),
             subject_team_id=target["awayTeamId"],
             target_kickoff=target["kickoffAt"],
+            captured_at=captured,
             code="API_FOOTBALL_AWAY_HISTORY",
         )
         h2h = _map_history(
             bundle.get("h2h"),
             subject_team_id=target["homeTeamId"],
             target_kickoff=target["kickoffAt"],
+            captured_at=captured,
             code="API_FOOTBALL_H2H",
         )
 

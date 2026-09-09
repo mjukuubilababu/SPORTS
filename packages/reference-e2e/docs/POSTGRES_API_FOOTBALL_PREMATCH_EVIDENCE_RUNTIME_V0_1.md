@@ -28,7 +28,7 @@ written to the runtime envelope or PostgreSQL.
 - The target provider fixture ID, team IDs, team names, kickoff, registered
   competition, and scheduled status must exactly match the Gate1 target.
 - Capture must be pre-kickoff and at or before the explicit prediction cutoff.
-- Historical rows must be settled and strictly before the target kickoff.
+- Historical rows must be settled, no later than capture, and strictly before the target kickoff.
 - Home/away form remains distinct from overall form.
 - Unavailable opponent strength, xG, lineups, injuries, suspensions, and market
   evidence remain null or empty.

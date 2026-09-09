@@ -46,6 +46,7 @@
     "capture_must_not_exceed_prediction_cutoff": true,
     "prediction_cutoff_must_be_before_kickoff": true,
     "historical_fixture_at_or_after_target_kickoff": "REJECT",
+    "historical_fixture_after_capture": "REJECT",
     "non_settled_history": "REJECT",
     "live_or_settled_target": "REJECT",
     "settlement_separate": true
