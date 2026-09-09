@@ -8,6 +8,7 @@
     "migrate:test": "node scripts/migrate-test-db.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:postgres": "node --test tests/postgres-evidence.integration.mjs",
+    "provider-match-evidence:persist": "node scripts/run-provider-match-evidence-persistence.mjs",
     "e2e": "node scripts/run-e2e.mjs",
     "verify": "npm run check && npm run migrate:test && npm test && npm run e2e"
   },

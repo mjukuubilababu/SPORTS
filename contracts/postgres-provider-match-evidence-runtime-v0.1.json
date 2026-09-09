@@ -1,0 +1,60 @@
+{
+  "contract": "postgres-provider-match-evidence-runtime",
+  "version": "v0.1",
+  "status": "IMPLEMENTED",
+  "extends": "postgres-provider-match-evidence-persistence-v0.1",
+  "entry_points": {
+    "runtime": "packages/reference-e2e/src/postgres-provider-match-evidence-runtime.mjs",
+    "cli": "packages/reference-e2e/scripts/run-provider-match-evidence-persistence.mjs",
+    "input": "canonical provider batch plus exact per-event persistence timing",
+    "output_contains_raw_provider_payload": false,
+    "output_contains_raw_snapshot": false
+  },
+  "persistence": {
+    "new_tables": 0,
+    "existing_observation_store_reused": true,
+    "existing_feature_lineage_store_reused": true,
+    "all_unique_events_one_transaction": true,
+    "partial_failure_full_rollback": true,
+    "one_dedicated_pool_client": true,
+    "pool_client_released": true,
+    "owned_pool_closed": true,
+    "exact_replay_idempotent": true,
+    "changed_payload_same_identity_rejected": true
+  },
+  "runtime_boundaries": {
+    "strict_batch": true,
+    "any_rejected_event_blocks_all_writes": true,
+    "empty_batch_rejected": true,
+    "missing_event_timing_rejected": true,
+    "extra_event_timing_rejected": true,
+    "post_kickoff_evidence_rejected": true,
+    "settlement_separate": true,
+    "missing_evidence_remains_explicit": true
+  },
+  "readback_attestation": {
+    "observation_fingerprint_recomputed": true,
+    "snapshot_fingerprint_verified": true,
+    "provider_payload_fingerprint_presence_verified": true,
+    "provider_payload_fingerprint_recomputed": false,
+    "every_feature_fingerprint_recomputed": true,
+    "complete_exact_feature_set_required": true,
+    "event_binding_required": true,
+    "raw_evidence_returned": false
+  },
+  "database": {
+    "engine": "PostgreSQL",
+    "ci_major_version": 16,
+    "migration_added": false
+  },
+  "governance": {
+    "p002_changed": false,
+    "authoritative_truth_owner": "GATE1",
+    "capital_authority": "GATE6",
+    "prediction_validation_execution_separate": true,
+    "capital_state": "LOCKED",
+    "capital_effect": "NONE",
+    "real_money": "NO",
+    "automatic_promotion_or_retuning": false
+  }
+}
