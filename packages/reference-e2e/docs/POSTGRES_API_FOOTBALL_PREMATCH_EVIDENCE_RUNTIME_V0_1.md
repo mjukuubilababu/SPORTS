@@ -39,6 +39,11 @@ the source-bundle fingerprint.
 - No independent model is invented. The output remains
   `EVIDENCE_READY_MODEL_PENDING` / `ABSTAIN` until a separately verified
   market-independent model is supplied.
+- Authenticated live batches carry an `HMAC-SHA256` acquisition attestation
+  over the exact batch identity, source type, capture, verification fields, and
+  events. The downstream consumer verifies it with `APISPORTS_KEY` before
+  snapshot construction; editing a replay into `PROVIDER_API` is rejected.
+  The key itself is never placed in the envelope or database.
 - Offline package replay uses `PROVIDER_API_REPLAY` and `verified=false`.
   The public replay builder exposes no authentication override; verification is
   emitted only by the function that performs the authenticated fetch and builds
@@ -66,6 +71,9 @@ APISPORTS_KEY=... python scripts/run_api_football_match_evidence_ingestion.py \
 node packages/reference-e2e/scripts/run-provider-match-evidence-persistence.mjs \
   runtime-envelope.json sanitized-receipt.json
 ```
+
+Keep `APISPORTS_KEY` in the environment for both commands so the persistence
+consumer can verify the acquisition attestation. It remains environment-only.
 
 Deterministic offline verification:
 

@@ -8,6 +8,7 @@ on:
       - 'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json'
       - 'packages/gate1/api_football_match_evidence_provider.py'
       - 'packages/intelligence-engine/src/match-evidence-analysis.mjs'
+      - 'packages/intelligence-engine/src/real-provider-match-evidence-ingestion.mjs'
       - 'packages/intelligence-engine/tests/real-provider-match-evidence-ingestion.test.mjs'
       - 'packages/reference-e2e/src/postgres-ingestion-provenance.mjs'
       - 'packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql'
@@ -73,6 +74,7 @@ jobs:
             'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json',
             'packages/gate1/api_football_match_evidence_provider.py',
             'packages/intelligence-engine/src/match-evidence-analysis.mjs',
+            'packages/intelligence-engine/src/real-provider-match-evidence-ingestion.mjs',
             'packages/intelligence-engine/tests/real-provider-match-evidence-ingestion.test.mjs',
             'packages/reference-e2e/src/postgres-ingestion-provenance.mjs',
             'packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql',
@@ -109,6 +111,9 @@ jobs:
           assert contract['source_binding']['package_acquired_at_required'] is True
           assert contract['source_binding']['package_acquired_at_must_equal_declared_capture'] is True
           assert contract['source_binding']['package_acquired_at_in_bundle_sha256'] is True
+          assert contract['authenticated_acquisition_attestation']['algorithm']=='HMAC-SHA256'
+          assert contract['authenticated_acquisition_attestation']['key_persisted'] is False
+          assert contract['authenticated_acquisition_attestation']['required_for_api_football_provider_api'] is True
           assert contract['offline_replay']['self_verified'] is False
           assert contract['offline_replay']['eligible_for_authenticated_promotion'] is False
           assert contract['offline_replay']['caller_asserted_authentication_forbidden'] is True
@@ -222,6 +227,9 @@ jobs:
             'new_migrations':1,
             'raw_payload_persisted':False,
             'provider_prediction_used':False,
+            'authenticated_acquisition_hmac_attested':True,
+            'attestation_key_persisted':False,
+            'promoted_replay_without_attestation_rejected':True,
             'bookmaker_odds_used':False,
             'exact_source_bundle_fingerprint':True,
             'exact_replay_idempotent':True,

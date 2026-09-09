@@ -86,6 +86,7 @@ jobs:
             'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json',
             'packages/gate1/api_football_match_evidence_provider.py',
             'packages/intelligence-engine/src/match-evidence-analysis.mjs',
+            'packages/intelligence-engine/src/real-provider-match-evidence-ingestion.mjs',
             'packages/intelligence-engine/tests/real-provider-match-evidence-ingestion.test.mjs',
             'packages/reference-e2e/docs/POSTGRES_API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1.md',
             'packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql',

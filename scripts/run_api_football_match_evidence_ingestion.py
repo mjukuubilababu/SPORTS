@@ -81,6 +81,7 @@ def main(argv: list[str] | None = None) -> int:
         "rawProviderPayloadPersisted": False,
         "authenticatedAcquisition": envelope["governance"]["authenticatedAcquisition"],
         "offlineReplay": envelope["governance"]["offlineReplay"],
+        "acquisitionAttested": "acquisitionAttestation" in envelope["providerBatch"],
         "providerPredictionUsed": False,
         "bookmakerOddsUsed": False,
         "capitalState": "LOCKED",

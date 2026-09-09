@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import urllib.parse
 import urllib.request
@@ -17,6 +18,8 @@ SETTLED_STATUSES = {"FT", "AET", "PEN"}
 SCHEDULED_STATUSES = {"NS", "TBD"}
 DEFAULT_FETCH_LAST = 20
 DEFAULT_FEATURE_LIMIT = 5
+ATTESTATION_VERSION = "API_FOOTBALL_ACQUISITION_ATTESTATION_V0_1"
+ATTESTATION_ALGORITHM = "HMAC-SHA256"
 
 
 def _canonical_json(value: object) -> str:
@@ -508,6 +511,31 @@ def fetch_provider_package(
     }
 
 
+def _attestation_payload(provider_batch: Mapping[str, object]) -> dict:
+    return {
+        "batchId": provider_batch["batchId"],
+        "provider": provider_batch["provider"],
+        "sourceType": provider_batch["sourceType"],
+        "sourceReference": provider_batch["sourceReference"],
+        "capturedAt": provider_batch["capturedAt"],
+        "verified": provider_batch["verified"],
+        "independentlyVerified": provider_batch["independentlyVerified"],
+        "events": provider_batch["events"],
+    }
+
+
+def _acquisition_attestation(provider_batch: Mapping[str, object], api_key: str) -> dict:
+    payload = _attestation_payload(provider_batch)
+    serialized = _canonical_json(payload).encode("utf-8")
+    signature = hmac.new(api_key.encode("utf-8"), serialized, hashlib.sha256).hexdigest()
+    return {
+        "version": ATTESTATION_VERSION,
+        "algorithm": ATTESTATION_ALGORITHM,
+        "payloadFingerprint": hashlib.sha256(serialized).hexdigest(),
+        "signature": signature,
+    }
+
+
 def fetch_runtime_envelope(
     *,
     api_key: str,
@@ -534,6 +562,10 @@ def fetch_runtime_envelope(
     envelope["providerBatch"]["verified"] = True
     envelope["governance"]["authenticatedAcquisition"] = True
     envelope["governance"]["offlineReplay"] = False
+    envelope["providerBatch"]["acquisitionAttestation"] = _acquisition_attestation(
+        envelope["providerBatch"],
+        _required_string(api_key, "APISPORTS_KEY_REQUIRED"),
+    )
     return envelope
 
 
@@ -557,5 +589,8 @@ def provider_manifest() -> dict:
             "offlineReplayVerified": False,
             "callerAssertedAuthenticationForbidden": True,
             "authenticatedFetchAndVerificationCoupled": True,
+            "authenticatedBatchHmacAttested": True,
+            "attestationCoversExactBatch": True,
+            "attestationKeyPersisted": False,
         },
     }

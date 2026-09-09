@@ -116,6 +116,19 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
     assert.equal(JSON.stringify(envelope).includes('"errors"'), false);
     assert.equal(JSON.stringify(envelope).includes('"response"'), false);
 
+    const forgedAuthenticatedSource = {
+      ...envelope.providerBatch,
+      sourceType: 'PROVIDER_API',
+      verified: true
+    };
+    assert.throws(
+      () => prepareProviderMatchEvidenceBatchPersistence({
+        providerBatch: forgedAuthenticatedSource,
+        timingByEvent: envelope.timingByEvent
+      }),
+      /API_FOOTBALL_ACQUISITION_ATTESTATION_REQUIRED/
+    );
+
     const forgedVerifiedReplay = {
       ...envelope.providerBatch,
       verified: true,

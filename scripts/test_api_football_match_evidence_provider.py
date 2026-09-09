@@ -168,6 +168,13 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         self.assertEqual(authenticated["providerBatch"]["sourceType"], "PROVIDER_API")
         self.assertTrue(authenticated["providerBatch"]["verified"])
         self.assertTrue(authenticated["governance"]["authenticatedAcquisition"])
+        attestation = authenticated["providerBatch"]["acquisitionAttestation"]
+        self.assertEqual(attestation["version"], "API_FOOTBALL_ACQUISITION_ATTESTATION_V0_1")
+        self.assertEqual(attestation["algorithm"], "HMAC-SHA256")
+        self.assertEqual(len(attestation["payloadFingerprint"]), 64)
+        self.assertEqual(len(attestation["signature"]), 64)
+        self.assertNotIn("super-secret-provider-key", json.dumps(authenticated))
+        self.assertNotIn("acquisitionAttestation", replayed["providerBatch"])
 
     def test_package_acquisition_time_is_required_and_exactly_bound_to_capture(self):
         missing = provider_package()

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash, createHmac } from 'node:crypto';
 
 import {
   adaptRealProviderMatchEvidenceEvent,
@@ -9,6 +10,38 @@ import {
 
 const CAPTURED = '2026-09-01T12:00:00.000Z';
 const KICKOFF = '2026-09-01T15:00:00.000Z';
+
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value).sort()
+        .filter((key) => value[key] !== undefined)
+        .map((key) => [key, canonicalize(value[key])])
+    );
+  }
+  return value;
+}
+
+function apiFootballAttestation(batchValue, key) {
+  const payload = {
+    batchId: batchValue.batchId,
+    provider: batchValue.provider,
+    sourceType: batchValue.sourceType,
+    sourceReference: batchValue.sourceReference,
+    capturedAt: batchValue.capturedAt,
+    verified: batchValue.verified,
+    independentlyVerified: batchValue.independentlyVerified,
+    events: batchValue.events
+  };
+  const serialized = JSON.stringify(canonicalize(payload));
+  return {
+    version: 'API_FOOTBALL_ACQUISITION_ATTESTATION_V0_1',
+    algorithm: 'HMAC-SHA256',
+    payloadFingerprint: createHash('sha256').update(serialized).digest('hex'),
+    signature: createHmac('sha256', key).update(serialized).digest('hex')
+  };
+}
 
 function match(id, daysAgo, goalsFor, goalsAgainst, extra = {}) {
   return {
@@ -276,6 +309,46 @@ test('provider API replay cannot self-assert provider verification', () => {
   assert.equal(row.snapshot.source.verified, false);
   assert.equal(row.snapshot.source.independently_verified, false);
   assert.equal(row.state, 'EVIDENCE_READY_MODEL_PENDING');
+});
+
+test('API-Football authenticated batches require a valid exact HMAC acquisition attestation', () => {
+  const key = 'unit-test-api-football-key';
+  const unsigned = batch([providerEvent({ model: null })], {
+    provider: 'API_FOOTBALL',
+    sourceType: 'PROVIDER_API',
+    sourceReference: 'api-football://prematch-evidence/batch/unit',
+    verified: true,
+    independentlyVerified: false
+  });
+  const signed = {
+    ...unsigned,
+    acquisitionAttestation: apiFootballAttestation(unsigned, key)
+  };
+  const previous = process.env.APISPORTS_KEY;
+  process.env.APISPORTS_KEY = key;
+  try {
+    const accepted = ingestRealProviderMatchEvidenceBatch(signed);
+    assert.equal(accepted.events[0].snapshot.source.verified, true);
+    assert.throws(
+      () => ingestRealProviderMatchEvidenceBatch({
+        ...signed,
+        sourceReference: 'api-football://prematch-evidence/batch/tampered'
+      }),
+      /API_FOOTBALL_ACQUISITION_ATTESTATION_MISMATCH/
+    );
+    const promotedReplay = {
+      ...unsigned,
+      sourceType: 'PROVIDER_API',
+      verified: true
+    };
+    assert.throws(
+      () => ingestRealProviderMatchEvidenceBatch(promotedReplay),
+      /API_FOOTBALL_ACQUISITION_ATTESTATION_REQUIRED/
+    );
+  } finally {
+    if (previous === undefined) delete process.env.APISPORTS_KEY;
+    else process.env.APISPORTS_KEY = previous;
+  }
 });
 
 test('same provider batch produces deterministic immutable output', () => {
