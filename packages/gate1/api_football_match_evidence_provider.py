@@ -260,7 +260,6 @@ def _build_runtime_envelope(
     *,
     captured_at: object,
     feature_limit: int = DEFAULT_FEATURE_LIMIT,
-    authenticated: bool,
 ) -> dict:
     captured = _utc(captured_at, "API_FOOTBALL_CAPTURED_AT_INVALID")
     if not isinstance(feature_limit, int) or feature_limit <= 0:
@@ -400,18 +399,18 @@ def _build_runtime_envelope(
         "providerBatch": {
             "batchId": "API-FOOTBALL-PREMATCH-" + batch_identity[:24],
             "provider": "API_FOOTBALL",
-            "sourceType": "PROVIDER_API" if authenticated else "PROVIDER_API_REPLAY",
+            "sourceType": "PROVIDER_API_REPLAY",
             "sourceReference": "api-football://prematch-evidence/batch/" + batch_identity,
             "capturedAt": captured,
-            "verified": authenticated,
+            "verified": False,
             "independentlyVerified": False,
             "events": canonical_events,
         },
         "timingByEvent": timings,
         "governance": {
             "authenticatedProviderRequiredForAcquisition": True,
-            "authenticatedAcquisition": authenticated,
-            "offlineReplay": not authenticated,
+            "authenticatedAcquisition": False,
+            "offlineReplay": True,
             "packageAcquiredAtBoundToCapture": True,
             "rawProviderPayloadPersisted": False,
             "rawSourceFingerprintsRetained": True,
@@ -444,7 +443,6 @@ def build_runtime_envelope(
         provider_package,
         captured_at=captured_at,
         feature_limit=feature_limit,
-        authenticated=False,
     )
 
 
@@ -526,13 +524,17 @@ def fetch_runtime_envelope(
         timeout=timeout,
         fetch_last=fetch_last,
     )
-    return _build_runtime_envelope(
+    envelope = _build_runtime_envelope(
         target_rows,
         provider_package,
         captured_at=provider_package["acquiredAt"],
         feature_limit=feature_limit,
-        authenticated=True,
     )
+    envelope["providerBatch"]["sourceType"] = "PROVIDER_API"
+    envelope["providerBatch"]["verified"] = True
+    envelope["governance"]["authenticatedAcquisition"] = True
+    envelope["governance"]["offlineReplay"] = False
+    return envelope
 
 
 def provider_manifest() -> dict:
