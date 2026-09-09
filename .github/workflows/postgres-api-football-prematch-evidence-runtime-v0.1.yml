@@ -7,6 +7,10 @@ on:
     paths:
       - 'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json'
       - 'packages/gate1/api_football_match_evidence_provider.py'
+      - 'packages/intelligence-engine/src/match-evidence-analysis.mjs'
+      - 'packages/intelligence-engine/tests/real-provider-match-evidence-ingestion.test.mjs'
+      - 'packages/reference-e2e/src/postgres-ingestion-provenance.mjs'
+      - 'packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql'
       - 'packages/reference-e2e/docs/POSTGRES_API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1.md'
       - 'packages/reference-e2e/tests/postgres-api-football-match-evidence-runtime.integration.mjs'
       - 'scripts/run_api_football_match_evidence_ingestion.py'
@@ -67,6 +71,10 @@ jobs:
             '.github/workflows/postgres-api-football-prematch-evidence-runtime-v0.1.yml',
             'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json',
             'packages/gate1/api_football_match_evidence_provider.py',
+            'packages/intelligence-engine/src/match-evidence-analysis.mjs',
+            'packages/intelligence-engine/tests/real-provider-match-evidence-ingestion.test.mjs',
+            'packages/reference-e2e/src/postgres-ingestion-provenance.mjs',
+            'packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql',
             'packages/reference-e2e/docs/POSTGRES_API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1.md',
             'packages/reference-e2e/tests/postgres-api-football-match-evidence-runtime.integration.mjs',
             'scripts/run_api_football_match_evidence_ingestion.py',
@@ -104,10 +112,13 @@ jobs:
           assert contract['offline_replay']['eligible_for_authenticated_promotion'] is False
           assert contract['offline_replay']['caller_asserted_authentication_forbidden'] is True
           assert contract['offline_replay']['verification_coupled_to_authenticated_fetch'] is True
+          assert contract['offline_replay']['consumer_forces_replay_unverified'] is True
+          assert contract['offline_replay']['persistence_forces_replay_unverified'] is True
+          assert contract['offline_replay']['postgres_rejects_verified_replay'] is True
           assert contract['canonical_mapping']['analysis_state_without_model']=='EVIDENCE_READY_MODEL_PENDING'
           assert contract['canonical_mapping']['decision_without_model']=='ABSTAIN'
           assert contract['persistence']['new_tables']==0
-          assert contract['persistence']['new_migrations']==0
+          assert contract['persistence']['new_migrations']==1
           assert contract['persistence']['postgres_ci_major_version']==16
           assert contract['persistence']['one_dedicated_pool_client'] is True
           assert contract['persistence']['partial_failure_full_rollback'] is True
@@ -166,6 +177,7 @@ jobs:
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0010_provider_match_evidence_persistence_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql
           echo 'API_FOOTBALL_PREMATCH_EVIDENCE_SCHEMA=PASS'
 
       - name: Run existing and API-Football PostgreSQL regressions
@@ -203,7 +215,7 @@ jobs:
             'observations':int(scalar("SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001'")),
             'features':int(scalar("SELECT count(*) FROM reference_feature_provenance_lineage_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001'")),
             'new_tables':0,
-            'new_migrations':0,
+            'new_migrations':1,
             'raw_payload_persisted':False,
             'provider_prediction_used':False,
             'bookmaker_odds_used':False,
@@ -216,6 +228,9 @@ jobs:
             'offline_replay_pre_match_eligible':False,
             'caller_asserted_authentication_forbidden':True,
             'verification_coupled_to_authenticated_fetch':True,
+            'consumer_forces_replay_unverified':True,
+            'persistence_forces_replay_unverified':True,
+            'postgres_rejects_verified_replay':True,
             'missing_evidence_explicit':True,
             'existing_dedicated_pool_client_runtime_reused':True,
             'existing_full_rollback_runtime_reused':True,

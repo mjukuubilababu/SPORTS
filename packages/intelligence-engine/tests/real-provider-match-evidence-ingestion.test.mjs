@@ -262,6 +262,22 @@ test('manual screenshot capture cannot self-assert provider truth', () => {
   assert.equal(row.state, 'EVIDENCE_READY_MODEL_PENDING');
 });
 
+test('provider API replay cannot self-assert provider verification', () => {
+  const report = ingestRealProviderMatchEvidenceBatch(batch(
+    [providerEvent({ model: null })],
+    {
+      sourceType: ' provider_api_replay ',
+      verified: true,
+      independentlyVerified: true
+    }
+  ));
+  const row = report.events[0];
+  assert.equal(row.snapshot.source_type, 'PROVIDER_API_REPLAY');
+  assert.equal(row.snapshot.source.verified, false);
+  assert.equal(row.snapshot.source.independently_verified, false);
+  assert.equal(row.state, 'EVIDENCE_READY_MODEL_PENDING');
+});
+
 test('same provider batch produces deterministic immutable output', () => {
   const first = ingestRealProviderMatchEvidenceBatch(batch());
   const second = ingestRealProviderMatchEvidenceBatch(batch());

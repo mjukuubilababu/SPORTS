@@ -3,7 +3,8 @@
 Status: **IMPLEMENTED**
 
 This runtime closes the acquisition-to-persistence gap without adding a second
-feature, model, prediction, or evidence store.
+feature, model, prediction, or evidence store. It adds one narrow constraint
+migration to the existing ingestion-provenance table.
 
 ## Canonical flow
 
@@ -41,7 +42,11 @@ the source-bundle fingerprint.
 - Offline package replay uses `PROVIDER_API_REPLAY` and `verified=false`.
   The public replay builder exposes no authentication override; verification is
   emitted only by the function that performs the authenticated fetch and builds
-  its envelope in one operation.
+  its envelope in one operation. The canonical snapshot consumer and generic
+  PostgreSQL ingestion preparation both force replay verification off.
+- PostgreSQL migration
+  `0011_api_football_replay_verification_firewall_v0_1.sql` adds a table-level
+  check that rejects any replay row marked verified or prematch eligible.
 - Exact replay is idempotent. Altered content under the same snapshot identity
   is rejected by the existing provider/runtime immutability boundary.
 - The existing dedicated PoolClient transaction, full rollback, readback

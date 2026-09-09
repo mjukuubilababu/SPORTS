@@ -115,6 +115,18 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
     assert.equal(JSON.stringify(envelope).includes('"errors"'), false);
     assert.equal(JSON.stringify(envelope).includes('"response"'), false);
 
+    const forgedVerifiedReplay = {
+      ...envelope.providerBatch,
+      verified: true,
+      independentlyVerified: true
+    };
+    const forgedPrepared = prepareProviderMatchEvidenceBatchPersistence({
+      providerBatch: forgedVerifiedReplay,
+      timingByEvent: envelope.timingByEvent
+    });
+    assert.ok(forgedPrepared.observations.every((row) => row.isVerified === false));
+    assert.ok(forgedPrepared.observations.every((row) => row.preMatchEligible === false));
+
     const prepared = prepareProviderMatchEvidenceBatchPersistence({
       providerBatch: {
         ...envelope.providerBatch,
@@ -129,13 +141,14 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
 
     const first = await runProviderMatchEvidencePersistence({
       pool,
-      providerBatch: envelope.providerBatch,
+      providerBatch: forgedVerifiedReplay,
       timingByEvent: envelope.timingByEvent
     });
     assert.equal(first.status, 'DURABLY_ARCHIVED_AND_ATTESTED');
     assert.equal(first.persistedEventCount, 1);
     assert.equal(first.attestations[0].status, 'ATTESTED');
     assert.equal(first.attestations[0].exactFeatureSet, true);
+    assert.equal(first.attestations[0].preMatchEligible, false);
     assert.ok(first.attestations[0].featureCount > 20);
 
     const replay = await runProviderMatchEvidencePersistence({
@@ -160,6 +173,26 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
     assert.equal(persisted.rows[0].capital_state, 'LOCKED');
     assert.equal(persisted.rows[0].real_money, 'NO');
     assert.equal(JSON.stringify(persisted.rows[0].payload_json).includes('targetFixture'), false);
+
+    await assert.rejects(
+      pool.query(
+        `INSERT INTO reference_ingestion_observations_v01(
+           provenance_id,observation_id,event_id,entity_type,entity_id,evidence_kind,provider,source,
+           source_type,source_url,observed_at,available_at,captured_at,prediction_cutoff,is_verified,
+           pre_match_eligible,source_payload_fingerprint,evidence_fingerprint,payload_json,persisted_at,
+           capital_state,real_money
+         )
+         SELECT provenance_id || '-FORGED',observation_id || '-FORGED',event_id,entity_type,entity_id,
+                evidence_kind,provider,source,'PROVIDER_API_REPLAY',source_url,observed_at,available_at,
+                captured_at,prediction_cutoff,true,true,source_payload_fingerprint,evidence_fingerprint,
+                payload_json,persisted_at,capital_state,real_money
+           FROM reference_ingestion_observations_v01
+          WHERE event_id=$1`,
+        [eventId]
+      ),
+      (error) => error?.code === '23514' &&
+        error?.constraint === 'reference_ingestion_replay_unverified_ck'
+    );
 
     const counts = await pool.query(
       `SELECT

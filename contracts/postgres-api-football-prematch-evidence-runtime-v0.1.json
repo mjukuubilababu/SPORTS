@@ -33,7 +33,10 @@
     "eligible_for_authenticated_promotion": false,
     "same_time_and_source_fingerprint_firewalls": true,
     "caller_asserted_authentication_forbidden": true,
-    "verification_coupled_to_authenticated_fetch": true
+    "verification_coupled_to_authenticated_fetch": true,
+    "consumer_forces_replay_unverified": true,
+    "persistence_forces_replay_unverified": true,
+    "postgres_rejects_verified_replay": true
   },
   "canonical_mapping": {
     "home_recent_form": true,
@@ -69,7 +72,8 @@
     "existing_feature_lineage_table": true,
     "existing_postgres_runtime": true,
     "new_tables": 0,
-    "new_migrations": 0,
+    "new_migrations": 1,
+    "replay_verification_firewall_migration": "0011_api_football_replay_verification_firewall_v0_1.sql",
     "postgres_ci_major_version": 16,
     "one_dedicated_pool_client": true,
     "partial_failure_full_rollback": true
@@ -92,6 +96,8 @@
     "package_capture_time_mismatch_rejected": true,
     "offline_replay_cannot_self_verify": true,
     "caller_cannot_assert_authenticated_mode": true,
+    "forged_replay_verification_forced_off": true,
+    "postgres_verified_replay_insert_rejected": true,
     "non_settled_history_rejected": true,
     "exact_source_fingerprints": true,
     "exact_replay_idempotent": true,
