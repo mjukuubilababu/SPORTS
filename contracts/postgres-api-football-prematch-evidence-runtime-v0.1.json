@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "postgres-api-football-prematch-evidence-runtime",
+  "status": "IMPLEMENTED",
+  "version": "API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1",
+  "extends": "postgres-provider-match-evidence-runtime-v0.1",
+  "provider": {
+    "name": "API_FOOTBALL",
+    "authenticated_acquisition": true,
+    "api_key_source": "APISPORTS_KEY_ENVIRONMENT_ONLY",
+    "api_key_persisted": false,
+    "target_fixture_identity_verified": true,
+    "canonical_competition_registration_required": true,
+    "settled_history_statuses": ["FT", "AET", "PEN"],
+    "scheduled_target_statuses": ["NS", "TBD"],
+    "provider_predictions_used": false,
+    "bookmaker_odds_used": false
+  },
+  "source_binding": {
+    "raw_documents": ["targetFixture", "homeHistory", "awayHistory", "h2h"],
+    "per_document_sha256": true,
+    "exact_bundle_sha256_in_source_reference": true,
+    "raw_payload_persisted": false,
+    "same_identity_changed_payload": "REJECT",
+    "exact_replay": "IDEMPOTENT"
+  },
+  "canonical_mapping": {
+    "home_recent_form": true,
+    "away_recent_form": true,
+    "home_venue_form": true,
+    "away_venue_form": true,
+    "h2h": true,
+    "rest_days": "DERIVED_FROM_EXACT_SETTLED_FIXTURE_TIMESTAMPS",
+    "opponent_strength_when_unavailable": null,
+    "xg_when_unavailable": null,
+    "lineups_when_unavailable": null,
+    "injuries_when_unavailable": null,
+    "suspensions_when_unavailable": null,
+    "market_when_unavailable": [],
+    "independent_model": null,
+    "analysis_state_without_model": "EVIDENCE_READY_MODEL_PENDING",
+    "decision_without_model": "ABSTAIN"
+  },
+  "time_firewall": {
+    "capture_must_be_before_kickoff": true,
+    "capture_must_not_exceed_prediction_cutoff": true,
+    "prediction_cutoff_must_be_before_kickoff": true,
+    "historical_fixture_at_or_after_target_kickoff": "REJECT",
+    "non_settled_history": "REJECT",
+    "live_or_settled_target": "REJECT",
+    "settlement_separate": true
+  },
+  "persistence": {
+    "existing_match_evidence_snapshot": true,
+    "existing_ingestion_provenance_table": true,
+    "existing_feature_lineage_table": true,
+    "existing_postgres_runtime": true,
+    "new_tables": 0,
+    "new_migrations": 0,
+    "postgres_ci_major_version": 16,
+    "one_dedicated_pool_client": true,
+    "partial_failure_full_rollback": true
+  },
+  "governance": {
+    "p002_changed": false,
+    "authoritative_truth_owner": "GATE1",
+    "capital_authority": "GATE6",
+    "prediction_not_validation_not_execution": true,
+    "capital_state": "LOCKED",
+    "real_money": "NO",
+    "automatic_promotion_or_retuning": false
+  },
+  "tests": {
+    "exact_target_identity": true,
+    "venue_context_distinct": true,
+    "h2h_orientation": true,
+    "missing_data_explicit": true,
+    "post_kickoff_rejected": true,
+    "non_settled_history_rejected": true,
+    "exact_source_fingerprints": true,
+    "exact_replay_idempotent": true,
+    "changed_payload_same_identity_rejected": true,
+    "raw_payload_not_persisted": true,
+    "postgres_16_end_to_end": true
+  }
+}
