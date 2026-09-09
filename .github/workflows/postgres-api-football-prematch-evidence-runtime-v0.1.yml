@@ -114,6 +114,9 @@ jobs:
           assert contract['authenticated_acquisition_attestation']['algorithm']=='HMAC-SHA256'
           assert contract['authenticated_acquisition_attestation']['key_persisted'] is False
           assert contract['authenticated_acquisition_attestation']['required_for_api_football_provider_api'] is True
+          assert contract['authenticated_acquisition_attestation']['required_for_every_provider_api_claim'] is True
+          assert contract['authenticated_acquisition_attestation']['provider_identity_covered_by_signature'] is True
+          assert contract['authenticated_acquisition_attestation']['adapted_event_must_match_signed_batch_event'] is True
           assert contract['offline_replay']['self_verified'] is False
           assert contract['offline_replay']['eligible_for_authenticated_promotion'] is False
           assert contract['offline_replay']['caller_asserted_authentication_forbidden'] is True
@@ -230,6 +233,8 @@ jobs:
             'authenticated_acquisition_hmac_attested':True,
             'attestation_key_persisted':False,
             'promoted_replay_without_attestation_rejected':True,
+            'provider_rename_cannot_bypass_attestation':True,
+            'unattested_direct_event_substitution_rejected':True,
             'bookmaker_odds_used':False,
             'exact_source_bundle_fingerprint':True,
             'exact_replay_idempotent':True,

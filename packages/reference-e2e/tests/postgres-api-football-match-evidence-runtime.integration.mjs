@@ -118,6 +118,7 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
 
     const forgedAuthenticatedSource = {
       ...envelope.providerBatch,
+      provider: 'RENAMED_PROVIDER',
       sourceType: 'PROVIDER_API',
       verified: true
     };
@@ -126,7 +127,7 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
         providerBatch: forgedAuthenticatedSource,
         timingByEvent: envelope.timingByEvent
       }),
-      /API_FOOTBALL_ACQUISITION_ATTESTATION_REQUIRED/
+      /PROVIDER_API_ACQUISITION_ATTESTATION_REQUIRED/
     );
 
     const forgedVerifiedReplay = {

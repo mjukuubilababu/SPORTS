@@ -169,7 +169,7 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         self.assertTrue(authenticated["providerBatch"]["verified"])
         self.assertTrue(authenticated["governance"]["authenticatedAcquisition"])
         attestation = authenticated["providerBatch"]["acquisitionAttestation"]
-        self.assertEqual(attestation["version"], "API_FOOTBALL_ACQUISITION_ATTESTATION_V0_1")
+        self.assertEqual(attestation["version"], "PROVIDER_API_ACQUISITION_ATTESTATION_V0_1")
         self.assertEqual(attestation["algorithm"], "HMAC-SHA256")
         self.assertEqual(len(attestation["payloadFingerprint"]), 64)
         self.assertEqual(len(attestation["signature"]), 64)

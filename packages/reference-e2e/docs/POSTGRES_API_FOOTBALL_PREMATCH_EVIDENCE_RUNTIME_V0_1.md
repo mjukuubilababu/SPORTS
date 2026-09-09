@@ -40,9 +40,11 @@ the source-bundle fingerprint.
   `EVIDENCE_READY_MODEL_PENDING` / `ABSTAIN` until a separately verified
   market-independent model is supplied.
 - Authenticated live batches carry an `HMAC-SHA256` acquisition attestation
-  over the exact batch identity, source type, capture, verification fields, and
-  events. The downstream consumer verifies it with `APISPORTS_KEY` before
-  snapshot construction; editing a replay into `PROVIDER_API` is rejected.
+  over the exact batch identity, provider identity, source type/reference,
+  capture, verification fields, and events. Every batch claiming
+  `PROVIDER_API` must present a valid attestation; provider renaming cannot
+  bypass the boundary. API-Football verification uses `APISPORTS_KEY`.
+  Direct event adaptation also requires an exact match to a signed batch event.
   The key itself is never placed in the envelope or database.
 - Offline package replay uses `PROVIDER_API_REPLAY` and `verified=false`.
   The public replay builder exposes no authentication override; verification is

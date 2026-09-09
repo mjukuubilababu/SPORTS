@@ -28,13 +28,16 @@
     "exact_replay": "IDEMPOTENT"
   },
   "authenticated_acquisition_attestation": {
-    "version": "API_FOOTBALL_ACQUISITION_ATTESTATION_V0_1",
+    "version": "PROVIDER_API_ACQUISITION_ATTESTATION_V0_1",
     "algorithm": "HMAC-SHA256",
     "key_source": "APISPORTS_KEY_ENVIRONMENT_ONLY",
     "key_persisted": false,
     "exact_batch_payload_fingerprint": true,
     "covers_source_type_capture_verification_and_events": true,
     "required_for_api_football_provider_api": true,
+    "required_for_every_provider_api_claim": true,
+    "provider_identity_covered_by_signature": true,
+    "adapted_event_must_match_signed_batch_event": true,
     "verified_before_snapshot_construction": true
   },
   "offline_replay": {
@@ -116,6 +119,8 @@
     "postgres_missing_independent_verification_replay_insert_rejected": true,
     "promoted_replay_without_acquisition_attestation_rejected": true,
     "tampered_authenticated_batch_attestation_rejected": true,
+    "provider_rename_cannot_bypass_attestation": true,
+    "unattested_direct_event_substitution_rejected": true,
     "non_settled_history_rejected": true,
     "exact_source_fingerprints": true,
     "exact_replay_idempotent": true,

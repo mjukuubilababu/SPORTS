@@ -7,8 +7,8 @@ import {
 
 export const REAL_PROVIDER_MATCH_EVIDENCE_INGESTION_VERSION = 'REAL_PROVIDER_MATCH_EVIDENCE_INGESTION_V0_1';
 export const CANONICAL_PROVIDER_MATCH_EVIDENCE_SCHEMA_VERSION = 'CANONICAL_PROVIDER_MATCH_EVIDENCE_V0_1';
-export const API_FOOTBALL_ACQUISITION_ATTESTATION_VERSION =
-  'API_FOOTBALL_ACQUISITION_ATTESTATION_V0_1';
+export const PROVIDER_API_ACQUISITION_ATTESTATION_VERSION =
+  'PROVIDER_API_ACQUISITION_ATTESTATION_V0_1';
 
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -28,7 +28,7 @@ function hmacFingerprint(key, value) {
     .digest('hex');
 }
 
-function apiFootballAttestationPayload(batch) {
+function providerApiAttestationPayload(batch) {
   return {
     batchId: batch.batchId,
     provider: batch.provider,
@@ -41,27 +41,29 @@ function apiFootballAttestationPayload(batch) {
   };
 }
 
-function assertApiFootballAcquisitionAttestation(batch) {
-  if (batch.provider !== 'API_FOOTBALL' || batch.sourceType !== 'PROVIDER_API') return;
+function assertProviderApiAcquisitionAttestation(batch) {
+  if (batch.sourceType !== 'PROVIDER_API') return;
   const attestation = batch.acquisitionAttestation;
   if (!attestation || typeof attestation !== 'object' || Array.isArray(attestation)) {
-    throw new Error('API_FOOTBALL_ACQUISITION_ATTESTATION_REQUIRED');
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_REQUIRED');
   }
   if (
-    attestation.version !== API_FOOTBALL_ACQUISITION_ATTESTATION_VERSION ||
+    attestation.version !== PROVIDER_API_ACQUISITION_ATTESTATION_VERSION ||
     attestation.algorithm !== 'HMAC-SHA256' ||
     typeof attestation.payloadFingerprint !== 'string' ||
     !/^[0-9a-f]{64}$/.test(attestation.payloadFingerprint) ||
     typeof attestation.signature !== 'string' ||
     !/^[0-9a-f]{64}$/.test(attestation.signature)
   ) {
-    throw new Error('API_FOOTBALL_ACQUISITION_ATTESTATION_INVALID');
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_INVALID');
   }
-  const key = process.env.APISPORTS_KEY;
+  const key = batch.provider === 'API_FOOTBALL'
+    ? process.env.APISPORTS_KEY
+    : process.env.PROVIDER_ACQUISITION_ATTESTATION_KEY;
   if (typeof key !== 'string' || key.trim() === '') {
-    throw new Error('API_FOOTBALL_ACQUISITION_ATTESTATION_KEY_REQUIRED');
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_KEY_REQUIRED');
   }
-  const payload = apiFootballAttestationPayload(batch);
+  const payload = providerApiAttestationPayload(batch);
   const expectedFingerprint = payloadFingerprint(payload);
   const expectedSignature = hmacFingerprint(key.trim(), payload);
   if (
@@ -71,7 +73,7 @@ function assertApiFootballAcquisitionAttestation(batch) {
       Buffer.from(expectedSignature, 'hex')
     )
   ) {
-    throw new Error('API_FOOTBALL_ACQUISITION_ATTESTATION_MISMATCH');
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_MISMATCH');
   }
 }
 
@@ -247,7 +249,15 @@ export function adaptRealProviderMatchEvidenceEvent(batch, event) {
     capturedAt: requireString(batch.capturedAt, 'CAPTURED_AT_REQUIRED')
   };
   timestamp(normalizedBatch.capturedAt, 'CAPTURED_AT_INVALID');
-  assertApiFootballAcquisitionAttestation(normalizedBatch);
+  assertProviderApiAcquisitionAttestation(normalizedBatch);
+  if (
+    normalizedBatch.sourceType === 'PROVIDER_API' &&
+    (!Array.isArray(normalizedBatch.events) ||
+      !normalizedBatch.events.some((signedEvent) =>
+        payloadFingerprint(signedEvent) === payloadFingerprint(event)))
+  ) {
+    throw new Error('PROVIDER_API_ADAPTED_EVENT_NOT_ATTESTED');
+  }
   return acceptedRow(normalizedBatch, event);
 }
 
@@ -266,7 +276,7 @@ export function ingestRealProviderMatchEvidenceBatch(batch) {
     sourceType,
     capturedAt
   };
-  assertApiFootballAcquisitionAttestation(normalizedBatch);
+  assertProviderApiAcquisitionAttestation(normalizedBatch);
   const eventIdentity = new Map();
   const snapshotIdentity = new Map();
   const events = [];

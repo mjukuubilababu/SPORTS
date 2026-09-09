@@ -36,7 +36,7 @@ function apiFootballAttestation(batchValue, key) {
   };
   const serialized = JSON.stringify(canonicalize(payload));
   return {
-    version: 'API_FOOTBALL_ACQUISITION_ATTESTATION_V0_1',
+    version: 'PROVIDER_API_ACQUISITION_ATTESTATION_V0_1',
     algorithm: 'HMAC-SHA256',
     payloadFingerprint: createHash('sha256').update(serialized).digest('hex'),
     signature: createHmac('sha256', key).update(serialized).digest('hex')
@@ -119,7 +119,7 @@ function batch(events = [providerEvent()], overrides = {}) {
   return {
     batchId: 'provider-batch-001',
     provider: 'STATS_PROVIDER_A',
-    sourceType: 'PROVIDER_API',
+    sourceType: 'PROVIDER_FEED',
     sourceReference: 'provider://feed/batch-001',
     capturedAt: CAPTURED,
     verified: true,
@@ -330,20 +330,28 @@ test('API-Football authenticated batches require a valid exact HMAC acquisition 
     const accepted = ingestRealProviderMatchEvidenceBatch(signed);
     assert.equal(accepted.events[0].snapshot.source.verified, true);
     assert.throws(
+      () => adaptRealProviderMatchEvidenceEvent(signed, {
+        ...signed.events[0],
+        evidenceSnapshotId: 'unattested-substitute'
+      }),
+      /PROVIDER_API_ADAPTED_EVENT_NOT_ATTESTED/
+    );
+    assert.throws(
       () => ingestRealProviderMatchEvidenceBatch({
         ...signed,
         sourceReference: 'api-football://prematch-evidence/batch/tampered'
       }),
-      /API_FOOTBALL_ACQUISITION_ATTESTATION_MISMATCH/
+      /PROVIDER_API_ACQUISITION_ATTESTATION_MISMATCH/
     );
     const promotedReplay = {
       ...unsigned,
+      provider: 'RENAMED_PROVIDER',
       sourceType: 'PROVIDER_API',
       verified: true
     };
     assert.throws(
       () => ingestRealProviderMatchEvidenceBatch(promotedReplay),
-      /API_FOOTBALL_ACQUISITION_ATTESTATION_REQUIRED/
+      /PROVIDER_API_ACQUISITION_ATTESTATION_REQUIRED/
     );
   } finally {
     if (previous === undefined) delete process.env.APISPORTS_KEY;
