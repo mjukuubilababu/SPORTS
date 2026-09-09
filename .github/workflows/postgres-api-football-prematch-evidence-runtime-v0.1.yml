@@ -1,0 +1,229 @@
+name: PostgreSQL API-Football Prematch Evidence Runtime v0.1
+
+on:
+  pull_request:
+    branches:
+      - import/decision-intelligence-v0.5-qualified-set
+    paths:
+      - 'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json'
+      - 'packages/gate1/api_football_match_evidence_provider.py'
+      - 'packages/reference-e2e/docs/POSTGRES_API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1.md'
+      - 'packages/reference-e2e/tests/postgres-api-football-match-evidence-runtime.integration.mjs'
+      - 'scripts/run_api_football_match_evidence_ingestion.py'
+      - 'scripts/test_api_football_match_evidence_provider.py'
+      - '.github/workflows/postgres-api-football-prematch-evidence-runtime-v0.1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-api-football-prematch-evidence-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: decision_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d decision_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/decision_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Scope guard
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          python - "$BASE" <<'PY'
+          import subprocess, sys
+          base=sys.argv[1]
+          allowed={
+            '.github/workflows/postgres-api-football-prematch-evidence-runtime-v0.1.yml',
+            'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json',
+            'packages/gate1/api_football_match_evidence_provider.py',
+            'packages/reference-e2e/docs/POSTGRES_API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1.md',
+            'packages/reference-e2e/tests/postgres-api-football-match-evidence-runtime.integration.mjs',
+            'scripts/run_api_football_match_evidence_ingestion.py',
+            'scripts/test_api_football_match_evidence_provider.py',
+          }
+          changed=[]
+          for line in subprocess.check_output(['git','diff','--name-status',f'{base}...HEAD'],text=True).splitlines():
+            parts=line.split('\t')
+            if parts[0].startswith(('D','R')):
+              raise SystemExit(f'API_FOOTBALL_PREMATCH_EVIDENCE_DESTRUCTIVE_CHANGE_FORBIDDEN: {line}')
+            changed.extend(parts[1:])
+          unexpected=sorted(set(changed)-allowed)
+          if unexpected:
+            raise SystemExit(f'API_FOOTBALL_PREMATCH_EVIDENCE_SCOPE_VIOLATION: {unexpected}')
+          print(f'API_FOOTBALL_PREMATCH_EVIDENCE_SCOPE=PASS files={sorted(set(changed))}')
+          PY
+
+      - name: Validate contract and frozen governance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          contract=json.loads(Path('contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json').read_text())
+          p002=json.loads(Path('contracts/p002-frozen-rules.json').read_text())
+          assert contract['status']=='IMPLEMENTED'
+          assert contract['extends']=='postgres-provider-match-evidence-runtime-v0.1'
+          assert contract['provider']['provider_predictions_used'] is False
+          assert contract['provider']['bookmaker_odds_used'] is False
+          assert contract['source_binding']['raw_payload_persisted'] is False
+          assert contract['source_binding']['same_identity_changed_payload']=='REJECT'
+          assert contract['canonical_mapping']['analysis_state_without_model']=='EVIDENCE_READY_MODEL_PENDING'
+          assert contract['canonical_mapping']['decision_without_model']=='ABSTAIN'
+          assert contract['persistence']['new_tables']==0
+          assert contract['persistence']['new_migrations']==0
+          assert contract['persistence']['postgres_ci_major_version']==16
+          assert contract['persistence']['one_dedicated_pool_client'] is True
+          assert contract['persistence']['partial_failure_full_rollback'] is True
+          assert contract['governance']['p002_changed'] is False
+          assert contract['governance']['authoritative_truth_owner']=='GATE1'
+          assert contract['governance']['capital_authority']=='GATE6'
+          assert contract['governance']['capital_state']=='LOCKED'
+          assert contract['governance']['real_money']=='NO'
+          assert contract['governance']['automatic_promotion_or_retuning'] is False
+          assert p002['lineage']=='P002'
+          assert p002['status']=='FROZEN_RESEARCH_RULE'
+          print('API_FOOTBALL_PREMATCH_EVIDENCE_CONTRACT=PASS')
+          print('P002_UNCHANGED=PASS')
+          PY
+
+      - name: Run provider adapter and Gate1 regressions
+        run: |
+          python -m py_compile             packages/gate1/api_football_match_evidence_provider.py             scripts/run_api_football_match_evidence_ingestion.py
+          python scripts/test_api_football_match_evidence_provider.py
+          python scripts/test_api_football_live_provider.py
+          python scripts/test_api_football_game_events.py
+
+      - name: Install reference E2E dependencies
+        working-directory: packages/reference-e2e
+        run: npm install --no-audit --no-fund --no-package-lock
+
+      - name: Preserve reference behavior
+        working-directory: packages/reference-e2e
+        env:
+          REFERENCE_EVIDENCE_PERSISTENCE_MODE: disabled
+        run: |
+          npm test
+          npm run e2e
+
+      - name: Run canonical Match Evidence regressions
+        run: |
+          node --test             packages/intelligence-engine/tests/match-evidence-analysis.test.mjs             packages/intelligence-engine/tests/real-provider-match-evidence-ingestion.test.mjs
+          python scripts/test_pattern_intelligence_contract_v0_1.py
+
+      - name: Confirm PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          pg_isready -h localhost -p 5432 -U postgres -d decision_test
+
+      - name: Apply existing canonical persistence chain
+        run: |
+          set -euo pipefail
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0002_reference_evidence_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0003_reference_stage_checkpoints_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0004_reference_run_leases_fencing_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0006_feature_model_frozen_signal_lineage_postgres_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0007_feature_model_signal_lineage_review_fixes_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0010_provider_match_evidence_persistence_v0_1.sql
+          echo 'API_FOOTBALL_PREMATCH_EVIDENCE_SCHEMA=PASS'
+
+      - name: Run existing and API-Football PostgreSQL regressions
+        working-directory: packages/reference-e2e
+        run: |
+          node --test             tests/postgres-provider-match-evidence-persistence.integration.mjs             tests/postgres-provider-match-evidence-runtime.integration.mjs             tests/postgres-api-football-match-evidence-runtime.integration.mjs
+
+      - name: Verify durable boundaries
+        run: |
+          set -euo pipefail
+          observation_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001'")"
+          feature_count="$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_feature_provenance_lineage_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001'")"
+          test "$observation_count" = "1"
+          test "$feature_count" -gt 20
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001' AND source ~ '^api-football://prematch-evidence/1001/bundle/[0-9a-f]{64}$'")" = "1"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001' AND (capital_state<>'LOCKED' OR real_money<>'NO')")" = "0"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001' AND evidence_kind IN ('SETTLEMENT','PREDICTION_SETTLEMENT')")" = "0"
+          echo "API_FOOTBALL_PREMATCH_EVIDENCE_DB=PASS observations=$observation_count features=$feature_count"
+
+      - name: Write verification artifact
+        run: |
+          mkdir -p artifacts/postgres-api-football-prematch-evidence-runtime
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          url='postgresql://postgres:postgres@localhost:5432/decision_test'
+          def scalar(sql):
+              return subprocess.check_output(['psql',url,'-qAt','-c',sql],text=True).strip()
+          report={
+            'version':'v0.1',
+            'decision':'PASS',
+            'database':'PostgreSQL 16 ephemeral CI',
+            'provider':'API_FOOTBALL',
+            'observations':int(scalar("SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001'")),
+            'features':int(scalar("SELECT count(*) FROM reference_feature_provenance_lineage_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001'")),
+            'new_tables':0,
+            'new_migrations':0,
+            'raw_payload_persisted':False,
+            'provider_prediction_used':False,
+            'bookmaker_odds_used':False,
+            'exact_source_bundle_fingerprint':True,
+            'exact_replay_idempotent':True,
+            'changed_payload_same_identity_rejected':True,
+            'post_kickoff_history_rejected':True,
+            'missing_evidence_explicit':True,
+            'existing_dedicated_pool_client_runtime_reused':True,
+            'existing_full_rollback_runtime_reused':True,
+            'settlement_separate':True,
+            'p002_changed':False,
+            'gate1_truth_owner_changed':False,
+            'gate6_capital_owner_changed':False,
+            'capital_state':'LOCKED',
+            'real_money':'NO'
+          }
+          assert report['observations']==1
+          assert report['features']>20
+          Path('artifacts/postgres-api-football-prematch-evidence-runtime/verification.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Upload PostgreSQL API-Football evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-api-football-prematch-evidence-runtime-v0.1
+          path: |
+            artifacts/postgres-api-football-prematch-evidence-runtime/verification.json
+            contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json
+          if-no-files-found: error
