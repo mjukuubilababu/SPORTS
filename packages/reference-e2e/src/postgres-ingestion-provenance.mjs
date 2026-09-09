@@ -60,7 +60,8 @@ export function prepareIngestionObservation(input) {
   if (!input || typeof input !== 'object') throw fail('POSTGRES_INGESTION_OBSERVATION_REQUIRED');
   text('EVENT_ID', input.eventId);
   text('SOURCE', input.source);
-  text('SOURCE_TYPE', input.sourceType);
+  const sourceType = text('SOURCE_TYPE', input.sourceType);
+  const replaySource = sourceType.trim().toUpperCase() === 'PROVIDER_API_REPLAY';
   const evidenceKind = text('EVIDENCE_KIND', input.evidenceKind).trim().toUpperCase();
   if (['SETTLEMENT', 'PREDICTION_SETTLEMENT'].includes(evidenceKind)) {
     throw fail('POSTGRES_INGESTION_SETTLEMENT_BOUNDARY_VIOLATION');
@@ -74,7 +75,7 @@ export function prepareIngestionObservation(input) {
   if (Date.parse(availableAt) < Date.parse(observedAt)) throw fail('POSTGRES_INGESTION_AVAILABLE_BEFORE_OBSERVED');
   if (Date.parse(capturedAt) < Date.parse(availableAt)) throw fail('POSTGRES_INGESTION_CAPTURE_BEFORE_AVAILABLE');
 
-  const isVerified = input.isVerified === true;
+  const isVerified = !replaySource && input.isVerified === true;
   const preMatchEligible = predictionCutoff !== null
     && isVerified
     && Date.parse(availableAt) <= Date.parse(predictionCutoff)
@@ -98,7 +99,7 @@ export function prepareIngestionObservation(input) {
     evidenceKind,
     provider: input.provider ?? null,
     source: input.source,
-    sourceType: input.sourceType,
+    sourceType,
     sourceUrl: input.sourceUrl ?? null,
     observedAt,
     availableAt,

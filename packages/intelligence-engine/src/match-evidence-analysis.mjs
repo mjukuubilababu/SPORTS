@@ -122,6 +122,11 @@ function nullableNumber(value, code, { min = -Infinity, max = Infinity } = {}) {
   return value;
 }
 
+const NON_SELF_VERIFIABLE_SOURCE_TYPES = new Set([
+  'MANUAL_SCREENSHOT_CAPTURE',
+  'PROVIDER_API_REPLAY'
+]);
+
 function sourceConfidence({ sourceType, verified, independentlyVerified }) {
   if (sourceType === 'MANUAL_SCREENSHOT_CAPTURE') {
     return independentlyVerified ? 0.75 : 0.35;
@@ -131,9 +136,12 @@ function sourceConfidence({ sourceType, verified, independentlyVerified }) {
 
 function normalizeSource(input, capturedAt) {
   const sourceType = requireString(input.sourceType, 'SOURCE_TYPE_REQUIRED').toUpperCase();
-  const independentlyVerified = Boolean(input.independentlyVerified);
-  const verified = sourceType === 'MANUAL_SCREENSHOT_CAPTURE'
-    ? independentlyVerified
+  const selfVerificationForbidden = NON_SELF_VERIFIABLE_SOURCE_TYPES.has(sourceType);
+  const independentlyVerified = sourceType === 'PROVIDER_API_REPLAY'
+    ? false
+    : Boolean(input.independentlyVerified);
+  const verified = selfVerificationForbidden
+    ? (sourceType === 'MANUAL_SCREENSHOT_CAPTURE' && independentlyVerified)
     : Boolean(input.verified);
   return deepFreeze({
     provider: requireString(input.sourceProvider, 'SOURCE_PROVIDER_REQUIRED'),
@@ -436,6 +444,12 @@ function snapshotPayload(snapshot) {
 export function verifyMatchEvidenceSnapshot(snapshot) {
   if (!snapshot || snapshot.immutable !== true) throw new Error('EVIDENCE_SNAPSHOT_NOT_IMMUTABLE');
   if (snapshot.fingerprint !== fingerprint(snapshotPayload(snapshot))) throw new Error('EVIDENCE_SNAPSHOT_FINGERPRINT_MISMATCH');
+  if (
+    snapshot.source_type === 'PROVIDER_API_REPLAY' &&
+    (snapshot.source?.verified !== false || snapshot.source?.independently_verified !== false)
+  ) {
+    throw new Error('PROVIDER_API_REPLAY_VERIFICATION_FORBIDDEN');
+  }
   return true;
 }
 

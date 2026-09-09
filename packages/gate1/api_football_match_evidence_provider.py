@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import urllib.parse
 import urllib.request
@@ -17,6 +18,8 @@ SETTLED_STATUSES = {"FT", "AET", "PEN"}
 SCHEDULED_STATUSES = {"NS", "TBD"}
 DEFAULT_FETCH_LAST = 20
 DEFAULT_FEATURE_LIMIT = 5
+ATTESTATION_VERSION = "PROVIDER_API_ACQUISITION_ATTESTATION_V0_1"
+ATTESTATION_ALGORITHM = "HMAC-SHA256"
 
 
 def _canonical_json(value: object) -> str:
@@ -254,7 +257,7 @@ def _package_index(provider_package: object) -> dict[int, dict]:
     return index
 
 
-def build_runtime_envelope(
+def _build_runtime_envelope(
     targets: Iterable[dict],
     provider_package: object,
     *,
@@ -275,6 +278,11 @@ def build_runtime_envelope(
         raise ValueError("API_FOOTBALL_TARGET_FIXTURE_ID_DUPLICATE")
 
     packages = _package_index(provider_package)
+    package_acquired = _utc(
+        provider_package.get("acquiredAt"), "API_FOOTBALL_PACKAGE_ACQUIRED_AT_REQUIRED"
+    )
+    if package_acquired != captured:
+        raise ValueError("API_FOOTBALL_PACKAGE_CAPTURE_TIME_MISMATCH")
     if set(packages) != set(fixture_ids):
         raise ValueError("API_FOOTBALL_PROVIDER_PACKAGE_TARGET_SET_NOT_EXACT")
 
@@ -319,6 +327,7 @@ def build_runtime_envelope(
         sources = _document_manifest(bundle)
         source_fingerprint = _sha256({
             "providerFixtureId": target["providerFixtureId"],
+            "acquiredAt": package_acquired,
             "documents": sources,
         })
         source_reference = (
@@ -393,16 +402,19 @@ def build_runtime_envelope(
         "providerBatch": {
             "batchId": "API-FOOTBALL-PREMATCH-" + batch_identity[:24],
             "provider": "API_FOOTBALL",
-            "sourceType": "PROVIDER_API",
+            "sourceType": "PROVIDER_API_REPLAY",
             "sourceReference": "api-football://prematch-evidence/batch/" + batch_identity,
             "capturedAt": captured,
-            "verified": True,
+            "verified": False,
             "independentlyVerified": False,
             "events": canonical_events,
         },
         "timingByEvent": timings,
         "governance": {
             "authenticatedProviderRequiredForAcquisition": True,
+            "authenticatedAcquisition": False,
+            "offlineReplay": True,
+            "packageAcquiredAtBoundToCapture": True,
             "rawProviderPayloadPersisted": False,
             "rawSourceFingerprintsRetained": True,
             "postKickoffEvidenceRejected": True,
@@ -421,6 +433,22 @@ def build_runtime_envelope(
     }
 
 
+def build_runtime_envelope(
+    targets: Iterable[dict],
+    provider_package: object,
+    *,
+    captured_at: object,
+    feature_limit: int = DEFAULT_FEATURE_LIMIT,
+) -> dict:
+    """Build an unverified replay envelope from caller-supplied provider data."""
+    return _build_runtime_envelope(
+        targets,
+        provider_package,
+        captured_at=captured_at,
+        feature_limit=feature_limit,
+    )
+
+
 def _url(**params: object) -> str:
     return BASE_URL + "?" + urllib.parse.urlencode(sorted(params.items()))
 
@@ -429,6 +457,10 @@ def _open_json(url: str, headers: Mapping[str, str], timeout: int) -> dict:
     request = urllib.request.Request(url, headers=dict(headers))
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _now_utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
 def fetch_provider_package(
@@ -472,11 +504,69 @@ def fetch_provider_package(
         })
     return {
         "provider": "API_FOOTBALL",
-        "acquiredAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
+        "acquiredAt": _now_utc(),
         "events": events,
         "requestCount": len(cache),
         "apiKeyPersisted": False,
     }
+
+
+def _attestation_payload(provider_batch: Mapping[str, object]) -> dict:
+    return {
+        "batchId": provider_batch["batchId"],
+        "provider": provider_batch["provider"],
+        "sourceType": provider_batch["sourceType"],
+        "sourceReference": provider_batch["sourceReference"],
+        "capturedAt": provider_batch["capturedAt"],
+        "verified": provider_batch["verified"],
+        "independentlyVerified": provider_batch["independentlyVerified"],
+        "events": provider_batch["events"],
+    }
+
+
+def _acquisition_attestation(provider_batch: Mapping[str, object], api_key: str) -> dict:
+    payload = _attestation_payload(provider_batch)
+    serialized = _canonical_json(payload).encode("utf-8")
+    signature = hmac.new(api_key.encode("utf-8"), serialized, hashlib.sha256).hexdigest()
+    return {
+        "version": ATTESTATION_VERSION,
+        "algorithm": ATTESTATION_ALGORITHM,
+        "payloadFingerprint": hashlib.sha256(serialized).hexdigest(),
+        "signature": signature,
+    }
+
+
+def fetch_runtime_envelope(
+    *,
+    api_key: str,
+    targets: Iterable[dict],
+    timeout: int = 20,
+    fetch_last: int = DEFAULT_FETCH_LAST,
+    feature_limit: int = DEFAULT_FEATURE_LIMIT,
+) -> dict:
+    """Fetch and verify one live envelope without exposing an authentication flag."""
+    target_rows = list(targets)
+    provider_package = fetch_provider_package(
+        api_key=api_key,
+        targets=target_rows,
+        timeout=timeout,
+        fetch_last=fetch_last,
+    )
+    envelope = _build_runtime_envelope(
+        target_rows,
+        provider_package,
+        captured_at=provider_package["acquiredAt"],
+        feature_limit=feature_limit,
+    )
+    envelope["providerBatch"]["sourceType"] = "PROVIDER_API"
+    envelope["providerBatch"]["verified"] = True
+    envelope["governance"]["authenticatedAcquisition"] = True
+    envelope["governance"]["offlineReplay"] = False
+    envelope["providerBatch"]["acquisitionAttestation"] = _acquisition_attestation(
+        envelope["providerBatch"],
+        _required_string(api_key, "APISPORTS_KEY_REQUIRED"),
+    )
+    return envelope
 
 
 def provider_manifest() -> dict:
@@ -495,5 +585,12 @@ def provider_manifest() -> dict:
             "newStore": False,
             "providerPredictionUsed": False,
             "bookmakerOddsUsed": False,
+            "packageAcquiredAtBoundToCapture": True,
+            "offlineReplayVerified": False,
+            "callerAssertedAuthenticationForbidden": True,
+            "authenticatedFetchAndVerificationCoupled": True,
+            "authenticatedBatchHmacAttested": True,
+            "attestationCoversExactBatch": True,
+            "attestationKeyPersisted": False,
         },
     }

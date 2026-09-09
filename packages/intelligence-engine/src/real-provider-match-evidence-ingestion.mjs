@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import {
   analyzeMatchEvidence,
   buildMatchEvidenceSnapshot,
@@ -7,6 +7,8 @@ import {
 
 export const REAL_PROVIDER_MATCH_EVIDENCE_INGESTION_VERSION = 'REAL_PROVIDER_MATCH_EVIDENCE_INGESTION_V0_1';
 export const CANONICAL_PROVIDER_MATCH_EVIDENCE_SCHEMA_VERSION = 'CANONICAL_PROVIDER_MATCH_EVIDENCE_V0_1';
+export const PROVIDER_API_ACQUISITION_ATTESTATION_VERSION =
+  'PROVIDER_API_ACQUISITION_ATTESTATION_V0_1';
 
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -18,6 +20,61 @@ function canonicalize(value) {
 
 function payloadFingerprint(value) {
   return createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex');
+}
+
+function hmacFingerprint(key, value) {
+  return createHmac('sha256', key)
+    .update(JSON.stringify(canonicalize(value)))
+    .digest('hex');
+}
+
+function providerApiAttestationPayload(batch) {
+  return {
+    batchId: batch.batchId,
+    provider: batch.provider,
+    sourceType: batch.sourceType,
+    sourceReference: batch.sourceReference,
+    capturedAt: batch.capturedAt,
+    verified: batch.verified,
+    independentlyVerified: batch.independentlyVerified,
+    events: batch.events
+  };
+}
+
+function assertProviderApiAcquisitionAttestation(batch) {
+  if (batch.sourceType !== 'PROVIDER_API') return;
+  const attestation = batch.acquisitionAttestation;
+  if (!attestation || typeof attestation !== 'object' || Array.isArray(attestation)) {
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_REQUIRED');
+  }
+  if (
+    attestation.version !== PROVIDER_API_ACQUISITION_ATTESTATION_VERSION ||
+    attestation.algorithm !== 'HMAC-SHA256' ||
+    typeof attestation.payloadFingerprint !== 'string' ||
+    !/^[0-9a-f]{64}$/.test(attestation.payloadFingerprint) ||
+    typeof attestation.signature !== 'string' ||
+    !/^[0-9a-f]{64}$/.test(attestation.signature)
+  ) {
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_INVALID');
+  }
+  const key = batch.provider === 'API_FOOTBALL'
+    ? process.env.APISPORTS_KEY
+    : process.env.PROVIDER_ACQUISITION_ATTESTATION_KEY;
+  if (typeof key !== 'string' || key.trim() === '') {
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_KEY_REQUIRED');
+  }
+  const payload = providerApiAttestationPayload(batch);
+  const expectedFingerprint = payloadFingerprint(payload);
+  const expectedSignature = hmacFingerprint(key.trim(), payload);
+  if (
+    attestation.payloadFingerprint !== expectedFingerprint ||
+    !timingSafeEqual(
+      Buffer.from(attestation.signature, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
+    )
+  ) {
+    throw new Error('PROVIDER_API_ACQUISITION_ATTESTATION_MISMATCH');
+  }
 }
 
 function deepFreeze(value) {
@@ -185,10 +242,23 @@ function rejectedRow(event, error) {
 
 export function adaptRealProviderMatchEvidenceEvent(batch, event) {
   if (!batch || !event) throw new Error('PROVIDER_BATCH_AND_EVENT_REQUIRED');
-  requireString(batch.provider, 'PROVIDER_REQUIRED');
-  requireString(batch.sourceType, 'SOURCE_TYPE_REQUIRED');
-  timestamp(batch.capturedAt, 'CAPTURED_AT_INVALID');
-  return acceptedRow(batch, event);
+  const normalizedBatch = {
+    ...batch,
+    provider: requireString(batch.provider, 'PROVIDER_REQUIRED'),
+    sourceType: requireString(batch.sourceType, 'SOURCE_TYPE_REQUIRED').toUpperCase(),
+    capturedAt: requireString(batch.capturedAt, 'CAPTURED_AT_REQUIRED')
+  };
+  timestamp(normalizedBatch.capturedAt, 'CAPTURED_AT_INVALID');
+  assertProviderApiAcquisitionAttestation(normalizedBatch);
+  if (
+    normalizedBatch.sourceType === 'PROVIDER_API' &&
+    (!Array.isArray(normalizedBatch.events) ||
+      !normalizedBatch.events.some((signedEvent) =>
+        payloadFingerprint(signedEvent) === payloadFingerprint(event)))
+  ) {
+    throw new Error('PROVIDER_API_ADAPTED_EVENT_NOT_ATTESTED');
+  }
+  return acceptedRow(normalizedBatch, event);
 }
 
 export function ingestRealProviderMatchEvidenceBatch(batch) {
@@ -206,6 +276,7 @@ export function ingestRealProviderMatchEvidenceBatch(batch) {
     sourceType,
     capturedAt
   };
+  assertProviderApiAcquisitionAttestation(normalizedBatch);
   const eventIdentity = new Map();
   const snapshotIdentity = new Map();
   const events = [];

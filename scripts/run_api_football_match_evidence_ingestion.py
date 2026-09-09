@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "packages" / "gate1"))
 from api_football_match_evidence_provider import (
     VERSION,
     build_runtime_envelope,
-    fetch_provider_package,
+    fetch_runtime_envelope,
 )
 
 
@@ -57,24 +57,20 @@ def main(argv: list[str] | None = None) -> int:
     if args.package_file:
         if not args.captured_at:
             raise ValueError("API_FOOTBALL_OFFLINE_CAPTURED_AT_REQUIRED")
-        provider_package = _read_json(args.package_file)
-        captured_at = args.captured_at
+        envelope = build_runtime_envelope(
+            targets,
+            _read_json(args.package_file),
+            captured_at=args.captured_at,
+        )
     else:
         if args.captured_at:
             raise ValueError("API_FOOTBALL_LIVE_CAPTURED_AT_OVERRIDE_FORBIDDEN")
-        provider_package = fetch_provider_package(
+        envelope = fetch_runtime_envelope(
             api_key=os.environ.get("APISPORTS_KEY", ""),
             targets=targets,
             timeout=args.timeout,
             fetch_last=args.fetch_last,
         )
-        captured_at = provider_package["acquiredAt"]
-
-    envelope = build_runtime_envelope(
-        targets,
-        provider_package,
-        captured_at=captured_at,
-    )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -83,6 +79,9 @@ def main(argv: list[str] | None = None) -> int:
         "output": str(output),
         "events": len(envelope["providerBatch"]["events"]),
         "rawProviderPayloadPersisted": False,
+        "authenticatedAcquisition": envelope["governance"]["authenticatedAcquisition"],
+        "offlineReplay": envelope["governance"]["offlineReplay"],
+        "acquisitionAttested": "acquisitionAttestation" in envelope["providerBatch"],
         "providerPredictionUsed": False,
         "bookmakerOddsUsed": False,
         "capitalState": "LOCKED",

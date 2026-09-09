@@ -5,15 +5,18 @@ import json
 import sys
 import unittest
 import urllib.parse
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "packages" / "gate1"))
 
+import api_football_match_evidence_provider as provider_module
 from api_football_match_evidence_provider import (
     VERSION,
     build_runtime_envelope,
     fetch_provider_package,
+    fetch_runtime_envelope,
 )
 
 
@@ -66,6 +69,7 @@ def target() -> dict:
 def provider_package() -> dict:
     return {
         "provider": "API_FOOTBALL",
+        "acquiredAt": CAPTURED,
         "events": [{
             "providerFixtureId": 1001,
             "targetFixture": response(fixture_row(
@@ -96,7 +100,8 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         evidence = event["evidence"]
 
         self.assertEqual(batch["provider"], "API_FOOTBALL")
-        self.assertEqual(batch["sourceType"], "PROVIDER_API")
+        self.assertEqual(batch["sourceType"], "PROVIDER_API_REPLAY")
+        self.assertFalse(batch["verified"])
         self.assertEqual(event["eventId"], "CANONICAL-EVENT-1001")
         self.assertEqual(event["providerEventId"], "1001")
         self.assertEqual(evidence["homeRecentMatches"][0]["goalsFor"], 2)
@@ -125,6 +130,61 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         self.assertFalse(envelope["governance"]["rawProviderPayloadPersisted"])
         self.assertEqual(envelope["governance"]["capitalState"], "LOCKED")
         self.assertEqual(envelope["governance"]["realMoney"], "NO")
+
+    def test_only_coupled_authenticated_fetch_can_verify_and_replay_cannot_self_promote(self):
+        documents = provider_package()["events"][0]
+
+        def fake_transport(url, headers, timeout):
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+            if query.get("id") == ["1001"]:
+                return documents["targetFixture"]
+            if query.get("team") == ["10"]:
+                return documents["homeHistory"]
+            if query.get("team") == ["20"]:
+                return documents["awayHistory"]
+            if query.get("h2h") == ["10-20"]:
+                return documents["h2h"]
+            raise AssertionError("unexpected query: " + url)
+
+        with mock.patch.object(provider_module, "_now_utc", return_value=CAPTURED):
+            acquired = fetch_provider_package(
+                api_key="super-secret-provider-key",
+                targets=[target()],
+                transport=fake_transport,
+            )
+        replayed = build_runtime_envelope([target()], acquired, captured_at=CAPTURED)
+        self.assertEqual(replayed["providerBatch"]["sourceType"], "PROVIDER_API_REPLAY")
+        self.assertFalse(replayed["providerBatch"]["verified"])
+        self.assertTrue(replayed["governance"]["offlineReplay"])
+
+        with (
+            mock.patch.object(provider_module, "_now_utc", return_value=CAPTURED),
+            mock.patch.object(provider_module, "_open_json", side_effect=fake_transport),
+        ):
+            authenticated = fetch_runtime_envelope(
+                api_key="super-secret-provider-key",
+                targets=[target()],
+            )
+        self.assertEqual(authenticated["providerBatch"]["sourceType"], "PROVIDER_API")
+        self.assertTrue(authenticated["providerBatch"]["verified"])
+        self.assertTrue(authenticated["governance"]["authenticatedAcquisition"])
+        attestation = authenticated["providerBatch"]["acquisitionAttestation"]
+        self.assertEqual(attestation["version"], "PROVIDER_API_ACQUISITION_ATTESTATION_V0_1")
+        self.assertEqual(attestation["algorithm"], "HMAC-SHA256")
+        self.assertEqual(len(attestation["payloadFingerprint"]), 64)
+        self.assertEqual(len(attestation["signature"]), 64)
+        self.assertNotIn("super-secret-provider-key", json.dumps(authenticated))
+        self.assertNotIn("acquisitionAttestation", replayed["providerBatch"])
+
+    def test_package_acquisition_time_is_required_and_exactly_bound_to_capture(self):
+        missing = provider_package()
+        del missing["acquiredAt"]
+        with self.assertRaisesRegex(ValueError, "API_FOOTBALL_PACKAGE_ACQUIRED_AT_REQUIRED"):
+            build_runtime_envelope([target()], missing, captured_at=CAPTURED)
+        late = provider_package()
+        late["acquiredAt"] = "2026-09-10T13:00:00.000Z"
+        with self.assertRaisesRegex(ValueError, "API_FOOTBALL_PACKAGE_CAPTURE_TIME_MISMATCH"):
+            build_runtime_envelope([target()], late, captured_at=CAPTURED)
 
     def test_same_inputs_and_capture_version_are_deterministic(self):
         first = build_runtime_envelope([target()], provider_package(), captured_at=CAPTURED)
@@ -177,9 +237,11 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         live["events"][0]["targetFixture"]["response"][0]["fixture"]["status"]["short"] = "1H"
         with self.assertRaisesRegex(ValueError, "API_FOOTBALL_TARGET_NOT_PREMATCH"):
             build_runtime_envelope([target()], live, captured_at=CAPTURED)
+        late = provider_package()
+        late["acquiredAt"] = "2026-09-10T14:50:00.000Z"
         with self.assertRaisesRegex(ValueError, "API_FOOTBALL_CAPTURE_AFTER_PREDICTION_CUTOFF"):
             build_runtime_envelope(
-                [target()], provider_package(), captured_at="2026-09-10T14:50:00Z"
+                [target()], late, captured_at="2026-09-10T14:50:00Z"
             )
 
     def test_provider_package_identity_is_exact(self):
@@ -226,6 +288,8 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         )
         self.assertEqual(acquired["requestCount"], 4)
         self.assertFalse(acquired["apiKeyPersisted"])
+        self.assertEqual(len(acquired["acquiredAt"]), 24)
+        self.assertTrue(acquired["acquiredAt"].endswith("Z"))
         self.assertNotIn("super-secret-provider-key", json.dumps(acquired))
         self.assertEqual({row[1]["x-apisports-key"] for row in seen}, {"super-secret-provider-key"})
         self.assertTrue(all(row[2] == 20 for row in seen))
