@@ -31,7 +31,9 @@
     "source_type": "PROVIDER_API_REPLAY",
     "self_verified": false,
     "eligible_for_authenticated_promotion": false,
-    "same_time_and_source_fingerprint_firewalls": true
+    "same_time_and_source_fingerprint_firewalls": true,
+    "caller_asserted_authentication_forbidden": true,
+    "verification_coupled_to_authenticated_fetch": true
   },
   "canonical_mapping": {
     "home_recent_form": true,
@@ -89,6 +91,7 @@
     "post_kickoff_rejected": true,
     "package_capture_time_mismatch_rejected": true,
     "offline_replay_cannot_self_verify": true,
+    "caller_cannot_assert_authenticated_mode": true,
     "non_settled_history_rejected": true,
     "exact_source_fingerprints": true,
     "exact_replay_idempotent": true,

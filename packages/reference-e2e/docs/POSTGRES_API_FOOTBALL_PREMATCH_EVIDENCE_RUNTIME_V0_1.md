@@ -38,8 +38,10 @@ the source-bundle fingerprint.
 - No independent model is invented. The output remains
   `EVIDENCE_READY_MODEL_PENDING` / `ABSTAIN` until a separately verified
   market-independent model is supplied.
-- Offline package replay uses `PROVIDER_API_REPLAY` and `verified=false`; only the
-  in-process authenticated acquisition path may set provider verification.
+- Offline package replay uses `PROVIDER_API_REPLAY` and `verified=false`.
+  The public replay builder exposes no authentication override; verification is
+  emitted only by the function that performs the authenticated fetch and builds
+  its envelope in one operation.
 - Exact replay is idempotent. Altered content under the same snapshot identity
   is rejected by the existing provider/runtime immutability boundary.
 - The existing dedicated PoolClient transaction, full rollback, readback
@@ -69,7 +71,9 @@ Offline package mode is for tests/replay of a separately captured response. Its
 package must carry the exact acquisition timestamp used as `--captured-at`.
 Replay is deliberately unverified, enforces the same identity,
 source-fingerprint, and no-hindsight rules, and never copies raw response bodies
-into the output envelope.
+into the output envelope. Calling the package fetch helper and later replaying
+its returned data also remains unverified; only the coupled live CLI path can
+emit an authenticated envelope.
 
 ## Governance
 

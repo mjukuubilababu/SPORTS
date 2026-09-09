@@ -5,15 +5,18 @@ import json
 import sys
 import unittest
 import urllib.parse
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "packages" / "gate1"))
 
+import api_football_match_evidence_provider as provider_module
 from api_football_match_evidence_provider import (
     VERSION,
     build_runtime_envelope,
     fetch_provider_package,
+    fetch_runtime_envelope,
 )
 
 
@@ -128,14 +131,40 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         self.assertEqual(envelope["governance"]["capitalState"], "LOCKED")
         self.assertEqual(envelope["governance"]["realMoney"], "NO")
 
-    def test_authenticated_mode_is_explicit_and_offline_replay_cannot_self_verify(self):
-        offline = build_runtime_envelope([target()], provider_package(), captured_at=CAPTURED)
-        authenticated = build_runtime_envelope(
-            [target()], provider_package(), captured_at=CAPTURED, authenticated=True
-        )
-        self.assertEqual(offline["providerBatch"]["sourceType"], "PROVIDER_API_REPLAY")
-        self.assertFalse(offline["providerBatch"]["verified"])
-        self.assertTrue(offline["governance"]["offlineReplay"])
+    def test_only_coupled_authenticated_fetch_can_verify_and_replay_cannot_self_promote(self):
+        documents = provider_package()["events"][0]
+
+        def fake_transport(url, headers, timeout):
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+            if query.get("id") == ["1001"]:
+                return documents["targetFixture"]
+            if query.get("team") == ["10"]:
+                return documents["homeHistory"]
+            if query.get("team") == ["20"]:
+                return documents["awayHistory"]
+            if query.get("h2h") == ["10-20"]:
+                return documents["h2h"]
+            raise AssertionError("unexpected query: " + url)
+
+        with mock.patch.object(provider_module, "_now_utc", return_value=CAPTURED):
+            acquired = fetch_provider_package(
+                api_key="super-secret-provider-key",
+                targets=[target()],
+                transport=fake_transport,
+            )
+        replayed = build_runtime_envelope([target()], acquired, captured_at=CAPTURED)
+        self.assertEqual(replayed["providerBatch"]["sourceType"], "PROVIDER_API_REPLAY")
+        self.assertFalse(replayed["providerBatch"]["verified"])
+        self.assertTrue(replayed["governance"]["offlineReplay"])
+
+        with (
+            mock.patch.object(provider_module, "_now_utc", return_value=CAPTURED),
+            mock.patch.object(provider_module, "_open_json", side_effect=fake_transport),
+        ):
+            authenticated = fetch_runtime_envelope(
+                api_key="super-secret-provider-key",
+                targets=[target()],
+            )
         self.assertEqual(authenticated["providerBatch"]["sourceType"], "PROVIDER_API")
         self.assertTrue(authenticated["providerBatch"]["verified"])
         self.assertTrue(authenticated["governance"]["authenticatedAcquisition"])

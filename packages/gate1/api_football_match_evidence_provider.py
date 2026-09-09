@@ -254,17 +254,15 @@ def _package_index(provider_package: object) -> dict[int, dict]:
     return index
 
 
-def build_runtime_envelope(
+def _build_runtime_envelope(
     targets: Iterable[dict],
     provider_package: object,
     *,
     captured_at: object,
     feature_limit: int = DEFAULT_FEATURE_LIMIT,
-    authenticated: bool = False,
+    authenticated: bool,
 ) -> dict:
     captured = _utc(captured_at, "API_FOOTBALL_CAPTURED_AT_INVALID")
-    if not isinstance(authenticated, bool):
-        raise ValueError("API_FOOTBALL_AUTHENTICATED_FLAG_INVALID")
     if not isinstance(feature_limit, int) or feature_limit <= 0:
         raise ValueError("API_FOOTBALL_FEATURE_LIMIT_INVALID")
     normalized_targets = [_target_fields(target) for target in targets]
@@ -433,6 +431,23 @@ def build_runtime_envelope(
     }
 
 
+def build_runtime_envelope(
+    targets: Iterable[dict],
+    provider_package: object,
+    *,
+    captured_at: object,
+    feature_limit: int = DEFAULT_FEATURE_LIMIT,
+) -> dict:
+    """Build an unverified replay envelope from caller-supplied provider data."""
+    return _build_runtime_envelope(
+        targets,
+        provider_package,
+        captured_at=captured_at,
+        feature_limit=feature_limit,
+        authenticated=False,
+    )
+
+
 def _url(**params: object) -> str:
     return BASE_URL + "?" + urllib.parse.urlencode(sorted(params.items()))
 
@@ -441,6 +456,10 @@ def _open_json(url: str, headers: Mapping[str, str], timeout: int) -> dict:
     request = urllib.request.Request(url, headers=dict(headers))
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _now_utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
 def fetch_provider_package(
@@ -484,11 +503,36 @@ def fetch_provider_package(
         })
     return {
         "provider": "API_FOOTBALL",
-        "acquiredAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
+        "acquiredAt": _now_utc(),
         "events": events,
         "requestCount": len(cache),
         "apiKeyPersisted": False,
     }
+
+
+def fetch_runtime_envelope(
+    *,
+    api_key: str,
+    targets: Iterable[dict],
+    timeout: int = 20,
+    fetch_last: int = DEFAULT_FETCH_LAST,
+    feature_limit: int = DEFAULT_FEATURE_LIMIT,
+) -> dict:
+    """Fetch and verify one live envelope without exposing an authentication flag."""
+    target_rows = list(targets)
+    provider_package = fetch_provider_package(
+        api_key=api_key,
+        targets=target_rows,
+        timeout=timeout,
+        fetch_last=fetch_last,
+    )
+    return _build_runtime_envelope(
+        target_rows,
+        provider_package,
+        captured_at=provider_package["acquiredAt"],
+        feature_limit=feature_limit,
+        authenticated=True,
+    )
 
 
 def provider_manifest() -> dict:
@@ -509,5 +553,7 @@ def provider_manifest() -> dict:
             "bookmakerOddsUsed": False,
             "packageAcquiredAtBoundToCapture": True,
             "offlineReplayVerified": False,
+            "callerAssertedAuthenticationForbidden": True,
+            "authenticatedFetchAndVerificationCoupled": True,
         },
     }

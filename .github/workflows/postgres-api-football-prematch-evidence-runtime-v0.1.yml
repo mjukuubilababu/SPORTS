@@ -102,6 +102,8 @@ jobs:
           assert contract['source_binding']['package_acquired_at_in_bundle_sha256'] is True
           assert contract['offline_replay']['self_verified'] is False
           assert contract['offline_replay']['eligible_for_authenticated_promotion'] is False
+          assert contract['offline_replay']['caller_asserted_authentication_forbidden'] is True
+          assert contract['offline_replay']['verification_coupled_to_authenticated_fetch'] is True
           assert contract['canonical_mapping']['analysis_state_without_model']=='EVIDENCE_READY_MODEL_PENDING'
           assert contract['canonical_mapping']['decision_without_model']=='ABSTAIN'
           assert contract['persistence']['new_tables']==0
@@ -212,6 +214,8 @@ jobs:
             'package_capture_time_mismatch_rejected':True,
             'offline_replay_verified':False,
             'offline_replay_pre_match_eligible':False,
+            'caller_asserted_authentication_forbidden':True,
+            'verification_coupled_to_authenticated_fetch':True,
             'missing_evidence_explicit':True,
             'existing_dedicated_pool_client_runtime_reused':True,
             'existing_full_rollback_runtime_reused':True,
