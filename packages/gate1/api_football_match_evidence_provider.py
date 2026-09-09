@@ -260,8 +260,11 @@ def build_runtime_envelope(
     *,
     captured_at: object,
     feature_limit: int = DEFAULT_FEATURE_LIMIT,
+    authenticated: bool = False,
 ) -> dict:
     captured = _utc(captured_at, "API_FOOTBALL_CAPTURED_AT_INVALID")
+    if not isinstance(authenticated, bool):
+        raise ValueError("API_FOOTBALL_AUTHENTICATED_FLAG_INVALID")
     if not isinstance(feature_limit, int) or feature_limit <= 0:
         raise ValueError("API_FOOTBALL_FEATURE_LIMIT_INVALID")
     normalized_targets = [_target_fields(target) for target in targets]
@@ -275,6 +278,11 @@ def build_runtime_envelope(
         raise ValueError("API_FOOTBALL_TARGET_FIXTURE_ID_DUPLICATE")
 
     packages = _package_index(provider_package)
+    package_acquired = _utc(
+        provider_package.get("acquiredAt"), "API_FOOTBALL_PACKAGE_ACQUIRED_AT_REQUIRED"
+    )
+    if package_acquired != captured:
+        raise ValueError("API_FOOTBALL_PACKAGE_CAPTURE_TIME_MISMATCH")
     if set(packages) != set(fixture_ids):
         raise ValueError("API_FOOTBALL_PROVIDER_PACKAGE_TARGET_SET_NOT_EXACT")
 
@@ -319,6 +327,7 @@ def build_runtime_envelope(
         sources = _document_manifest(bundle)
         source_fingerprint = _sha256({
             "providerFixtureId": target["providerFixtureId"],
+            "acquiredAt": package_acquired,
             "documents": sources,
         })
         source_reference = (
@@ -393,16 +402,19 @@ def build_runtime_envelope(
         "providerBatch": {
             "batchId": "API-FOOTBALL-PREMATCH-" + batch_identity[:24],
             "provider": "API_FOOTBALL",
-            "sourceType": "PROVIDER_API",
+            "sourceType": "PROVIDER_API" if authenticated else "PROVIDER_API_REPLAY",
             "sourceReference": "api-football://prematch-evidence/batch/" + batch_identity,
             "capturedAt": captured,
-            "verified": True,
+            "verified": authenticated,
             "independentlyVerified": False,
             "events": canonical_events,
         },
         "timingByEvent": timings,
         "governance": {
             "authenticatedProviderRequiredForAcquisition": True,
+            "authenticatedAcquisition": authenticated,
+            "offlineReplay": not authenticated,
+            "packageAcquiredAtBoundToCapture": True,
             "rawProviderPayloadPersisted": False,
             "rawSourceFingerprintsRetained": True,
             "postKickoffEvidenceRejected": True,
@@ -495,5 +507,7 @@ def provider_manifest() -> dict:
             "newStore": False,
             "providerPredictionUsed": False,
             "bookmakerOddsUsed": False,
+            "packageAcquiredAtBoundToCapture": True,
+            "offlineReplayVerified": False,
         },
     }

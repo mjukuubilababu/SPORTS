@@ -21,7 +21,9 @@ their settled head-to-head history. It does not fetch or consume provider
 predictions or bookmaker odds. Every source document is hashed; their ordered
 manifest is hashed again and the exact bundle fingerprint is embedded in the
 snapshot source reference. Raw provider response bodies and the API key are not
-written to the runtime envelope or PostgreSQL.
+written to the runtime envelope or PostgreSQL. The acquisition timestamp is
+required, must exactly equal the declared capture timestamp, and is included in
+the source-bundle fingerprint.
 
 ## Fail-closed boundaries
 
@@ -36,6 +38,8 @@ written to the runtime envelope or PostgreSQL.
 - No independent model is invented. The output remains
   `EVIDENCE_READY_MODEL_PENDING` / `ABSTAIN` until a separately verified
   market-independent model is supplied.
+- Offline package replay uses `PROVIDER_API_REPLAY` and `verified=false`; only the
+  in-process authenticated acquisition path may set provider verification.
 - Exact replay is idempotent. Altered content under the same snapshot identity
   is rejected by the existing provider/runtime immutability boundary.
 - The existing dedicated PoolClient transaction, full rollback, readback
@@ -61,9 +65,11 @@ python scripts/run_api_football_match_evidence_ingestion.py \
   --captured-at 2026-09-10T12:00:00.000Z
 ```
 
-Offline package mode is for tests/replay of a separately captured authenticated
-response. It enforces the same identity, source-fingerprint, and no-hindsight
-rules and never copies raw response bodies into the output envelope.
+Offline package mode is for tests/replay of a separately captured response. Its
+package must carry the exact acquisition timestamp used as `--captured-at`.
+Replay is deliberately unverified, enforces the same identity,
+source-fingerprint, and no-hindsight rules, and never copies raw response bodies
+into the output envelope.
 
 ## Governance
 

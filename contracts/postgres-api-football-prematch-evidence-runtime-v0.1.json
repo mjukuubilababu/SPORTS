@@ -20,9 +20,18 @@
     "raw_documents": ["targetFixture", "homeHistory", "awayHistory", "h2h"],
     "per_document_sha256": true,
     "exact_bundle_sha256_in_source_reference": true,
+    "package_acquired_at_required": true,
+    "package_acquired_at_must_equal_declared_capture": true,
+    "package_acquired_at_in_bundle_sha256": true,
     "raw_payload_persisted": false,
     "same_identity_changed_payload": "REJECT",
     "exact_replay": "IDEMPOTENT"
+  },
+  "offline_replay": {
+    "source_type": "PROVIDER_API_REPLAY",
+    "self_verified": false,
+    "eligible_for_authenticated_promotion": false,
+    "same_time_and_source_fingerprint_firewalls": true
   },
   "canonical_mapping": {
     "home_recent_form": true,
@@ -78,6 +87,8 @@
     "h2h_orientation": true,
     "missing_data_explicit": true,
     "post_kickoff_rejected": true,
+    "package_capture_time_mismatch_rejected": true,
+    "offline_replay_cannot_self_verify": true,
     "non_settled_history_rejected": true,
     "exact_source_fingerprints": true,
     "exact_replay_idempotent": true,

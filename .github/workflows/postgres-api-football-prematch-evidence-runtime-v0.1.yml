@@ -97,6 +97,11 @@ jobs:
           assert contract['provider']['bookmaker_odds_used'] is False
           assert contract['source_binding']['raw_payload_persisted'] is False
           assert contract['source_binding']['same_identity_changed_payload']=='REJECT'
+          assert contract['source_binding']['package_acquired_at_required'] is True
+          assert contract['source_binding']['package_acquired_at_must_equal_declared_capture'] is True
+          assert contract['source_binding']['package_acquired_at_in_bundle_sha256'] is True
+          assert contract['offline_replay']['self_verified'] is False
+          assert contract['offline_replay']['eligible_for_authenticated_promotion'] is False
           assert contract['canonical_mapping']['analysis_state_without_model']=='EVIDENCE_READY_MODEL_PENDING'
           assert contract['canonical_mapping']['decision_without_model']=='ABSTAIN'
           assert contract['persistence']['new_tables']==0
@@ -174,6 +179,7 @@ jobs:
           test "$observation_count" = "1"
           test "$feature_count" -gt 20
           test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001' AND source ~ '^api-football://prematch-evidence/1001/bundle/[0-9a-f]{64}$'")" = "1"
+          test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001' AND (is_verified IS TRUE OR pre_match_eligible IS TRUE)")" = "0"
           test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001' AND (capital_state<>'LOCKED' OR real_money<>'NO')")" = "0"
           test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT count(*) FROM reference_ingestion_observations_v01 WHERE event_id='API-FOOTBALL-RUNTIME-EVENT-1001' AND evidence_kind IN ('SETTLEMENT','PREDICTION_SETTLEMENT')")" = "0"
           echo "API_FOOTBALL_PREMATCH_EVIDENCE_DB=PASS observations=$observation_count features=$feature_count"
@@ -203,6 +209,9 @@ jobs:
             'exact_replay_idempotent':True,
             'changed_payload_same_identity_rejected':True,
             'post_kickoff_history_rejected':True,
+            'package_capture_time_mismatch_rejected':True,
+            'offline_replay_verified':False,
+            'offline_replay_pre_match_eligible':False,
             'missing_evidence_explicit':True,
             'existing_dedicated_pool_client_runtime_reused':True,
             'existing_full_rollback_runtime_reused':True,

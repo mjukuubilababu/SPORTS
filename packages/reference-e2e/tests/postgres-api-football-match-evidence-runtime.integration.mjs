@@ -51,6 +51,7 @@ function target() {
 function rawPackage() {
   return {
     provider: 'API_FOOTBALL',
+    acquiredAt: CAPTURED,
     events: [{
       providerFixtureId: 1001,
       targetFixture: response(
@@ -101,6 +102,10 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
     const envelope = await buildEnvelope(directory, 'original', rawPackage());
     assert.equal(envelope.runtimeVersion, 'API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1');
     assert.equal(envelope.providerBatch.provider, 'API_FOOTBALL');
+    assert.equal(envelope.providerBatch.sourceType, 'PROVIDER_API_REPLAY');
+    assert.equal(envelope.providerBatch.verified, false);
+    assert.equal(envelope.governance.offlineReplay, true);
+    assert.equal(envelope.governance.packageAcquiredAtBoundToCapture, true);
     assert.equal(envelope.providerBatch.events[0].model, null);
     assert.equal(envelope.providerBatch.events[0].evidence.xG, null);
     assert.equal(envelope.providerBatch.events[0].evidence.lineups, null);
@@ -143,13 +148,15 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
 
     const eventId = target().eventId;
     const persisted = await pool.query(
-      `SELECT source,payload_json,capital_state,real_money
+      `SELECT source,payload_json,is_verified,pre_match_eligible,capital_state,real_money
          FROM reference_ingestion_observations_v01
         WHERE event_id=$1`,
       [eventId]
     );
     assert.equal(persisted.rowCount, 1);
     assert.match(persisted.rows[0].source, /^api-football:\/\/prematch-evidence\/1001\/bundle\/[0-9a-f]{64}$/);
+    assert.equal(persisted.rows[0].is_verified, false);
+    assert.equal(persisted.rows[0].pre_match_eligible, false);
     assert.equal(persisted.rows[0].capital_state, 'LOCKED');
     assert.equal(persisted.rows[0].real_money, 'NO');
     assert.equal(JSON.stringify(persisted.rows[0].payload_json).includes('targetFixture'), false);

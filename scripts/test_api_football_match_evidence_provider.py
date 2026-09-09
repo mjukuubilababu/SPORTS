@@ -66,6 +66,7 @@ def target() -> dict:
 def provider_package() -> dict:
     return {
         "provider": "API_FOOTBALL",
+        "acquiredAt": CAPTURED,
         "events": [{
             "providerFixtureId": 1001,
             "targetFixture": response(fixture_row(
@@ -96,7 +97,8 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         evidence = event["evidence"]
 
         self.assertEqual(batch["provider"], "API_FOOTBALL")
-        self.assertEqual(batch["sourceType"], "PROVIDER_API")
+        self.assertEqual(batch["sourceType"], "PROVIDER_API_REPLAY")
+        self.assertFalse(batch["verified"])
         self.assertEqual(event["eventId"], "CANONICAL-EVENT-1001")
         self.assertEqual(event["providerEventId"], "1001")
         self.assertEqual(evidence["homeRecentMatches"][0]["goalsFor"], 2)
@@ -125,6 +127,28 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         self.assertFalse(envelope["governance"]["rawProviderPayloadPersisted"])
         self.assertEqual(envelope["governance"]["capitalState"], "LOCKED")
         self.assertEqual(envelope["governance"]["realMoney"], "NO")
+
+    def test_authenticated_mode_is_explicit_and_offline_replay_cannot_self_verify(self):
+        offline = build_runtime_envelope([target()], provider_package(), captured_at=CAPTURED)
+        authenticated = build_runtime_envelope(
+            [target()], provider_package(), captured_at=CAPTURED, authenticated=True
+        )
+        self.assertEqual(offline["providerBatch"]["sourceType"], "PROVIDER_API_REPLAY")
+        self.assertFalse(offline["providerBatch"]["verified"])
+        self.assertTrue(offline["governance"]["offlineReplay"])
+        self.assertEqual(authenticated["providerBatch"]["sourceType"], "PROVIDER_API")
+        self.assertTrue(authenticated["providerBatch"]["verified"])
+        self.assertTrue(authenticated["governance"]["authenticatedAcquisition"])
+
+    def test_package_acquisition_time_is_required_and_exactly_bound_to_capture(self):
+        missing = provider_package()
+        del missing["acquiredAt"]
+        with self.assertRaisesRegex(ValueError, "API_FOOTBALL_PACKAGE_ACQUIRED_AT_REQUIRED"):
+            build_runtime_envelope([target()], missing, captured_at=CAPTURED)
+        late = provider_package()
+        late["acquiredAt"] = "2026-09-10T13:00:00.000Z"
+        with self.assertRaisesRegex(ValueError, "API_FOOTBALL_PACKAGE_CAPTURE_TIME_MISMATCH"):
+            build_runtime_envelope([target()], late, captured_at=CAPTURED)
 
     def test_same_inputs_and_capture_version_are_deterministic(self):
         first = build_runtime_envelope([target()], provider_package(), captured_at=CAPTURED)
@@ -226,6 +250,7 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         )
         self.assertEqual(acquired["requestCount"], 4)
         self.assertFalse(acquired["apiKeyPersisted"])
+        self.assertRegex(acquired["acquiredAt"], r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$")
         self.assertNotIn("super-secret-provider-key", json.dumps(acquired))
         self.assertEqual({row[1]["x-apisports-key"] for row in seen}, {"super-secret-provider-key"})
         self.assertTrue(all(row[2] == 20 for row in seen))

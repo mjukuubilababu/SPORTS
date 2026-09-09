@@ -74,6 +74,7 @@ def main(argv: list[str] | None = None) -> int:
         targets,
         provider_package,
         captured_at=captured_at,
+        authenticated=not bool(args.package_file),
     )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -83,6 +84,8 @@ def main(argv: list[str] | None = None) -> int:
         "output": str(output),
         "events": len(envelope["providerBatch"]["events"]),
         "rawProviderPayloadPersisted": False,
+        "authenticatedAcquisition": not bool(args.package_file),
+        "offlineReplay": bool(args.package_file),
         "providerPredictionUsed": False,
         "bookmakerOddsUsed": False,
         "capitalState": "LOCKED",
