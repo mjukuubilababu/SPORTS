@@ -241,6 +241,35 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
         error?.constraint === 'reference_ingestion_replay_unverified_ck'
     );
 
+    const constraintClient = await pool.connect();
+    try {
+      await constraintClient.query('SET session_replication_role=replica');
+      await assert.rejects(
+        constraintClient.query(
+          `INSERT INTO reference_ingestion_observations_v01(
+             provenance_id,observation_id,event_id,entity_type,entity_id,evidence_kind,provider,source,
+             source_type,source_url,observed_at,available_at,captured_at,prediction_cutoff,is_verified,
+             pre_match_eligible,source_payload_fingerprint,evidence_fingerprint,payload_json,persisted_at,
+             capital_state,real_money
+           )
+           SELECT provenance_id || '-SELF-VERIFIED',observation_id || '-SELF-VERIFIED',event_id,
+                  entity_type,entity_id,evidence_kind,provider,source,'PROVIDER_API_REPLAY',source_url,
+                  observed_at,available_at,captured_at,prediction_cutoff,false,false,
+                  source_payload_fingerprint,evidence_fingerprint,
+                  jsonb_set(payload_json, '{snapshot,source,verified}', 'true'::jsonb),
+                  persisted_at,capital_state,real_money
+             FROM reference_ingestion_observations_v01
+            WHERE event_id=$1`,
+          [eventId]
+        ),
+        (error) => error?.code === '23514' &&
+          error?.constraint === 'reference_ingestion_replay_unverified_ck'
+      );
+    } finally {
+      await constraintClient.query('SET session_replication_role=origin');
+      constraintClient.release();
+    }
+
     const counts = await pool.query(
       `SELECT
          (SELECT count(*)::int FROM reference_ingestion_observations_v01 WHERE event_id=$1) observations,

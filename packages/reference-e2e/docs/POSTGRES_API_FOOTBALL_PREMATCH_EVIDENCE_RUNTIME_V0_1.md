@@ -47,8 +47,9 @@ the source-bundle fingerprint.
 - PostgreSQL migration
   `0011_api_football_replay_verification_firewall_v0_1.sql` adds a table-level
   check that rejects any replay row marked verified or prematch eligible and
-  requires the archived snapshot's independent-verification flag to exist as a
-  Boolean and be exactly false. The constraint uses null-safe predicates, so a
+  requires the archived snapshot's self-verification and independent-verification
+  flags to exist as Booleans and both be exactly false. The constraint uses
+  null-safe predicates, so a
   missing JSON field is rejected rather than accepted as SQL `NULL`.
 - Exact replay is idempotent. Altered content under the same snapshot identity
   is rejected by the existing provider/runtime immutability boundary.
