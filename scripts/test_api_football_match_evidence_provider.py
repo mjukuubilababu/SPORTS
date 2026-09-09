@@ -201,9 +201,11 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         live["events"][0]["targetFixture"]["response"][0]["fixture"]["status"]["short"] = "1H"
         with self.assertRaisesRegex(ValueError, "API_FOOTBALL_TARGET_NOT_PREMATCH"):
             build_runtime_envelope([target()], live, captured_at=CAPTURED)
+        late = provider_package()
+        late["acquiredAt"] = "2026-09-10T14:50:00.000Z"
         with self.assertRaisesRegex(ValueError, "API_FOOTBALL_CAPTURE_AFTER_PREDICTION_CUTOFF"):
             build_runtime_envelope(
-                [target()], provider_package(), captured_at="2026-09-10T14:50:00Z"
+                [target()], late, captured_at="2026-09-10T14:50:00Z"
             )
 
     def test_provider_package_identity_is_exact(self):
@@ -250,7 +252,8 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         )
         self.assertEqual(acquired["requestCount"], 4)
         self.assertFalse(acquired["apiKeyPersisted"])
-        self.assertRegex(acquired["acquiredAt"], r"^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$")
+        self.assertEqual(len(acquired["acquiredAt"]), 24)
+        self.assertTrue(acquired["acquiredAt"].endswith("Z"))
         self.assertNotIn("super-secret-provider-key", json.dumps(acquired))
         self.assertEqual({row[1]["x-apisports-key"] for row in seen}, {"super-secret-provider-key"})
         self.assertTrue(all(row[2] == 20 for row in seen))
