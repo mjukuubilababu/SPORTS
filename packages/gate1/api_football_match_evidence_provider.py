@@ -164,6 +164,7 @@ def _map_history(
     target_kickoff: str,
     captured_at: str,
     code: str,
+    opponent_team_id: Optional[int] = None,
 ) -> list[tuple[dict, str]]:
     rows = _response(document, code)
     target_time = _timestamp(target_kickoff, "API_FOOTBALL_TARGET_KICKOFF_INVALID")
@@ -186,6 +187,8 @@ def _map_history(
             raise ValueError("API_FOOTBALL_POST_CAPTURE_HISTORY_REJECTED")
         home_id, _home_name = _team(teams.get("home"), code + "_HOME_TEAM")
         away_id, _away_name = _team(teams.get("away"), code + "_AWAY_TEAM")
+        if opponent_team_id is not None and {home_id, away_id} != {subject_team_id, opponent_team_id}:
+            raise ValueError("API_FOOTBALL_H2H_TARGET_PAIR_MISMATCH")
         if subject_team_id == home_id:
             venue = "HOME"
             goals_for = _score(goals.get("home"), code + "_HOME_GOALS_INVALID")
@@ -310,6 +313,7 @@ def build_runtime_envelope(
             target_kickoff=target["kickoffAt"],
             captured_at=captured,
             code="API_FOOTBALL_H2H",
+            opponent_team_id=target["awayTeamId"],
         )
 
         sources = _document_manifest(bundle)

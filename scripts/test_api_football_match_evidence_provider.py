@@ -142,6 +142,12 @@ class ApiFootballMatchEvidenceProviderTests(unittest.TestCase):
         self.assertNotEqual(left["providerSourceFingerprint"], right["providerSourceFingerprint"])
         self.assertNotEqual(left["evidence"], right["evidence"])
 
+    def test_h2h_must_contain_both_target_teams(self):
+        package = provider_package()
+        package["events"][0]["h2h"]["response"][0]["teams"]["away"] = {"id": 99, "name": "UNRELATED FC"}
+        with self.assertRaisesRegex(ValueError, "API_FOOTBALL_H2H_TARGET_PAIR_MISMATCH"):
+            build_runtime_envelope([target()], package, captured_at=CAPTURED)
+
     def test_target_identity_mismatch_rejected(self):
         package = provider_package()
         package["events"][0]["targetFixture"]["response"][0]["teams"]["home"]["id"] = 999

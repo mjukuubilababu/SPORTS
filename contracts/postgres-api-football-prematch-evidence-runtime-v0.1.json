@@ -30,6 +30,7 @@
     "home_venue_form": true,
     "away_venue_form": true,
     "h2h": true,
+    "h2h_exact_target_pair_required": true,
     "rest_days": "DERIVED_FROM_EXACT_SETTLED_FIXTURE_TIMESTAMPS",
     "opponent_strength_when_unavailable": null,
     "xg_when_unavailable": null,
