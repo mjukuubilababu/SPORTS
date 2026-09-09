@@ -12,6 +12,7 @@ import {
   prepareProviderMatchEvidenceBatchPersistence,
   runProviderMatchEvidencePersistence
 } from '../src/postgres-provider-match-evidence-runtime.mjs';
+import { prepareIngestionObservation } from '../src/postgres-ingestion-provenance.mjs';
 
 const execFileAsync = promisify(execFile);
 const connectionString = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
@@ -124,8 +125,9 @@ test('API-Football prematch evidence maps into the existing immutable PostgreSQL
       providerBatch: forgedVerifiedReplay,
       timingByEvent: envelope.timingByEvent
     });
-    assert.ok(forgedPrepared.observations.every((row) => row.isVerified === false));
-    assert.ok(forgedPrepared.observations.every((row) => row.preMatchEligible === false));
+    const forcedReplayObservations = forgedPrepared.observations.map(prepareIngestionObservation);
+    assert.ok(forcedReplayObservations.every((row) => row.isVerified === false));
+    assert.ok(forcedReplayObservations.every((row) => row.preMatchEligible === false));
 
     const prepared = prepareProviderMatchEvidenceBatchPersistence({
       providerBatch: {

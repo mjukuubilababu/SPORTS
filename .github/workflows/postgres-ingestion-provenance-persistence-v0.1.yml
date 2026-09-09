@@ -7,6 +7,7 @@ on:
     paths:
       - 'packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql'
       - 'packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql'
+      - 'packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql'
       - 'packages/reference-e2e/src/postgres-ingestion-provenance.mjs'
       - 'packages/reference-e2e/tests/postgres-ingestion-provenance.integration.mjs'
       - 'contracts/postgres-ingestion-provenance-persistence-v0.1.json'
@@ -81,6 +82,16 @@ jobs:
             'packages/prediction-api/tests/persistence-failclosed.test.mjs',
             'packages/prediction-api/tests/postgres-persistence.integration.test.mjs',
             'packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql',
+            '.github/workflows/postgres-api-football-prematch-evidence-runtime-v0.1.yml',
+            'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json',
+            'packages/gate1/api_football_match_evidence_provider.py',
+            'packages/intelligence-engine/src/match-evidence-analysis.mjs',
+            'packages/intelligence-engine/tests/real-provider-match-evidence-ingestion.test.mjs',
+            'packages/reference-e2e/docs/POSTGRES_API_FOOTBALL_PREMATCH_EVIDENCE_RUNTIME_V0_1.md',
+            'packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql',
+            'packages/reference-e2e/tests/postgres-api-football-match-evidence-runtime.integration.mjs',
+            'scripts/run_api_football_match_evidence_ingestion.py',
+            'scripts/test_api_football_match_evidence_provider.py',
           }
           changed=[]
           for line in subprocess.check_output(['git','diff','--name-status',f'{base}...HEAD'],text=True).splitlines():
@@ -146,6 +157,7 @@ jobs:
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0005_ingestion_provenance_postgres_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0009_downstream_lineage_attestation_feature_payload_v0_1.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/reference-e2e/migrations/0011_api_football_replay_verification_firewall_v0_1.sql
           test "$(psql "$TEST_DATABASE_URL" -qAt -c "SELECT column_name FROM information_schema.columns WHERE table_name='reference_feature_provenance_lineage_v01' AND column_name='feature_payload'")" = "feature_payload"
           for table in \
             reference_ingestion_observations_v01 \
