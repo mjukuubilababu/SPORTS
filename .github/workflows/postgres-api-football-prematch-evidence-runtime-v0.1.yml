@@ -69,6 +69,7 @@ jobs:
           base=sys.argv[1]
           allowed={
             '.github/workflows/postgres-api-football-prematch-evidence-runtime-v0.1.yml',
+            '.github/workflows/postgres-ingestion-provenance-persistence-v0.1.yml',
             'contracts/postgres-api-football-prematch-evidence-runtime-v0.1.json',
             'packages/gate1/api_football_match_evidence_provider.py',
             'packages/intelligence-engine/src/match-evidence-analysis.mjs',
